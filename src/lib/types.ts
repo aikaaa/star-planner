@@ -33,6 +33,22 @@ export function getDaysNeeded(plan: CharacterPlan): number {
   return Math.ceil(remaining / 3); // 3 shards per day
 }
 
+// Given available days and current shards, calculate the highest reachable star
+export function getTargetStarFromDays(currentStar: number, currentShards: number, days: number): number {
+  const totalShards = days * 3 + currentShards;
+  let accumulated = 0;
+  let reachable = currentStar;
+  for (let s = currentStar; s < 5; s++) {
+    accumulated += SHARD_COSTS[`${s}-${s + 1}`] || 0;
+    if (totalShards >= accumulated) {
+      reachable = s + 1;
+    } else {
+      break;
+    }
+  }
+  return Math.max(currentStar + 1, reachable);
+}
+
 export function getCompletionDate(plan: CharacterPlan): Date {
   const days = getDaysNeeded(plan);
   const start = new Date(plan.startDate);

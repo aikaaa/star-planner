@@ -10,7 +10,7 @@ import { CalendarIcon, Plus, Trash2, Star } from "lucide-react";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { CharacterPlan, getDaysNeeded, getTotalShardsNeeded } from "@/lib/types";
+import { CharacterPlan, getDaysNeeded, getCompletionDate, getTotalShardsNeeded, getTargetStarFromDays } from "@/lib/types";
 import { ROLE_LIST } from "@/lib/roleList";
 
 interface SetPlanDialogProps {
@@ -162,24 +162,58 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                 </div>
               </div>
 
-              <div>
-                <Label className="text-muted-foreground text-xs">开始日期</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full mt-1 justify-start bg-secondary border-border text-foreground">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {format(new Date(char.startDate), "yyyy年MM月dd日", { locale: zhCN })}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={new Date(char.startDate)}
-                      onSelect={(d) => d && updateCharacter(index, { startDate: d.toISOString().split("T")[0] })}
-                      className={cn("p-3 pointer-events-auto")}
-                    />
-                  </PopoverContent>
-                </Popover>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-muted-foreground text-xs">开始日期</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full mt-1 justify-start bg-secondary border-border text-foreground text-xs px-2">
+                        <CalendarIcon className="mr-1 h-3 w-3" />
+                        {format(new Date(char.startDate), "yyyy/MM/dd", { locale: zhCN })}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={new Date(char.startDate)}
+                        onSelect={(d) => d && updateCharacter(index, { startDate: d.toISOString().split("T")[0] })}
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground text-xs">结束日期</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full mt-1 justify-start bg-secondary border-border text-foreground text-xs px-2">
+                        <CalendarIcon className="mr-1 h-3 w-3" />
+                        {format(getCompletionDate(char), "yyyy/MM/dd", { locale: zhCN })}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={getCompletionDate(char)}
+                        onSelect={(d) => {
+                          if (!d) return;
+                          const start = new Date(char.startDate);
+                          start.setHours(0, 0, 0, 0);
+                          d.setHours(0, 0, 0, 0);
+                          const diffDays = Math.max(0, Math.round((d.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+                          const newTarget = getTargetStarFromDays(char.currentStar, char.currentShards, diffDays);
+                          updateCharacter(index, { targetStar: Math.min(5, newTarget) });
+                        }}
+                        disabled={(d) => {
+                          const start = new Date(char.startDate);
+                          start.setHours(0, 0, 0, 0);
+                          return d < start;
+                        }}
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
 
               <div className="text-xs text-info flex items-center gap-1">
