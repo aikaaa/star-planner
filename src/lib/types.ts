@@ -54,9 +54,16 @@ export function getCharactersOnDate(plans: CharacterPlan[], date: Date): Charact
   });
 }
 
-// Mock community data
+// Mock community data - Top 10
 export const COMMUNITY_TOP_CHARACTERS = [
   { name: "艾尔海森", count: 1247, avatar: "🧙" },
   { name: "纳西妲", count: 1089, avatar: "🌿" },
   { name: "雷电将军", count: 956, avatar: "⚡" },
+  { name: "胡桃", count: 823, avatar: "🔥" },
+  { name: "甘雨", count: 712, avatar: "❄️" },
+  { name: "钟离", count: 689, avatar: "🪨" },
+  { name: "夜兰", count: 634, avatar: "💧" },
+  { name: "万叶", count: 578, avatar: "🍃" },
+  { name: "妮露", count: 521, avatar: "💃" },
+  { name: "八重神子", count: 487, avatar: "🦊" },
 ];
