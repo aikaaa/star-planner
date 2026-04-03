@@ -10,7 +10,7 @@ import { CalendarIcon, Plus, Trash2, Star } from "lucide-react";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { CharacterPlan, getDaysNeeded, getTotalShardsNeeded } from "@/lib/types";
+import { CharacterPlan, getDaysNeeded, getCompletionDate, getTotalShardsNeeded, getTargetStarFromDays } from "@/lib/types";
 import { ROLE_LIST } from "@/lib/roleList";
 
 interface SetPlanDialogProps {
