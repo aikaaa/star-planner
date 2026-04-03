@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { CharacterPlan, getDaysNeeded, getTotalShardsNeeded } from "@/lib/types";
+import { ROLE_LIST } from "@/lib/roleList";
 
 interface SetPlanDialogProps {
   open: boolean;
@@ -49,7 +50,6 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
 
   const handleSave = () => {
     const valid = characters.filter((c) => c.name.trim() !== "");
-    if (valid.length === 0) return;
     onSave(valid);
     onOpenChange(false);
   };
@@ -66,26 +66,33 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
             <div key={char.id} className="gradient-card rounded-lg p-4 border border-border space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-foreground">角色 {index + 1}</span>
-                {characters.length > 1 && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-destructive hover:text-destructive"
-                    onClick={() => removeCharacter(index)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-destructive hover:text-destructive"
+                  onClick={() => removeCharacter(index)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
 
               <div>
                 <Label className="text-muted-foreground text-xs">角色名称</Label>
-                <Input
-                  placeholder="输入角色名称"
+                <Select
                   value={char.name}
-                  onChange={(e) => updateCharacter(index, { name: e.target.value })}
-                  className="mt-1 bg-secondary border-border"
-                />
+                  onValueChange={(v) => updateCharacter(index, { name: v })}
+                >
+                  <SelectTrigger className="mt-1 bg-secondary border-border">
+                    <SelectValue placeholder="选择角色" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {ROLE_LIST.map((role) => (
+                      <SelectItem key={role} value={role}>
+                        {role}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
