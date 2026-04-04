@@ -30,7 +30,7 @@ const emptyCharacter = (): CharacterPlan => ({
   startDate: new Date().toISOString().split("T")[0],
 });
 
-function RoleCombobox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function RoleCombobox({ value, onChange, usedNames }: { value: string; onChange: (v: string) => void; usedNames: string[] }) {
   const [open, setOpen] = useState(false);
   return (
     <div>
@@ -53,19 +53,27 @@ function RoleCombobox({ value, onChange }: { value: string; onChange: (v: string
             <CommandList>
               <CommandEmpty>未找到角色</CommandEmpty>
               <CommandGroup>
-                {ROLE_LIST.map((role) => (
-                  <CommandItem
-                    key={role}
-                    value={role}
-                    onSelect={() => {
-                      onChange(role);
-                      setOpen(false);
-                    }}
-                  >
-                    <Check className={cn("mr-2 h-4 w-4", value === role ? "opacity-100" : "opacity-0")} />
-                    {role}
-                  </CommandItem>
-                ))}
+                {ROLE_LIST.map((role) => {
+                  const isUsed = role !== value && usedNames.includes(role);
+                  return (
+                    <CommandItem
+                      key={role}
+                      value={role}
+                      disabled={isUsed}
+                      onSelect={() => {
+                        if (!isUsed) {
+                          onChange(role);
+                          setOpen(false);
+                        }
+                      }}
+                      className={isUsed ? "opacity-40" : ""}
+                    >
+                      <Check className={cn("mr-2 h-4 w-4", value === role ? "opacity-100" : "opacity-0")} />
+                      {role}
+                      {isUsed && <span className="ml-auto text-xs text-muted-foreground">已选</span>}
+                    </CommandItem>
+                  );
+                })}
               </CommandGroup>
             </CommandList>
           </Command>
