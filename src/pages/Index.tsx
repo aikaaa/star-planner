@@ -22,12 +22,22 @@ export default function Index() {
   const [plans, setPlans] = useState<CharacterPlan[]>(loadPlans);
   const [showSetPlan, setShowSetPlan] = useState(false);
   const [showCommunity, setShowCommunity] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<CharacterPlan | null>(null);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(plans));
   }, [plans]);
 
   const handleSavePlans = (newPlans: CharacterPlan[]) => {
+    setPlans(newPlans);
+    reportFarmingCharacters(newPlans.map((p) => ({ name: p.name, targetStar: getEffectiveTargetStar(p) })));
+  };
+
+  // 单角色编辑：把修改后的角色合并回 plans
+  const handleSaveEditingPlan = (updated: CharacterPlan[]) => {
+    if (updated.length === 0) return;
+    const updatedPlan = updated[0];
+    const newPlans = plans.map((p) => (p.id === updatedPlan.id ? updatedPlan : p));
     setPlans(newPlans);
     reportFarmingCharacters(newPlans.map((p) => ({ name: p.name, targetStar: getEffectiveTargetStar(p) })));
   };
@@ -75,12 +85,19 @@ export default function Index() {
           </div>
         ) : (
           <div className="gradient-card rounded-xl border border-border p-4">
-            <FarmingCalendar plans={plans} />
+            <FarmingCalendar plans={plans} onEditPlan={(plan) => setEditingPlan(plan)} />
           </div>
         )}
       </div>
 
       <SetPlanDialog open={showSetPlan} onOpenChange={setShowSetPlan} existingPlans={plans} onSave={handleSavePlans} />
+      <SetPlanDialog
+        open={editingPlan !== null}
+        onOpenChange={(o) => { if (!o) setEditingPlan(null); }}
+        existingPlans={editingPlan ? [editingPlan] : []}
+        onSave={handleSaveEditingPlan}
+        singleEdit
+      />
       <CommunityDialog open={showCommunity} onOpenChange={setShowCommunity} />
     </div>
   );

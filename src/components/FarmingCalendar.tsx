@@ -6,6 +6,7 @@ import { useState } from "react";
 
 interface FarmingCalendarProps {
   plans: CharacterPlan[];
+  onEditPlan?: (plan: CharacterPlan) => void;
 }
 
 const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
@@ -30,7 +31,7 @@ const CHAR_DOT_COLORS = [
   "bg-cyan-500", "bg-violet-500", "bg-rose-500", "bg-lime-500",
 ];
 
-export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
+export default function FarmingCalendar({ plans, onEditPlan }: FarmingCalendarProps) {
   const [viewMonth, setViewMonth] = useState(() => new Date());
 
   const year = viewMonth.getFullYear();
@@ -142,12 +143,21 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
             const days = getDaysNeeded(p);
             const endDate = getCompletionDate(p);
             return (
-              <div key={p.id} className={`rounded-lg p-3 border ${CHAR_COLORS[i]}`}>
+              <div
+                key={p.id}
+                className={`rounded-lg p-3 border ${CHAR_COLORS[i]} ${onEditPlan ? "cursor-pointer active:opacity-70 transition-opacity" : ""}`}
+                onClick={() => onEditPlan?.(p)}
+              >
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-foreground text-sm">{p.name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {p.currentStar}★ → {getEffectiveTargetStar(p)}★
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {p.currentStar}★ → {getEffectiveTargetStar(p)}★
+                    </span>
+                    {onEditPlan && (
+                      <span className="text-xs text-muted-foreground/60">编辑 ›</span>
+                    )}
+                  </div>
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
                   预计 {days} 天 · 完成于 {endDate.getFullYear()}/{endDate.getMonth() + 1}/{endDate.getDate()}
