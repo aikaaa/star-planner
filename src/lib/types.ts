@@ -90,7 +90,7 @@ export const CHAR_ICON_OPTIONS: CharIconOption[] = [
 // Shards needed for each star upgrade
 export const SHARD_COSTS: Record<string, number> = {
   "1-2": 20,
-  "2-3": 50,
+  "2-3": 60,
   "3-4": 100,
   "4-5": 120,
 };
