@@ -28,7 +28,7 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       - name: Zip dist
-        run: cd dist && zip -r ../release.zip . && cd ..
+        run: zip -r release.zip dist
 
       - name: Upload release asset
         uses: softprops/action-gh-release@v1
