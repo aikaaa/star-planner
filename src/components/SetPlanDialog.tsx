@@ -129,7 +129,7 @@ function IconPicker({ value, onChange }: { value: string; onChange: (emoji: stri
       <Button
         type="button"
         variant="outline"
-        className="w-12 h-9 text-xl bg-secondary border-border p-0"
+        className="w-full h-9 text-xl bg-secondary border-border p-0"
         onClick={() => setOpen((v) => !v)}
       >
         {value}
@@ -322,21 +322,17 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                   ))}
                 </div>
 
-                {/* 角色名称 + 图标并排 */}
-                <div className="flex gap-2 items-end">
-                  <div className="flex-1 min-w-0">
-                    <RoleCombobox
-                      value={char.name}
-                      onChange={(v) => updateCharacter(index, { name: v })}
-                      usedNames={characters.map((c) => c.name).filter(Boolean)}
-                    />
-                  </div>
-                  <div className="shrink-0">
-                    <IconPicker
-                      value={char.icon ?? CHAR_ICON_OPTIONS[index % CHAR_ICON_OPTIONS.length].emoji}
-                      onChange={(emoji) => updateCharacter(index, { icon: emoji })}
-                    />
-                  </div>
+                {/* 角色名称 + 图标并排，各占 50% */}
+                <div className="grid grid-cols-2 gap-2">
+                  <RoleCombobox
+                    value={char.name}
+                    onChange={(v) => updateCharacter(index, { name: v })}
+                    usedNames={characters.map((c) => c.name).filter(Boolean)}
+                  />
+                  <IconPicker
+                    value={char.icon ?? CHAR_ICON_OPTIONS[index % CHAR_ICON_OPTIONS.length].emoji}
+                    onChange={(emoji) => updateCharacter(index, { icon: emoji })}
+                  />
                 </div>
 
                 {/* 已有碎片 */}
