@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,8 @@ import {
   getTotalShardsNeeded,
   getTargetStarFromDays,
   getFreeTargetLabel,
+  parseLocalDate,
+  toDateStr,
 } from "@/lib/types";
 import { ROLE_LIST } from "@/lib/roleList";
 
@@ -36,11 +38,23 @@ const emptyCharacter = (): CharacterPlan => ({
   currentStar: 1,
   targetStar: 2,
   currentShards: 0,
-  startDate: new Date().toISOString().split("T")[0],
+  startDate: toDateStr(new Date()),
 });
 
 function RoleCombobox({ value, onChange, usedNames }: { value: string; onChange: (v: string) => void; usedNames: string[] }) {
   const [open, setOpen] = useState(false);
+  const [vpHeight, setVpHeight] = useState(() => window.visualViewport?.height ?? window.innerHeight);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const handler = () => setVpHeight(vv.height);
+    vv.addEventListener("resize", handler);
+    return () => vv.removeEventListener("resize", handler);
+  }, []);
+
+  const listMaxH = Math.max(120, Math.floor(vpHeight * 0.35));
+
   return (
     <div>
       <Label className="text-muted-foreground text-xs">角色名称</Label>
@@ -59,7 +73,7 @@ function RoleCombobox({ value, onChange, usedNames }: { value: string; onChange:
         <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
           <Command>
             <CommandInput placeholder="搜索角色..." />
-            <CommandList className="max-h-[40vh] overflow-y-auto overscroll-contain" style={{ touchAction: "pan-y" }}>
+            <CommandList className="overflow-y-auto overscroll-contain" style={{ touchAction: "pan-y", maxHeight: `${listMaxH}px` }}>
               <CommandEmpty>未找到角色</CommandEmpty>
               <CommandGroup>
                 {ROLE_LIST.map((role) => {
@@ -114,12 +128,18 @@ function DatePickerButton({ date, onSelect, disabled }: { date: Date; onSelect: 
   );
 }
 
+const toCharacters = (plans: CharacterPlan[]) =>
+  plans.length > 0
+    ? plans.map((c) => ({ farmingMode: "star" as FarmingMode, ...c }))
+    : [emptyCharacter()];
+
 export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSave }: SetPlanDialogProps) {
-  const [characters, setCharacters] = useState<CharacterPlan[]>(
-    existingPlans.length > 0
-      ? existingPlans.map((c) => ({ farmingMode: "star" as FarmingMode, ...c }))
-      : [emptyCharacter()]
-  );
+  const [characters, setCharacters] = useState<CharacterPlan[]>(() => toCharacters(existingPlans));
+
+  // 每次打开弹窗时从最新的 existingPlans 重新初始化，避免显示旧数据
+  useEffect(() => {
+    if (open) setCharacters(toCharacters(existingPlans));
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const updateCharacter = (index: number, updates: Partial<CharacterPlan>) => {
     setCharacters((prev) => prev.map((c, i) => (i === index ? { ...c, ...updates } : c)));
@@ -129,12 +149,12 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
     const char = characters[index];
     if (mode === "free") {
       // 切换到自由模式：用当前计算出的结束日期作为初始 endDate
-      const endDate = getCompletionDate(char).toISOString().split("T")[0];
+      const endDate = toDateStr(getCompletionDate(char));
       updateCharacter(index, { farmingMode: mode, endDate });
     } else {
       // 切换到按星模式：根据 endDate 反推 targetStar
-      const endDate = char.endDate ? new Date(char.endDate) : getCompletionDate(char);
-      const start = new Date(char.startDate);
+      const endDate = char.endDate ? parseLocalDate(char.endDate!) : getCompletionDate(char);
+      const start = parseLocalDate(char.startDate);
       start.setHours(0, 0, 0, 0);
       endDate.setHours(0, 0, 0, 0);
       const days = Math.max(0, Math.round((endDate.getTime() - start.getTime()) / 86400000));
@@ -202,9 +222,9 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
             const isFree = char.farmingMode === "free";
             const completionDate = getCompletionDate(char);
             const days = getDaysNeeded(char);
-            const endDateObj = char.endDate ? new Date(char.endDate) : completionDate;
+            const endDateObj = char.endDate ? parseLocalDate(char.endDate!) : completionDate;
             const freeDays = isFree
-              ? Math.max(0, Math.round((endDateObj.getTime() - new Date(char.startDate).getTime()) / 86400000))
+              ? Math.max(0, Math.round((endDateObj.getTime() - parseLocalDate(char.startDate).getTime()) / 86400000))
               : 0;
             const freeLabel = isFree ? getFreeTargetLabel(char.currentStar, char.currentShards, freeDays) : "";
 
@@ -348,10 +368,10 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                   <div>
                     <Label className="text-muted-foreground text-xs">开始日期</Label>
                     <DatePickerButton
-                      date={new Date(char.startDate)}
+                      date={parseLocalDate(char.startDate)}
                       onSelect={(d) => {
-                        const newStart = d.toISOString().split("T")[0];
-                        if (isFree && char.endDate && d > new Date(char.endDate)) {
+                        const newStart = toDateStr(d);
+                        if (isFree && char.endDate && d > parseLocalDate(char.endDate!)) {
                           updateCharacter(index, { startDate: newStart, endDate: newStart });
                         } else {
                           updateCharacter(index, { startDate: newStart });
@@ -365,9 +385,9 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                       // 自由跑片：结束日期可选
                       <DatePickerButton
                         date={endDateObj}
-                        onSelect={(d) => updateCharacter(index, { endDate: d.toISOString().split("T")[0] })}
+                        onSelect={(d) => updateCharacter(index, { endDate: toDateStr(d) })}
                         disabled={(d) => {
-                          const start = new Date(char.startDate);
+                          const start = parseLocalDate(char.startDate);
                           start.setHours(0, 0, 0, 0);
                           return d < start;
                         }}

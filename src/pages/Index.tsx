@@ -25,8 +25,12 @@ export default function Index() {
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(plans));
-    reportFarmingCharacters(plans.map((p) => ({ name: p.name, targetStar: getEffectiveTargetStar(p) })));
   }, [plans]);
+
+  const handleSavePlans = (newPlans: CharacterPlan[]) => {
+    setPlans(newPlans);
+    reportFarmingCharacters(newPlans.map((p) => ({ name: p.name, targetStar: getEffectiveTargetStar(p) })));
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -76,7 +80,7 @@ export default function Index() {
         )}
       </div>
 
-      <SetPlanDialog open={showSetPlan} onOpenChange={setShowSetPlan} existingPlans={plans} onSave={setPlans} />
+      <SetPlanDialog open={showSetPlan} onOpenChange={setShowSetPlan} existingPlans={plans} onSave={handleSavePlans} />
       <CommunityDialog open={showCommunity} onOpenChange={setShowCommunity} />
     </div>
   );
