@@ -122,7 +122,7 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
                     return (
                       <span
                         key={c.id}
-                        className="text-[10px] sm:text-xs leading-none"
+                        className="text-[8px] sm:text-[10px] leading-none"
                         title={c.name}
                       >
                         {getCharIcon(c, idx)}
