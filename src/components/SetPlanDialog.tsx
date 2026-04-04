@@ -39,7 +39,7 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
   };
 
   const addCharacter = () => {
-    if (characters.length < 3) {
+    if (characters.length < 10) {
       setCharacters((prev) => [...prev, emptyCharacter()]);
     }
   };
