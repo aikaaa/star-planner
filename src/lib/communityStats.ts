@@ -33,52 +33,19 @@ export async function reportFarmingCharacters(characters: CharacterReport[]): Pr
 }
 
 /**
- * 查询近 7 天跑片热门角色 Top10（按不同设备数降序）。
- * 同时统计每个角色最多人跑的目标星级。
+ * 查询近 7 天跑片热门角色 Top10。
+ * 通过服务端 RPC 函数聚合，只返回 10 行，性能不随数据量增长而下降。
  */
 export async function fetchCommunityTop10(): Promise<CommunityCharacter[] | null> {
   if (!supabase) return null;
 
-  const since = new Date();
-  since.setDate(since.getDate() - 7);
-
-  const { data, error } = await supabase
-    .from("character_farm_reports")
-    .select("character_name, device_id, target_star")
-    .gte("reported_at", since.toISOString());
+  const { data, error } = await supabase.rpc("get_community_top10");
 
   if (error || !data) return null;
 
-  // 按角色统计不同设备数，并统计各目标星级出现次数
-  const deviceSets = new Map<string, Set<string>>();
-  const starCounts = new Map<string, Map<number, number>>();
-
-  for (const row of data) {
-    const name = row.character_name;
-
-    if (!deviceSets.has(name)) deviceSets.set(name, new Set());
-    deviceSets.get(name)!.add(row.device_id);
-
-    if (row.target_star != null) {
-      if (!starCounts.has(name)) starCounts.set(name, new Map());
-      const m = starCounts.get(name)!;
-      m.set(row.target_star, (m.get(row.target_star) ?? 0) + 1);
-    }
-  }
-
-  return Array.from(deviceSets.entries())
-    .map(([name, devices]) => {
-      // 取出现次数最多的目标星级
-      const starMap = starCounts.get(name);
-      let topTargetStar: number | undefined;
-      if (starMap) {
-        let maxCount = 0;
-        for (const [star, cnt] of starMap) {
-          if (cnt > maxCount) { maxCount = cnt; topTargetStar = star; }
-        }
-      }
-      return { name, count: devices.size, topTargetStar };
-    })
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 10);
+  return data.map((row: { character_name: string; user_count: number; top_target_star: number | null }) => ({
+    name: row.character_name,
+    count: row.user_count,
+    topTargetStar: row.top_target_star ?? undefined,
+  }));
 }
