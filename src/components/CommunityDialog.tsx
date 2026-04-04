@@ -83,8 +83,8 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                     <div className="flex items-center justify-between gap-1">
                       <span className="font-semibold text-foreground text-sm">{char.name}</span>
                       {char.topTargetStar != null && (
-                        <span className="text-xs text-muted-foreground/70 shrink-0">
-                          更多人选择跑<span className="font-bold">{char.topTargetStar}★</span>
+                        <span className="text-[10px] text-muted-foreground/70 shrink-0">
+                          更多人选择跑<span className="font-bold text-star">{char.topTargetStar}</span>★
                         </span>
                       )}
                     </div>
