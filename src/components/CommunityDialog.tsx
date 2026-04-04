@@ -84,7 +84,7 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                       <span className="font-semibold text-foreground text-sm">{char.name}</span>
                       {char.topTargetStar != null && (
                         <span className="text-[10px] text-muted-foreground/70 shrink-0">
-                          更多人选择跑<span className="font-bold text-white">{char.topTargetStar}</span>★
+                          更多人选择跑<span className="font-bold text-white">{char.topTargetStar}★</span>
                         </span>
                       )}
                     </div>
