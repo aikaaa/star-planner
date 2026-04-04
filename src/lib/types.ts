@@ -107,7 +107,7 @@ export function getDaysNeeded(plan: CharacterPlan): number {
   if (plan.farmingMode === "free" && plan.endDate) {
     const start = parseLocalDate(plan.startDate);
     const end = parseLocalDate(plan.endDate);
-    return Math.max(0, Math.round((end.getTime() - start.getTime()) / 86400000));
+    return Math.max(0, Math.round((end.getTime() - start.getTime()) / 86400000) + 1); // +1 包含结束当天
   }
   const totalNeeded = getTotalShardsNeeded(plan.currentStar, plan.targetStar);
   const remaining = Math.max(0, totalNeeded - plan.currentShards);
