@@ -266,7 +266,7 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                       className={cn(
                         "flex-1 py-1.5 rounded-md text-xs font-medium border transition-all",
                         char.farmingMode === mode
-                          ? "gradient-primary text-primary-foreground border-primary glow-primary"
+                          ? "gradient-primary text-primary-foreground border-transparent glow-primary"
                           : "bg-secondary text-muted-foreground border-border hover:text-foreground"
                       )}
                     >
