@@ -4,7 +4,7 @@ import { Settings, Users, Sparkles } from "lucide-react";
 import FarmingCalendar from "@/components/FarmingCalendar";
 import SetPlanDialog from "@/components/SetPlanDialog";
 import CommunityDialog from "@/components/CommunityDialog";
-import { CharacterPlan } from "@/lib/types";
+import { CharacterPlan, getEffectiveTargetStar } from "@/lib/types";
 import { reportFarmingCharacters } from "@/lib/communityStats";
 
 const STORAGE_KEY = "shard-farming-plans";
@@ -25,7 +25,7 @@ export default function Index() {
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(plans));
-    reportFarmingCharacters(plans.map((p) => p.name));
+    reportFarmingCharacters(plans.map((p) => ({ name: p.name, targetStar: getEffectiveTargetStar(p) })));
   }, [plans]);
 
   return (

@@ -115,6 +115,16 @@ export function getCharactersOnDate(plans: CharacterPlan[], date: Date): Charact
   });
 }
 
+// 计算角色的「有效目标星级」用于上报和展示
+// 按星跑片直接取 targetStar，自由跑片取可达的整数星级
+export function getEffectiveTargetStar(plan: CharacterPlan): number {
+  if (plan.farmingMode === "free") {
+    const days = getDaysNeeded(plan);
+    return getPartialProgress(plan.currentStar, plan.currentShards, days).reachableStar;
+  }
+  return plan.targetStar;
+}
+
 // Mock community data - Top 10
 export const COMMUNITY_TOP_CHARACTERS = [
   { name: "艾尔海森", count: 1247, avatar: "🧙" },

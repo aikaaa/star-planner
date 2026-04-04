@@ -80,7 +80,12 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                       : <span className="text-sm font-bold text-muted-foreground">{index + 1}</span>}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-foreground text-sm">{char.name}</div>
+                    <div className="flex items-baseline gap-1.5">
+                    <span className="font-semibold text-foreground text-sm">{char.name}</span>
+                    {char.topTargetStar != null && (
+                      <span className="text-muted-foreground text-[10px]">更多人在跑{char.topTargetStar}★</span>
+                    )}
+                  </div>
                     <div className="w-full bg-secondary rounded-full h-1.5 mt-1">
                       <div
                         className="bg-primary h-1.5 rounded-full transition-all"
