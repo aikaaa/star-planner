@@ -19,6 +19,7 @@ import {
   getTotalShardsNeeded,
   getTargetStarFromDays,
   getFreeTargetLabel,
+  parseLocalDate,
 } from "@/lib/types";
 import { ROLE_LIST } from "@/lib/roleList";
 
@@ -133,8 +134,8 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
       updateCharacter(index, { farmingMode: mode, endDate });
     } else {
       // 切换到按星模式：根据 endDate 反推 targetStar
-      const endDate = char.endDate ? new Date(char.endDate) : getCompletionDate(char);
-      const start = new Date(char.startDate);
+      const endDate = char.endDate ? parseLocalDate(char.endDate!) : getCompletionDate(char);
+      const start = parseLocalDate(char.startDate);
       start.setHours(0, 0, 0, 0);
       endDate.setHours(0, 0, 0, 0);
       const days = Math.max(0, Math.round((endDate.getTime() - start.getTime()) / 86400000));
@@ -202,9 +203,9 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
             const isFree = char.farmingMode === "free";
             const completionDate = getCompletionDate(char);
             const days = getDaysNeeded(char);
-            const endDateObj = char.endDate ? new Date(char.endDate) : completionDate;
+            const endDateObj = char.endDate ? parseLocalDate(char.endDate!) : completionDate;
             const freeDays = isFree
-              ? Math.max(0, Math.round((endDateObj.getTime() - new Date(char.startDate).getTime()) / 86400000))
+              ? Math.max(0, Math.round((endDateObj.getTime() - parseLocalDate(char.startDate).getTime()) / 86400000))
               : 0;
             const freeLabel = isFree ? getFreeTargetLabel(char.currentStar, char.currentShards, freeDays) : "";
 
@@ -348,10 +349,10 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                   <div>
                     <Label className="text-muted-foreground text-xs">开始日期</Label>
                     <DatePickerButton
-                      date={new Date(char.startDate)}
+                      date={parseLocalDate(char.startDate)}
                       onSelect={(d) => {
                         const newStart = d.toISOString().split("T")[0];
-                        if (isFree && char.endDate && d > new Date(char.endDate)) {
+                        if (isFree && char.endDate && d > parseLocalDate(char.endDate!)) {
                           updateCharacter(index, { startDate: newStart, endDate: newStart });
                         } else {
                           updateCharacter(index, { startDate: newStart });
@@ -367,7 +368,7 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                         date={endDateObj}
                         onSelect={(d) => updateCharacter(index, { endDate: d.toISOString().split("T")[0] })}
                         disabled={(d) => {
-                          const start = new Date(char.startDate);
+                          const start = parseLocalDate(char.startDate);
                           start.setHours(0, 0, 0, 0);
                           return d < start;
                         }}

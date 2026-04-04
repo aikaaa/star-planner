@@ -1,5 +1,11 @@
 export type FarmingMode = "star" | "free";
 
+/** 将 "YYYY-MM-DD" 解析为本地时间 Date，避免 UTC 时区偏移导致日期差一天 */
+export function parseLocalDate(dateStr: string): Date {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
 export interface CharacterPlan {
   id: string;
   name: string;
@@ -33,10 +39,8 @@ export function getTotalShardsNeeded(currentStar: number, targetStar: number): n
 
 export function getDaysNeeded(plan: CharacterPlan): number {
   if (plan.farmingMode === "free" && plan.endDate) {
-    const start = new Date(plan.startDate);
-    const end = new Date(plan.endDate);
-    start.setHours(0, 0, 0, 0);
-    end.setHours(0, 0, 0, 0);
+    const start = parseLocalDate(plan.startDate);
+    const end = parseLocalDate(plan.endDate);
     return Math.max(0, Math.round((end.getTime() - start.getTime()) / 86400000));
   }
   const totalNeeded = getTotalShardsNeeded(plan.currentStar, plan.targetStar);
@@ -93,10 +97,10 @@ export function getFreeTargetLabel(
 
 export function getCompletionDate(plan: CharacterPlan): Date {
   if (plan.farmingMode === "free" && plan.endDate) {
-    return new Date(plan.endDate);
+    return parseLocalDate(plan.endDate);
   }
   const days = getDaysNeeded(plan);
-  const start = new Date(plan.startDate);
+  const start = parseLocalDate(plan.startDate);
   const end = new Date(start);
   end.setDate(end.getDate() + days);
   return end;
@@ -105,7 +109,7 @@ export function getCompletionDate(plan: CharacterPlan): Date {
 // Get which character is being farmed on a specific date
 export function getCharactersOnDate(plans: CharacterPlan[], date: Date): CharacterPlan[] {
   return plans.filter((plan) => {
-    const start = new Date(plan.startDate);
+    const start = parseLocalDate(plan.startDate);
     const end = getCompletionDate(plan);
     start.setHours(0, 0, 0, 0);
     end.setHours(0, 0, 0, 0);
