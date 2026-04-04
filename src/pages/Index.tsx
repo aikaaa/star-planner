@@ -37,9 +37,7 @@ export default function Index() {
       {/* Header */}
       <header className="gradient-primary px-4 py-6 sm:py-8 text-center">
         <div className="flex items-center justify-center gap-2 mb-1">
-          <Sparkles className="h-6 w-6 text-star" />
           <h1 className="text-xl sm:text-2xl font-bold text-primary-foreground">铃兰跑片助手</h1>
-          <Sparkles className="h-6 w-6 text-star" />
         </div>
         <p className="text-primary-foreground/70 text-xs sm:text-sm">管理你的角色碎片养成进度</p>
       </header>
