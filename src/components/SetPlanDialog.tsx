@@ -287,7 +287,7 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
             const days = getDaysNeeded(char);
             const endDateObj = char.endDate ? parseLocalDate(char.endDate!) : completionDate;
             const freeDays = isFree
-              ? Math.max(0, Math.round((endDateObj.getTime() - parseLocalDate(char.startDate).getTime()) / 86400000))
+              ? Math.max(0, Math.round((endDateObj.getTime() - parseLocalDate(char.startDate).getTime()) / 86400000) + 1)
               : 0;
             const freeLabel = isFree ? getFreeTargetLabel(char.currentStar, char.currentShards, freeDays) : "";
 
