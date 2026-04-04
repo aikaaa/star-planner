@@ -110,24 +110,10 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                 </Button>
               </div>
 
-              <div>
-                <Label className="text-muted-foreground text-xs">角色名称</Label>
-                <Select
-                  value={char.name}
-                  onValueChange={(v) => updateCharacter(index, { name: v })}
-                >
-                  <SelectTrigger className="mt-1 bg-secondary border-border">
-                    <SelectValue placeholder="选择角色" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-60">
-                    {ROLE_LIST.map((role) => (
-                      <SelectItem key={role} value={role}>
-                        {role}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <RoleCombobox
+                value={char.name}
+                onChange={(v) => updateCharacter(index, { name: v })}
+              />
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
