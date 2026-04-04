@@ -28,8 +28,6 @@ interface SetPlanDialogProps {
   onOpenChange: (open: boolean) => void;
   existingPlans: CharacterPlan[];
   onSave: (plans: CharacterPlan[]) => void;
-  /** 单角色编辑模式：隐藏添加/删除按钮，标题改为"编辑角色" */
-  singleEdit?: boolean;
 }
 
 const emptyCharacter = (): CharacterPlan => ({
@@ -149,7 +147,7 @@ const toCharacters = (plans: CharacterPlan[]) =>
     ? plans.map((c) => ({ farmingMode: "star" as FarmingMode, ...c }))
     : [emptyCharacter()];
 
-export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSave, singleEdit = false }: SetPlanDialogProps) {
+export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSave }: SetPlanDialogProps) {
   const [characters, setCharacters] = useState<CharacterPlan[]>(() => toCharacters(existingPlans));
 
   // 每次打开弹窗时从最新的 existingPlans 重新初始化，避免显示旧数据
@@ -230,7 +228,7 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-gradient text-xl">{singleEdit ? "编辑角色计划" : "设置跑片计划"}</DialogTitle>
+          <DialogTitle className="text-gradient text-xl">设置跑片计划</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -247,19 +245,17 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
             return (
               <div key={char.id} className="gradient-card rounded-lg p-4 border border-border space-y-3">
                 {/* 标题行 */}
-                {!singleEdit && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-foreground">角色 {index + 1}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-destructive hover:text-destructive"
-                      onClick={() => removeCharacter(index)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-foreground">角色 {index + 1}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-destructive hover:text-destructive"
+                    onClick={() => removeCharacter(index)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
 
                 {/* 跑片方式切换 */}
                 <div className="flex gap-2">
@@ -439,7 +435,7 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
             );
           })}
 
-          {!singleEdit && characters.length < 10 && (
+          {characters.length < 10 && (
             <Button
               variant="outline"
               className="w-full border-dashed border-border text-muted-foreground hover:text-foreground"
