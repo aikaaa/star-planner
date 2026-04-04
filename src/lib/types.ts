@@ -1,9 +1,8 @@
 export type FarmingMode = "star" | "free";
 
-/** 将 "YYYY-MM-DD" 解析为本地时间 Date，避免 UTC 时区偏移导致日期差一天 */
+/** 将 "YYYY-MM-DD" 解析为东八区时间，避免 UTC 偏移导致日期差一天 */
 export function parseLocalDate(dateStr: string): Date {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  return new Date(y, m - 1, d);
+  return new Date(dateStr + "T00:00:00+08:00");
 }
 
 export interface CharacterPlan {
