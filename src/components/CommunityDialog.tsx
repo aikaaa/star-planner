@@ -80,7 +80,12 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                       : <span className="text-sm font-bold text-muted-foreground">{index + 1}</span>}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-foreground text-sm">{char.name}</div>
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="font-semibold text-foreground text-sm">{char.name}</span>
+                      {char.topTargetStar != null && (
+                        <span className="text-[10px] text-muted-foreground/70 shrink-0">更多人在跑{char.topTargetStar}★</span>
+                      )}
+                    </div>
                     <div className="w-full bg-secondary rounded-full h-1.5 mt-1">
                       <div
                         className="bg-primary h-1.5 rounded-full transition-all"
@@ -91,9 +96,6 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                   <div className="text-right shrink-0">
                     <span className="text-sm font-bold text-star">{pct}%</span>
                     <div className="text-xs text-muted-foreground">{char.count}人</div>
-                    {char.topTargetStar != null && (
-                      <div className="text-[10px] text-muted-foreground/70 mt-0.5">更多人在跑{char.topTargetStar}★</div>
-                    )}
                   </div>
                 </div>
               );
