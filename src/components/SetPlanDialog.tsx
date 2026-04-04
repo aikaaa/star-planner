@@ -43,6 +43,18 @@ const emptyCharacter = (): CharacterPlan => ({
 
 function RoleCombobox({ value, onChange, usedNames }: { value: string; onChange: (v: string) => void; usedNames: string[] }) {
   const [open, setOpen] = useState(false);
+  const [vpHeight, setVpHeight] = useState(() => window.visualViewport?.height ?? window.innerHeight);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const handler = () => setVpHeight(vv.height);
+    vv.addEventListener("resize", handler);
+    return () => vv.removeEventListener("resize", handler);
+  }, []);
+
+  const listMaxH = Math.max(120, Math.floor(vpHeight * 0.35));
+
   return (
     <div>
       <Label className="text-muted-foreground text-xs">角色名称</Label>
@@ -61,7 +73,7 @@ function RoleCombobox({ value, onChange, usedNames }: { value: string; onChange:
         <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
           <Command>
             <CommandInput placeholder="搜索角色..." />
-            <CommandList className="max-h-[40vh] overflow-y-auto overscroll-contain" style={{ touchAction: "pan-y" }}>
+            <CommandList className="overflow-y-auto overscroll-contain" style={{ touchAction: "pan-y", maxHeight: `${listMaxH}px` }}>
               <CommandEmpty>未找到角色</CommandEmpty>
               <CommandGroup>
                 {ROLE_LIST.map((role) => {
