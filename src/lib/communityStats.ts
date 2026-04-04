@@ -12,6 +12,11 @@ export interface CharacterReport {
   targetStar: number;
 }
 
+export interface CommunityResult {
+  data: CommunityCharacter[];
+  updatedAt: Date | null; // 服务端缓存的最后刷新时间
+}
+
 /**
  * 上报当前用户正在跑的角色（每次保存计划时调用）。
  * 先删除该设备的旧记录，再批量插入新记录，保证数据准确。
@@ -33,28 +38,53 @@ export async function reportFarmingCharacters(characters: CharacterReport[]): Pr
   );
 }
 
-let _cache: { data: CommunityCharacter[]; ts: number } | null = null;
-const CACHE_TTL = 5 * 60 * 1000; // 5 分钟内不重复请求
+let _cache: { result: CommunityResult; ts: number } | null = null;
+const CACHE_TTL = 60 * 60 * 1000; // 1 小时内不重复请求（服务端也是每小时刷新）
 
 /**
- * 查询近 7 天跑片热门角色 Top10。
- * 通过服务端 RPC 函数聚合，只返回 10 行；结果缓存 5 分钟。
+ * 从服务端预计算缓存表读取 Top10，速度极快。
+ * 服务端由 pg_cron 每小时刷新一次，客户端缓存 1 小时。
+ * 降级：若缓存表不存在则回退到实时 RPC。
  */
-export async function fetchCommunityTop10(): Promise<CommunityCharacter[] | null> {
+export async function fetchCommunityTop10(): Promise<CommunityResult | null> {
   if (!supabase) return null;
-  if (_cache && Date.now() - _cache.ts < CACHE_TTL) return _cache.data;
+  if (_cache && Date.now() - _cache.ts < CACHE_TTL) return _cache.result;
 
+  // 优先读预计算缓存表
+  const { data: cacheRow, error: cacheErr } = await supabase
+    .from("community_cache")
+    .select("data, updated_at")
+    .eq("id", 1)
+    .single();
+
+  if (!cacheErr && cacheRow?.data) {
+    const rows = cacheRow.data as { character_name: string; user_count: number; top_target_star: number | null; top_target_pct: number | null }[];
+    const result: CommunityResult = {
+      data: rows.map((row) => ({
+        name: row.character_name,
+        count: row.user_count,
+        topTargetStar: row.top_target_star ?? undefined,
+        topTargetPct: row.top_target_pct ?? undefined,
+      })),
+      updatedAt: cacheRow.updated_at ? new Date(cacheRow.updated_at) : null,
+    };
+    _cache = { result, ts: Date.now() };
+    return result;
+  }
+
+  // 降级：实时 RPC
   const { data, error } = await supabase.rpc("get_community_top10");
-
   if (error || !data) return null;
 
-  const result = data.map((row: { character_name: string; user_count: number; top_target_star: number | null; top_target_pct: number | null }) => ({
-    name: row.character_name,
-    count: row.user_count,
-    topTargetStar: row.top_target_star ?? undefined,
-    topTargetPct: row.top_target_pct ?? undefined,
-  }));
-
-  _cache = { data: result, ts: Date.now() };
+  const result: CommunityResult = {
+    data: data.map((row: { character_name: string; user_count: number; top_target_star: number | null; top_target_pct: number | null }) => ({
+      name: row.character_name,
+      count: row.user_count,
+      topTargetStar: row.top_target_star ?? undefined,
+      topTargetPct: row.top_target_pct ?? undefined,
+    })),
+    updatedAt: null,
+  };
+  _cache = { result, ts: Date.now() };
   return result;
 }
