@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { CharacterPlan, getCharactersOnDate, getCompletionDate, getDaysNeeded } from "@/lib/types";
-import { ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
@@ -76,10 +76,7 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
             <div key={p.id} className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <div className={`w-2.5 h-2.5 rounded-full ${CHAR_DOT_COLORS[i]}`} />
               <span>{p.name}</span>
-              <span className="flex items-center">
-                {p.currentStar}→{p.targetStar}
-                <Star className="h-3 w-3 text-star fill-star ml-0.5" />
-              </span>
+              <span>{p.currentStar}→{p.targetStar}</span>
             </div>
           ))}
         </div>
