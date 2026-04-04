@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Plus, Trash2, Star } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { CalendarIcon, Plus, Trash2, Star, Check, ChevronsUpDown } from "lucide-react";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -28,6 +29,51 @@ const emptyCharacter = (): CharacterPlan => ({
   currentShards: 0,
   startDate: new Date().toISOString().split("T")[0],
 });
+
+function RoleCombobox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <Label className="text-muted-foreground text-xs">角色名称</Label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full mt-1 justify-between bg-secondary border-border text-foreground"
+          >
+            {value || "选择角色"}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+          <Command>
+            <CommandInput placeholder="搜索角色..." />
+            <CommandList>
+              <CommandEmpty>未找到角色</CommandEmpty>
+              <CommandGroup>
+                {ROLE_LIST.map((role) => (
+                  <CommandItem
+                    key={role}
+                    value={role}
+                    onSelect={() => {
+                      onChange(role);
+                      setOpen(false);
+                    }}
+                  >
+                    <Check className={cn("mr-2 h-4 w-4", value === role ? "opacity-100" : "opacity-0")} />
+                    {role}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
 
 export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSave }: SetPlanDialogProps) {
   const [characters, setCharacters] = useState<CharacterPlan[]>(
@@ -109,24 +155,10 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                 </Button>
               </div>
 
-              <div>
-                <Label className="text-muted-foreground text-xs">角色名称</Label>
-                <Select
-                  value={char.name}
-                  onValueChange={(v) => updateCharacter(index, { name: v })}
-                >
-                  <SelectTrigger className="mt-1 bg-secondary border-border">
-                    <SelectValue placeholder="选择角色" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-60">
-                    {ROLE_LIST.map((role) => (
-                      <SelectItem key={role} value={role}>
-                        {role}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <RoleCombobox
+                value={char.name}
+                onChange={(v) => updateCharacter(index, { name: v })}
+              />
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
