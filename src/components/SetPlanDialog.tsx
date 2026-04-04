@@ -121,6 +121,52 @@ function RoleCombobox({ value, onChange, usedNames }: { value: string; onChange:
   );
 }
 
+function IconPicker({ value, onChange }: { value: string; onChange: (emoji: string) => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <Label className="text-muted-foreground text-xs">图标</Label>
+      <Button
+        type="button"
+        variant="outline"
+        className="mt-1 w-full h-9 text-lg bg-secondary border-border justify-start gap-2"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span>{value}</span>
+        <span className="text-xs text-muted-foreground font-normal">点击更换</span>
+      </Button>
+      {open && (
+        <div
+          className="mt-1 rounded-md border border-border bg-popover p-2"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(8, 1fr)",
+            gap: "4px",
+            maxHeight: "160px",
+            overflowY: "scroll",
+            WebkitOverflowScrolling: "touch",
+          }}
+        >
+          {CHAR_ICON_OPTIONS.map((opt) => (
+            <button
+              key={opt.emoji}
+              type="button"
+              title={opt.label}
+              onClick={() => { onChange(opt.emoji); setOpen(false); }}
+              className={cn(
+                "flex items-center justify-center rounded-md text-xl p-1 hover:bg-accent active:bg-accent transition-colors",
+                value === opt.emoji ? "bg-accent ring-2 ring-primary" : ""
+              )}
+            >
+              {opt.emoji}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function DatePickerButton({ date, onSelect, disabled }: { date: Date; onSelect: (d: Date) => void; disabled?: (d: Date) => boolean }) {
   return (
     <Popover>
@@ -276,49 +322,18 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                   ))}
                 </div>
 
-                {/* 角色名称 + 图标选择 */}
-                <div className="flex gap-2 items-end">
-                  <div className="flex-1">
-                    <RoleCombobox
-                      value={char.name}
-                      onChange={(v) => updateCharacter(index, { name: v })}
-                      usedNames={characters.map((c) => c.name).filter(Boolean)}
-                    />
-                  </div>
-                  <div className="shrink-0">
-                    <Label className="text-muted-foreground text-xs block mb-1">图标</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-12 h-9 text-lg bg-secondary border-border p-0"
-                        >
-                          {char.icon ?? CHAR_ICON_OPTIONS[index % CHAR_ICON_OPTIONS.length].emoji}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-72 p-2" align="end">
-                        <p className="text-xs text-muted-foreground mb-2 px-1">选择图标</p>
-                        <div className="grid grid-cols-8 gap-1 max-h-48 overflow-y-auto" style={{ WebkitOverflowScrolling: "touch" }}>
-                          {CHAR_ICON_OPTIONS.map((opt) => (
-                            <button
-                              key={opt.emoji}
-                              type="button"
-                              title={opt.label}
-                              onClick={() => updateCharacter(index, { icon: opt.emoji })}
-                              className={cn(
-                                "flex flex-col items-center justify-center rounded-md p-1 text-xl hover:bg-accent transition-colors",
-                                char.icon === opt.emoji ? "bg-accent ring-2 ring-primary" : ""
-                              )}
-                            >
-                              {opt.emoji}
-                            </button>
-                          ))}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                </div>
+                {/* 角色名称 */}
+                <RoleCombobox
+                  value={char.name}
+                  onChange={(v) => updateCharacter(index, { name: v })}
+                  usedNames={characters.map((c) => c.name).filter(Boolean)}
+                />
+
+                {/* 图标选择（内联展开，iOS 可正常滚动） */}
+                <IconPicker
+                  value={char.icon ?? CHAR_ICON_OPTIONS[index % CHAR_ICON_OPTIONS.length].emoji}
+                  onChange={(emoji) => updateCharacter(index, { icon: emoji })}
+                />
 
                 {/* 已有碎片 */}
                 <div>
