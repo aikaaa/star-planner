@@ -30,6 +30,51 @@ const emptyCharacter = (): CharacterPlan => ({
   startDate: new Date().toISOString().split("T")[0],
 });
 
+function RoleCombobox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <Label className="text-muted-foreground text-xs">角色名称</Label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full mt-1 justify-between bg-secondary border-border text-foreground"
+          >
+            {value || "选择角色"}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+          <Command>
+            <CommandInput placeholder="搜索角色..." />
+            <CommandList>
+              <CommandEmpty>未找到角色</CommandEmpty>
+              <CommandGroup>
+                {ROLE_LIST.map((role) => (
+                  <CommandItem
+                    key={role}
+                    value={role}
+                    onSelect={() => {
+                      onChange(role);
+                      setOpen(false);
+                    }}
+                  >
+                    <Check className={cn("mr-2 h-4 w-4", value === role ? "opacity-100" : "opacity-0")} />
+                    {role}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+
 export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSave }: SetPlanDialogProps) {
   const [characters, setCharacters] = useState<CharacterPlan[]>(
     existingPlans.length > 0 ? [...existingPlans] : [emptyCharacter()]
