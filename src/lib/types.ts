@@ -22,11 +22,38 @@ export interface CharacterPlan {
   currentShards: number;
   startDate: string; // ISO date string
   endDate?: string;  // 自由跑片时由用户设置
+  icon?: string;     // 用户自选的 emoji 图标
 }
 
 export interface FarmingPlan {
   characters: CharacterPlan[];
 }
+
+export interface CharIconOption {
+  emoji: string;
+  label: string;
+}
+
+export const CHAR_ICON_OPTIONS: CharIconOption[] = [
+  { emoji: "🍏", label: "青苹果" },
+  { emoji: "🍅", label: "番茄" },
+  { emoji: "🫐", label: "蓝莓" },
+  { emoji: "🌻", label: "向日葵" },
+  { emoji: "🍇", label: "葡萄" },
+  { emoji: "🍊", label: "橘子" },
+  { emoji: "🌸", label: "樱花" },
+  { emoji: "⭐", label: "星星" },
+  { emoji: "🌙", label: "月亮" },
+  { emoji: "🍀", label: "四叶草" },
+  { emoji: "🔥", label: "火焰" },
+  { emoji: "❄️", label: "雪花" },
+  { emoji: "🦋", label: "蝴蝶" },
+  { emoji: "💎", label: "钻石" },
+  { emoji: "🎯", label: "靶心" },
+  { emoji: "🏆", label: "奖杯" },
+  { emoji: "🌈", label: "彩虹" },
+  { emoji: "🎵", label: "音符" },
+];
 
 // Shards needed for each star upgrade
 export const SHARD_COSTS: Record<string, number> = {

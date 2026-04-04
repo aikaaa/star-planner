@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { CharacterPlan, getCharactersOnDate, getCompletionDate, getDaysNeeded, getEffectiveTargetStar } from "@/lib/types";
+import { CharacterPlan, getCharactersOnDate, getCompletionDate, getDaysNeeded, getEffectiveTargetStar, CHAR_ICON_OPTIONS } from "@/lib/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -10,7 +10,7 @@ interface FarmingCalendarProps {
 
 const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
 
-// Color palette for up to 10 characters
+// 卡片背景色（保留用于 summary cards）
 const CHAR_COLORS = [
   "bg-primary/30 border-primary/50",
   "bg-info/30 border-info/50",
@@ -24,11 +24,10 @@ const CHAR_COLORS = [
   "bg-lime-500/20 border-lime-500/40",
 ];
 
-const CHAR_DOT_COLORS = [
-  "bg-primary", "bg-info", "bg-orange-500",
-  "bg-emerald-500", "bg-pink-500", "bg-star",
-  "bg-cyan-500", "bg-violet-500", "bg-rose-500", "bg-lime-500",
-];
+/** 取角色的图标 emoji，未设置时按 index 取默认值 */
+function getCharIcon(plan: CharacterPlan, index: number): string {
+  return plan.icon ?? CHAR_ICON_OPTIONS[index % CHAR_ICON_OPTIONS.length].emoji;
+}
 
 export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
   const [viewMonth, setViewMonth] = useState(() => new Date());
@@ -74,7 +73,7 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
         <div className="flex flex-wrap gap-3 mb-4">
           {plans.map((p, i) => (
             <div key={p.id} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <div className={`w-2.5 h-2.5 rounded-full ${CHAR_DOT_COLORS[i]}`} />
+              <span className="text-sm leading-none">{getCharIcon(p, i)}</span>
               <span>{p.name}</span>
               <span>{p.currentStar}→{getEffectiveTargetStar(p)}</span>
             </div>
@@ -113,19 +112,21 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
                   : ""
               }`}
             >
-              <span className={`text-xs sm:text-sm ${isToday ? "font-bold text-primary" : "text-foreground"}`}>
+              <span className={`text-xs sm:text-sm leading-none ${isToday ? "font-bold text-primary" : "text-foreground"}`}>
                 {day}
               </span>
               {hasChars && (
-                <div className="flex gap-0.5 mt-0.5">
+                <div className="flex gap-0.5 mt-0.5 flex-wrap justify-center">
                   {characters.map((c) => {
                     const idx = plans.findIndex((p) => p.id === c.id);
                     return (
-                      <div
+                      <span
                         key={c.id}
-                        className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${CHAR_DOT_COLORS[idx] || "bg-muted-foreground"}`}
+                        className="text-[10px] sm:text-xs leading-none"
                         title={c.name}
-                      />
+                      >
+                        {getCharIcon(c, idx)}
+                      </span>
                     );
                   })}
                 </div>
@@ -144,7 +145,10 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
             return (
               <div key={p.id} className={`rounded-lg p-3 border ${CHAR_COLORS[i]}`}>
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-foreground text-sm">{p.name}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-base leading-none">{getCharIcon(p, i)}</span>
+                    <span className="font-medium text-foreground text-sm">{p.name}</span>
+                  </div>
                   <span className="text-xs text-muted-foreground">
                     {p.currentStar}★ → {getEffectiveTargetStar(p)}★
                   </span>
