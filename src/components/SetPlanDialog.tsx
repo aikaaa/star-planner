@@ -124,43 +124,45 @@ function RoleCombobox({ value, onChange, usedNames }: { value: string; onChange:
 function IconPicker({ value, onChange }: { value: string; onChange: (emoji: string) => void }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="relative">
-      <Label className="text-muted-foreground text-xs block mb-1">图标</Label>
+    <div>
+      <Label className="text-muted-foreground text-xs">图标</Label>
       <Button
         type="button"
         variant="outline"
-        className="w-full h-9 text-xl bg-secondary border-border justify-start gap-2 px-3"
+        className="w-full mt-1 justify-between bg-secondary border-border text-foreground"
         onClick={() => setOpen((v) => !v)}
       >
-        {value}
+        <span className="text-xl">{value}</span>
+        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
       </Button>
       {open && (
-        <div
-          className="absolute right-0 z-10 mt-1 rounded-md border border-border bg-popover p-2 shadow-md"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(8, 1fr)",
-            gap: "4px",
-            width: "280px",
-            maxHeight: "160px",
-            overflowY: "scroll",
-            WebkitOverflowScrolling: "touch",
-          }}
-        >
-          {CHAR_ICON_OPTIONS.map((opt) => (
-            <button
-              key={opt.emoji}
-              type="button"
-              title={opt.label}
-              onClick={() => { onChange(opt.emoji); setOpen(false); }}
-              className={cn(
-                "flex items-center justify-center rounded-md text-xl p-1 hover:bg-accent active:bg-accent transition-colors",
-                value === opt.emoji ? "bg-accent ring-2 ring-primary" : ""
-              )}
-            >
-              {opt.emoji}
-            </button>
-          ))}
+        <div className="mt-1 rounded-md border border-border bg-popover shadow-md">
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(8, 1fr)",
+              gap: "4px",
+              padding: "8px",
+              height: "200px",
+              overflowY: "scroll",
+              WebkitOverflowScrolling: "touch",
+            }}
+          >
+            {CHAR_ICON_OPTIONS.map((opt) => (
+              <button
+                key={opt.emoji}
+                type="button"
+                title={opt.label}
+                onClick={() => { onChange(opt.emoji); setOpen(false); }}
+                className={cn(
+                  "flex items-center justify-center rounded-md text-2xl p-1 hover:bg-accent active:bg-accent transition-colors",
+                  value === opt.emoji ? "bg-accent ring-2 ring-primary" : ""
+                )}
+              >
+                {opt.emoji}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>
