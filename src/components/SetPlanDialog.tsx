@@ -124,24 +124,24 @@ function RoleCombobox({ value, onChange, usedNames }: { value: string; onChange:
 function IconPicker({ value, onChange }: { value: string; onChange: (emoji: string) => void }) {
   const [open, setOpen] = useState(false);
   return (
-    <div>
-      <Label className="text-muted-foreground text-xs">图标</Label>
+    <div className="relative">
+      <Label className="text-muted-foreground text-xs block mb-1">图标</Label>
       <Button
         type="button"
         variant="outline"
-        className="mt-1 w-full h-9 text-lg bg-secondary border-border justify-start gap-2"
+        className="w-12 h-9 text-xl bg-secondary border-border p-0"
         onClick={() => setOpen((v) => !v)}
       >
-        <span>{value}</span>
-        <span className="text-xs text-muted-foreground font-normal">点击更换</span>
+        {value}
       </Button>
       {open && (
         <div
-          className="mt-1 rounded-md border border-border bg-popover p-2"
+          className="absolute right-0 z-10 mt-1 rounded-md border border-border bg-popover p-2 shadow-md"
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(8, 1fr)",
             gap: "4px",
+            width: "280px",
             maxHeight: "160px",
             overflowY: "scroll",
             WebkitOverflowScrolling: "touch",
@@ -322,18 +322,22 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                   ))}
                 </div>
 
-                {/* 角色名称 */}
-                <RoleCombobox
-                  value={char.name}
-                  onChange={(v) => updateCharacter(index, { name: v })}
-                  usedNames={characters.map((c) => c.name).filter(Boolean)}
-                />
-
-                {/* 图标选择（内联展开，iOS 可正常滚动） */}
-                <IconPicker
-                  value={char.icon ?? CHAR_ICON_OPTIONS[index % CHAR_ICON_OPTIONS.length].emoji}
-                  onChange={(emoji) => updateCharacter(index, { icon: emoji })}
-                />
+                {/* 角色名称 + 图标并排 */}
+                <div className="flex gap-2 items-end">
+                  <div className="flex-1 min-w-0">
+                    <RoleCombobox
+                      value={char.name}
+                      onChange={(v) => updateCharacter(index, { name: v })}
+                      usedNames={characters.map((c) => c.name).filter(Boolean)}
+                    />
+                  </div>
+                  <div className="shrink-0">
+                    <IconPicker
+                      value={char.icon ?? CHAR_ICON_OPTIONS[index % CHAR_ICON_OPTIONS.length].emoji}
+                      onChange={(emoji) => updateCharacter(index, { icon: emoji })}
+                    />
+                  </div>
+                </div>
 
                 {/* 已有碎片 */}
                 <div>
