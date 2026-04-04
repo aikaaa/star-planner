@@ -5,6 +5,14 @@ export function parseLocalDate(dateStr: string): Date {
   return new Date(dateStr + "T00:00:00+08:00");
 }
 
+/** 将 Date 对象转为 "YYYY-MM-DD" 字符串（取本地日期，避免 toISOString 转成 UTC 差一天） */
+export function toDateStr(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 export interface CharacterPlan {
   id: string;
   name: string;

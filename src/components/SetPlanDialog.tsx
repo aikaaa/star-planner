@@ -20,6 +20,7 @@ import {
   getTargetStarFromDays,
   getFreeTargetLabel,
   parseLocalDate,
+  toDateStr,
 } from "@/lib/types";
 import { ROLE_LIST } from "@/lib/roleList";
 
@@ -37,7 +38,7 @@ const emptyCharacter = (): CharacterPlan => ({
   currentStar: 1,
   targetStar: 2,
   currentShards: 0,
-  startDate: new Date().toISOString().split("T")[0],
+  startDate: toDateStr(new Date()),
 });
 
 function RoleCombobox({ value, onChange, usedNames }: { value: string; onChange: (v: string) => void; usedNames: string[] }) {
@@ -130,7 +131,7 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
     const char = characters[index];
     if (mode === "free") {
       // 切换到自由模式：用当前计算出的结束日期作为初始 endDate
-      const endDate = getCompletionDate(char).toISOString().split("T")[0];
+      const endDate = toDateStr(getCompletionDate(char));
       updateCharacter(index, { farmingMode: mode, endDate });
     } else {
       // 切换到按星模式：根据 endDate 反推 targetStar
@@ -351,7 +352,7 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                     <DatePickerButton
                       date={parseLocalDate(char.startDate)}
                       onSelect={(d) => {
-                        const newStart = d.toISOString().split("T")[0];
+                        const newStart = toDateStr(d);
                         if (isFree && char.endDate && d > parseLocalDate(char.endDate!)) {
                           updateCharacter(index, { startDate: newStart, endDate: newStart });
                         } else {
@@ -366,7 +367,7 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                       // 自由跑片：结束日期可选
                       <DatePickerButton
                         date={endDateObj}
-                        onSelect={(d) => updateCharacter(index, { endDate: d.toISOString().split("T")[0] })}
+                        onSelect={(d) => updateCharacter(index, { endDate: toDateStr(d) })}
                         disabled={(d) => {
                           const start = parseLocalDate(char.startDate);
                           start.setHours(0, 0, 0, 0);
