@@ -297,9 +297,9 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                           {char.icon ?? CHAR_ICON_OPTIONS[index % CHAR_ICON_OPTIONS.length].emoji}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-64 p-2" align="end">
+                      <PopoverContent className="w-72 p-2" align="end">
                         <p className="text-xs text-muted-foreground mb-2 px-1">选择图标</p>
-                        <div className="grid grid-cols-6 gap-1">
+                        <div className="grid grid-cols-8 gap-1 max-h-48 overflow-y-auto" style={{ WebkitOverflowScrolling: "touch" }}>
                           {CHAR_ICON_OPTIONS.map((opt) => (
                             <button
                               key={opt.emoji}
