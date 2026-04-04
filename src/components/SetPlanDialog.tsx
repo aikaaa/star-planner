@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -116,12 +116,18 @@ function DatePickerButton({ date, onSelect, disabled }: { date: Date; onSelect: 
   );
 }
 
+const toCharacters = (plans: CharacterPlan[]) =>
+  plans.length > 0
+    ? plans.map((c) => ({ farmingMode: "star" as FarmingMode, ...c }))
+    : [emptyCharacter()];
+
 export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSave }: SetPlanDialogProps) {
-  const [characters, setCharacters] = useState<CharacterPlan[]>(
-    existingPlans.length > 0
-      ? existingPlans.map((c) => ({ farmingMode: "star" as FarmingMode, ...c }))
-      : [emptyCharacter()]
-  );
+  const [characters, setCharacters] = useState<CharacterPlan[]>(() => toCharacters(existingPlans));
+
+  // 每次打开弹窗时从最新的 existingPlans 重新初始化，避免显示旧数据
+  useEffect(() => {
+    if (open) setCharacters(toCharacters(existingPlans));
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const updateCharacter = (index: number, updates: Partial<CharacterPlan>) => {
     setCharacters((prev) => prev.map((c, i) => (i === index ? { ...c, ...updates } : c)));

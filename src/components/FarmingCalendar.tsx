@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { CharacterPlan, getCharactersOnDate, getCompletionDate, getDaysNeeded } from "@/lib/types";
+import { CharacterPlan, getCharactersOnDate, getCompletionDate, getDaysNeeded, getEffectiveTargetStar } from "@/lib/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -76,7 +76,7 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
             <div key={p.id} className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <div className={`w-2.5 h-2.5 rounded-full ${CHAR_DOT_COLORS[i]}`} />
               <span>{p.name}</span>
-              <span>{p.currentStar}→{p.targetStar}</span>
+              <span>{p.currentStar}→{getEffectiveTargetStar(p)}</span>
             </div>
           ))}
         </div>
@@ -146,7 +146,7 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-foreground text-sm">{p.name}</span>
                   <span className="text-xs text-muted-foreground">
-                    {p.currentStar}★ → {p.targetStar}★
+                    {p.currentStar}★ → {getEffectiveTargetStar(p)}★
                   </span>
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
