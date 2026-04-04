@@ -4,7 +4,7 @@ import { Settings, Users, Sparkles } from "lucide-react";
 import FarmingCalendar from "@/components/FarmingCalendar";
 import SetPlanDialog from "@/components/SetPlanDialog";
 import CommunityDialog from "@/components/CommunityDialog";
-import { CharacterPlan } from "@/lib/types";
+import { CharacterPlan, getEffectiveTargetStar } from "@/lib/types";
 import { reportFarmingCharacters } from "@/lib/communityStats";
 
 const STORAGE_KEY = "shard-farming-plans";
@@ -25,7 +25,7 @@ export default function Index() {
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(plans));
-    reportFarmingCharacters(plans.map((p) => p.name));
+    reportFarmingCharacters(plans.map((p) => ({ name: p.name, targetStar: getEffectiveTargetStar(p) })));
   }, [plans]);
 
   return (
@@ -34,7 +34,7 @@ export default function Index() {
       <header className="gradient-primary px-4 py-6 sm:py-8 text-center">
         <div className="flex items-center justify-center gap-2 mb-1">
           <Sparkles className="h-6 w-6 text-star" />
-          <h1 className="text-xl sm:text-2xl font-bold text-primary-foreground">跑片计划</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-primary-foreground">铃兰跑片助手</h1>
         </div>
         <p className="text-primary-foreground/70 text-xs sm:text-sm">管理你的角色碎片养成进度</p>
       </header>

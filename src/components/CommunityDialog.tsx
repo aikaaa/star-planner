@@ -80,7 +80,14 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                       : <span className="text-sm font-bold text-muted-foreground">{index + 1}</span>}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-foreground text-sm">{char.name}</div>
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="font-semibold text-foreground text-sm">{char.name}</span>
+                      {char.topTargetStar != null && (
+                        <span className="text-[10px] text-muted-foreground/70 shrink-0">
+                          更多人选择跑<span className="font-bold text-white">{char.topTargetStar}★</span>
+                        </span>
+                      )}
+                    </div>
                     <div className="w-full bg-secondary rounded-full h-1.5 mt-1">
                       <div
                         className="bg-primary h-1.5 rounded-full transition-all"

@@ -1,10 +1,14 @@
+export type FarmingMode = "star" | "free";
+
 export interface CharacterPlan {
   id: string;
   name: string;
+  farmingMode: FarmingMode; // "star"=按星跑片 "free"=自由跑片
   currentStar: number;
   targetStar: number;
   currentShards: number;
   startDate: string; // ISO date string
+  endDate?: string;  // 自由跑片时由用户设置
 }
 
 export interface FarmingPlan {
@@ -28,6 +32,13 @@ export function getTotalShardsNeeded(currentStar: number, targetStar: number): n
 }
 
 export function getDaysNeeded(plan: CharacterPlan): number {
+  if (plan.farmingMode === "free" && plan.endDate) {
+    const start = new Date(plan.startDate);
+    const end = new Date(plan.endDate);
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+    return Math.max(0, Math.round((end.getTime() - start.getTime()) / 86400000));
+  }
   const totalNeeded = getTotalShardsNeeded(plan.currentStar, plan.targetStar);
   const remaining = Math.max(0, totalNeeded - plan.currentShards);
   return Math.ceil(remaining / 3); // 3 shards per day
@@ -49,7 +60,41 @@ export function getTargetStarFromDays(currentStar: number, currentShards: number
   return Math.max(currentStar + 1, reachable);
 }
 
+// 自由跑片：计算可达星级及剩余碎片（用于展示不完整进度）
+export function getPartialProgress(
+  currentStar: number,
+  currentShards: number,
+  days: number
+): { reachableStar: number; remainingShards: number } {
+  let shards = currentShards + days * 3;
+  let star = currentStar;
+  while (star < 5) {
+    const cost = SHARD_COSTS[`${star}-${star + 1}`] || 0;
+    if (shards >= cost) {
+      shards -= cost;
+      star++;
+    } else {
+      break;
+    }
+  }
+  return { reachableStar: star, remainingShards: shards };
+}
+
+// 自由跑片目标展示字符串，例如 "3★ 余30片" 或 "5★ 满星"
+export function getFreeTargetLabel(
+  currentStar: number,
+  currentShards: number,
+  days: number
+): string {
+  const { reachableStar, remainingShards } = getPartialProgress(currentStar, currentShards, days);
+  if (reachableStar >= 5) return "5★ 满星 🎉";
+  return `${reachableStar}★ 余 ${remainingShards} 片`;
+}
+
 export function getCompletionDate(plan: CharacterPlan): Date {
+  if (plan.farmingMode === "free" && plan.endDate) {
+    return new Date(plan.endDate);
+  }
   const days = getDaysNeeded(plan);
   const start = new Date(plan.startDate);
   const end = new Date(start);
@@ -68,6 +113,16 @@ export function getCharactersOnDate(plans: CharacterPlan[], date: Date): Charact
     d.setHours(0, 0, 0, 0);
     return d >= start && d <= end;
   });
+}
+
+// 计算角色的「有效目标星级」用于上报和展示
+// 按星跑片直接取 targetStar，自由跑片取可达的整数星级
+export function getEffectiveTargetStar(plan: CharacterPlan): number {
+  if (plan.farmingMode === "free") {
+    const days = getDaysNeeded(plan);
+    return getPartialProgress(plan.currentStar, plan.currentShards, days).reachableStar;
+  }
+  return plan.targetStar;
 }
 
 // Mock community data - Top 10
