@@ -255,15 +255,19 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
             </div>
           ))}
 
-          {characters.length < 3 && (
+          {characters.length < 10 && (
             <Button
               variant="outline"
               className="w-full border-dashed border-border text-muted-foreground hover:text-foreground"
               onClick={addCharacter}
             >
               <Plus className="mr-2 h-4 w-4" />
-              添加角色（{characters.length}/3）
+              添加角色（{characters.length}/10）
             </Button>
+          )}
+
+          {validationError && (
+            <p className="text-destructive text-sm text-center">{validationError}</p>
           )}
 
           <Button className="w-full gradient-primary text-primary-foreground glow-primary" onClick={handleSave}>
