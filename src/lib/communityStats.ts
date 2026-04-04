@@ -4,6 +4,7 @@ export interface CommunityCharacter {
   name: string;
   count: number;
   topTargetStar?: number; // 最多人跑的目标星级
+  topTargetPct?: number;  // 跑该目标星级的人占比（%）
 }
 
 export interface CharacterReport {
@@ -43,9 +44,10 @@ export async function fetchCommunityTop10(): Promise<CommunityCharacter[] | null
 
   if (error || !data) return null;
 
-  return data.map((row: { character_name: string; user_count: number; top_target_star: number | null }) => ({
+  return data.map((row: { character_name: string; user_count: number; top_target_star: number | null; top_target_pct: number | null }) => ({
     name: row.character_name,
     count: row.user_count,
     topTargetStar: row.top_target_star ?? undefined,
+    topTargetPct: row.top_target_pct ?? undefined,
   }));
 }
