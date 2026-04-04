@@ -116,14 +116,14 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
                 {day}
               </span>
               {hasChars && (
-                <div className="flex gap-0.5 mt-0.5 flex-wrap justify-center">
-                  {characters.map((c) => {
+                <div className="flex mt-0.5 overflow-hidden" style={{ gap: "1px" }}>
+                  {characters.slice(0, 3).map((c) => {
                     const idx = plans.findIndex((p) => p.id === c.id);
                     return (
                       <span
                         key={c.id}
-                        className="text-[8px] leading-none"
                         title={c.name}
+                        style={{ fontSize: "10px", lineHeight: 1, flexShrink: 0 }}
                       >
                         {getCharIcon(c, idx)}
                       </span>
