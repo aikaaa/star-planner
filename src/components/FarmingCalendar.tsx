@@ -10,14 +10,25 @@ interface FarmingCalendarProps {
 
 const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
 
-// Simple color palette for up to 3 characters
+// Color palette for up to 10 characters
 const CHAR_COLORS = [
   "bg-primary/30 border-primary/50",
   "bg-info/30 border-info/50",
   "bg-star/20 border-star/40",
+  "bg-emerald-500/20 border-emerald-500/40",
+  "bg-pink-500/20 border-pink-500/40",
+  "bg-orange-500/20 border-orange-500/40",
+  "bg-cyan-500/20 border-cyan-500/40",
+  "bg-violet-500/20 border-violet-500/40",
+  "bg-rose-500/20 border-rose-500/40",
+  "bg-lime-500/20 border-lime-500/40",
 ];
 
-const CHAR_DOT_COLORS = ["bg-primary", "bg-info", "bg-star"];
+const CHAR_DOT_COLORS = [
+  "bg-primary", "bg-info", "bg-star",
+  "bg-emerald-500", "bg-pink-500", "bg-orange-500",
+  "bg-cyan-500", "bg-violet-500", "bg-rose-500", "bg-lime-500",
+];
 
 export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
   const [viewMonth, setViewMonth] = useState(() => new Date());
