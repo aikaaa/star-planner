@@ -48,8 +48,41 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
     setCharacters((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  const validateOverlap = (plans: CharacterPlan[]): string | null => {
+    if (plans.length <= 3) return null;
+    // Check every day across all plans for >3 concurrent characters
+    const events: { date: number; delta: number }[] = [];
+    for (const p of plans) {
+      const start = new Date(p.startDate);
+      start.setHours(0, 0, 0, 0);
+      const end = getCompletionDate(p);
+      end.setHours(0, 0, 0, 0);
+      events.push({ date: start.getTime(), delta: 1 });
+      // end date is inclusive, so the day after end we subtract
+      events.push({ date: end.getTime() + 86400000, delta: -1 });
+    }
+    events.sort((a, b) => a.date - b.date || a.delta - b.delta);
+    let concurrent = 0;
+    for (const e of events) {
+      concurrent += e.delta;
+      if (concurrent > 3) {
+        const d = new Date(e.date);
+        return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} 当天同时跑片角色超过3人，请调整日期`;
+      }
+    }
+    return null;
+  };
+
   const handleSave = () => {
     const valid = characters.filter((c) => c.name.trim() !== "");
+    const error = validateOverlap(valid);
+    if (error) {
+      setValidationError(error);
+      return;
+    }
+    setValidationError(null);
     onSave(valid);
     onOpenChange(false);
   };
