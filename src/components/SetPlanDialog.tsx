@@ -166,6 +166,7 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
               <RoleCombobox
                 value={char.name}
                 onChange={(v) => updateCharacter(index, { name: v })}
+                usedNames={characters.map((c) => c.name).filter(Boolean)}
               />
 
               <div className="grid grid-cols-2 gap-3">
