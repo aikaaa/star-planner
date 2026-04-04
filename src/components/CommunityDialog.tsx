@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trophy, Loader2, WifiOff } from "lucide-react";
+import { Trophy, Loader2, WifiOff, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchCommunityTop10, type CommunityCharacter } from "@/lib/communityStats";
 import { COMMUNITY_TOP_CHARACTERS } from "@/lib/types";
@@ -12,21 +12,35 @@ interface CommunityDialogProps {
 
 const medals = ["🥇", "🥈", "🥉"];
 
+function formatUpdatedAt(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  if (diffMins < 1) return "刚刚更新";
+  if (diffMins < 60) return `${diffMins} 分钟前更新`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours} 小时前更新`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays} 天前更新`;
+}
+
 export default function CommunityDialog({ open, onOpenChange }: CommunityDialogProps) {
   const [chars, setChars] = useState<CommunityCharacter[]>([]);
   const [loading, setLoading] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [isReal, setIsReal] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setLoading(true);
-    fetchCommunityTop10().then((data) => {
-      if (data && data.length > 0) {
-        setChars(data);
+    fetchCommunityTop10().then((result) => {
+      if (result && result.data.length > 0) {
+        setChars(result.data);
+        setUpdatedAt(result.updatedAt);
         setIsReal(true);
       } else {
-        // 降级：使用本地 mock 数据
         setChars(COMMUNITY_TOP_CHARACTERS);
+        setUpdatedAt(null);
         setIsReal(false);
       }
       setLoading(false);
@@ -46,7 +60,10 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
           {!loading && (
             <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
               {isReal ? (
-                <span className="text-green-500">● 实时数据</span>
+                <>
+                  <Clock className="h-3 w-3 shrink-0" />
+                  <span>{updatedAt ? formatUpdatedAt(updatedAt) : "数据已加载"}</span>
+                </>
               ) : (
                 <>
                   <WifiOff className="h-3 w-3" />
