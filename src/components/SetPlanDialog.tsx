@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { CalendarIcon, Plus, Trash2, Star, Check, ChevronsUpDown } from "lucide-react";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
@@ -43,76 +42,80 @@ const emptyCharacter = (): CharacterPlan => ({
 
 function RoleCombobox({ value, onChange, usedNames }: { value: string; onChange: (v: string) => void; usedNames: string[] }) {
   const [open, setOpen] = useState(false);
-  const [vpHeight, setVpHeight] = useState(() => window.visualViewport?.height ?? window.innerHeight);
+  const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const handler = () => setVpHeight(vv.height);
-    vv.addEventListener("resize", handler);
-    return () => vv.removeEventListener("resize", handler);
-  }, []);
+  const filtered = search.trim()
+    ? ROLE_LIST.filter((r) => r.includes(search.trim()))
+    : ROLE_LIST;
 
-  const listMaxH = Math.max(120, Math.floor(vpHeight * 0.35));
+  const handleSelect = (role: string) => {
+    onChange(role);
+    setOpen(false);
+    setSearch("");
+  };
 
   return (
     <div>
       <Label className="text-muted-foreground text-xs">角色名称</Label>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            className="w-full mt-1 justify-between bg-secondary border-border text-foreground"
+      <Button
+        type="button"
+        variant="outline"
+        role="combobox"
+        aria-expanded={open}
+        className="w-full mt-1 justify-between bg-secondary border-border text-foreground"
+        onClick={() => { setOpen((v) => !v); setSearch(""); }}
+      >
+        {value || "选择角色"}
+        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+      </Button>
+
+      {open && (
+        <div className="mt-1 rounded-md border border-border bg-popover shadow-md">
+          {/* 搜索框 */}
+          <div className="flex items-center border-b border-border px-3">
+            <input
+              autoFocus
+              type="text"
+              placeholder="搜索角色..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="flex-1 bg-transparent py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none"
+            />
+          </div>
+          {/* 列表：纯 div，iOS Safari 可以正常滚动 */}
+          <div
+            style={{
+              height: "220px",
+              overflowY: "scroll",
+              WebkitOverflowScrolling: "touch",
+            }}
           >
-            {value || "选择角色"}
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-          <Command>
-            <CommandInput placeholder="搜索角色..." />
-            <div className="relative">
-              <CommandList
-                className="overflow-y-scroll overscroll-contain"
-                style={{
-                  touchAction: "pan-y",
-                  WebkitOverflowScrolling: "touch",
-                  maxHeight: `${listMaxH}px`,
-                }}
-              >
-                <CommandEmpty>未找到角色</CommandEmpty>
-                <CommandGroup>
-                  {ROLE_LIST.map((role) => {
-                    const isUsed = role !== value && usedNames.includes(role);
-                    return (
-                      <CommandItem
-                        key={role}
-                        value={role}
-                        disabled={isUsed}
-                        onSelect={() => {
-                          if (!isUsed) {
-                            onChange(role);
-                            setOpen(false);
-                          }
-                        }}
-                        className={isUsed ? "opacity-40" : ""}
-                      >
-                        <Check className={cn("mr-2 h-4 w-4", value === role ? "opacity-100" : "opacity-0")} />
-                        {role}
-                        {isUsed && <span className="ml-auto text-xs text-muted-foreground">已选</span>}
-                      </CommandItem>
-                    );
-                  })}
-                </CommandGroup>
-              </CommandList>
-              {/* 底部渐变，提示还有更多内容 */}
-              <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-popover to-transparent" />
-            </div>
-          </Command>
-        </PopoverContent>
-      </Popover>
+            {filtered.length === 0 ? (
+              <div className="py-6 text-center text-sm text-muted-foreground">未找到角色</div>
+            ) : (
+              filtered.map((role) => {
+                const isUsed = role !== value && usedNames.includes(role);
+                return (
+                  <button
+                    key={role}
+                    type="button"
+                    disabled={isUsed}
+                    onClick={() => !isUsed && handleSelect(role)}
+                    className={cn(
+                      "flex w-full items-center px-3 py-2 text-sm text-left",
+                      isUsed ? "opacity-40 cursor-not-allowed" : "hover:bg-accent active:bg-accent",
+                    )}
+                  >
+                    <Check className={cn("mr-2 h-4 w-4 shrink-0", value === role ? "opacity-100" : "opacity-0")} />
+                    <span className="flex-1">{role}</span>
+                    {isUsed && <span className="ml-auto text-xs text-muted-foreground">已选</span>}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
