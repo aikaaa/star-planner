@@ -5,6 +5,7 @@ import FarmingCalendar from "@/components/FarmingCalendar";
 import SetPlanDialog from "@/components/SetPlanDialog";
 import CommunityDialog from "@/components/CommunityDialog";
 import { CharacterPlan } from "@/lib/types";
+import { reportFarmingCharacters } from "@/lib/communityStats";
 
 const STORAGE_KEY = "shard-farming-plans";
 
@@ -24,6 +25,7 @@ export default function Index() {
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(plans));
+    reportFarmingCharacters(plans.map((p) => p.name));
   }, [plans]);
 
   return (
