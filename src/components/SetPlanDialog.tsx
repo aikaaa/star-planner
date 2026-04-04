@@ -50,7 +50,7 @@ function RoleCombobox({ value, onChange, usedNames }: { value: string; onChange:
         <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
           <Command>
             <CommandInput placeholder="搜索角色..." />
-            <CommandList>
+            <CommandList className="max-h-[40vh] overflow-y-auto overscroll-contain" style={{ touchAction: "pan-y" }}>
               <CommandEmpty>未找到角色</CommandEmpty>
               <CommandGroup>
                 {ROLE_LIST.map((role) => {
@@ -228,8 +228,9 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                   <Input
                     type="number"
                     min={0}
-                    value={char.currentShards}
-                    onChange={(e) => updateCharacter(index, { currentShards: Math.max(0, Number(e.target.value)) })}
+                    value={char.currentShards === 0 ? "" : char.currentShards}
+                    placeholder="0"
+                    onChange={(e) => updateCharacter(index, { currentShards: Math.max(0, Number(e.target.value) || 0) })}
                     className="bg-secondary border-border"
                   />
                   <span className="text-muted-foreground text-sm">片</span>
