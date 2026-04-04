@@ -73,32 +73,43 @@ function RoleCombobox({ value, onChange, usedNames }: { value: string; onChange:
         <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
           <Command>
             <CommandInput placeholder="搜索角色..." />
-            <CommandList className="overflow-y-auto overscroll-contain" style={{ touchAction: "pan-y", maxHeight: `${listMaxH}px` }}>
-              <CommandEmpty>未找到角色</CommandEmpty>
-              <CommandGroup>
-                {ROLE_LIST.map((role) => {
-                  const isUsed = role !== value && usedNames.includes(role);
-                  return (
-                    <CommandItem
-                      key={role}
-                      value={role}
-                      disabled={isUsed}
-                      onSelect={() => {
-                        if (!isUsed) {
-                          onChange(role);
-                          setOpen(false);
-                        }
-                      }}
-                      className={isUsed ? "opacity-40" : ""}
-                    >
-                      <Check className={cn("mr-2 h-4 w-4", value === role ? "opacity-100" : "opacity-0")} />
-                      {role}
-                      {isUsed && <span className="ml-auto text-xs text-muted-foreground">已选</span>}
-                    </CommandItem>
-                  );
-                })}
-              </CommandGroup>
-            </CommandList>
+            <div className="relative">
+              <CommandList
+                className="overflow-y-scroll overscroll-contain"
+                style={{
+                  touchAction: "pan-y",
+                  WebkitOverflowScrolling: "touch",
+                  maxHeight: `${listMaxH}px`,
+                }}
+              >
+                <CommandEmpty>未找到角色</CommandEmpty>
+                <CommandGroup>
+                  {ROLE_LIST.map((role) => {
+                    const isUsed = role !== value && usedNames.includes(role);
+                    return (
+                      <CommandItem
+                        key={role}
+                        value={role}
+                        disabled={isUsed}
+                        onSelect={() => {
+                          if (!isUsed) {
+                            onChange(role);
+                            setOpen(false);
+                          }
+                        }}
+                        className={isUsed ? "opacity-40" : ""}
+                      >
+                        <Check className={cn("mr-2 h-4 w-4", value === role ? "opacity-100" : "opacity-0")} />
+                        {role}
+                        {isUsed && <span className="ml-auto text-xs text-muted-foreground">已选</span>}
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              </CommandList>
+              {/* 底部渐变，提示还有更多内容 */}
+              <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-popover to-transparent" />
+            </div>
           </Command>
         </PopoverContent>
       </Popover>
