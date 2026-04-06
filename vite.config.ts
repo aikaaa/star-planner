@@ -18,7 +18,8 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === "development" && componentTagger(),
     mode === "production" && legacy({
-      targets: ["android >= 6", "chrome >= 60"],
+      targets: ["android >= 5", "chrome >= 49"],
+      renderModernChunks: false,
     }),
   ].filter(Boolean),
   build: {
