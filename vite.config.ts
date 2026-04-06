@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
+import { viteSingleFile } from "vite-plugin-singlefile";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
@@ -16,10 +17,13 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     mode === "development" && componentTagger(),
+    mode === "production" && viteSingleFile(),
   ].filter(Boolean),
   build: {
     target: ["es2015", "chrome60", "safari11"],
     modulePreload: false,
+    assetsInlineLimit: 100000000,
+    cssCodeSplit: false,
   },
   resolve: {
     alias: {
