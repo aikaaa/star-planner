@@ -23,6 +23,7 @@ import {
   CHAR_ICON_OPTIONS,
 } from "@/lib/types";
 import { ROLE_LIST } from "@/lib/roleList";
+import { generateUUID } from "@/lib/supabase";
 
 interface SetPlanDialogProps {
   open: boolean;
@@ -32,7 +33,7 @@ interface SetPlanDialogProps {
 }
 
 const emptyCharacter = (): CharacterPlan => ({
-  id: crypto.randomUUID(),
+  id: generateUUID(),
   name: "",
   farmingMode: "star",
   currentStar: 1,
