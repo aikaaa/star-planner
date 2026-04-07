@@ -1,8 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { CharacterPlan, getCharactersOnDate, getCompletionDate, getDaysNeeded, getEffectiveTargetStar, CHAR_ICON_OPTIONS } from "@/lib/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { getAvatarUrl } from "@/lib/roleAvatars";
 
 interface FarmingCalendarProps {
   plans: CharacterPlan[];
@@ -27,6 +27,48 @@ const CHAR_COLORS = [
 /** 取角色的图标 emoji，未设置时按 index 取默认值 */
 function getCharIcon(plan: CharacterPlan, index: number): string {
   return plan.icon ?? CHAR_ICON_OPTIONS[index % CHAR_ICON_OPTIONS.length].emoji;
+}
+
+/**
+ * 角色头像组件：优先显示游戏头像图片，加载失败或无图片时降级为 emoji。
+ * size: CSS 尺寸字符串，如 "20px"
+ */
+function CharAvatar({
+  plan,
+  index,
+  size = "20px",
+  className = "",
+}: {
+  plan: CharacterPlan;
+  index: number;
+  size?: string;
+  className?: string;
+}) {
+  const [imgFailed, setImgFailed] = useState(false);
+  const avatarUrl = getAvatarUrl(plan.name);
+
+  if (avatarUrl && !imgFailed) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={plan.name}
+        title={plan.name}
+        onError={() => setImgFailed(true)}
+        className={`rounded-full object-cover ${className}`}
+        style={{ width: size, height: size, flexShrink: 0 }}
+      />
+    );
+  }
+
+  return (
+    <span
+      title={plan.name}
+      className={className}
+      style={{ fontSize: size, lineHeight: 1, flexShrink: 0 }}
+    >
+      {getCharIcon(plan, index)}
+    </span>
+  );
 }
 
 export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
@@ -73,7 +115,7 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
         <div className="flex flex-wrap gap-3 mb-4">
           {plans.map((p, i) => (
             <div key={p.id} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <span className="text-sm leading-none">{getCharIcon(p, i)}</span>
+              <CharAvatar plan={p} index={i} size="18px" />
               <span>{p.name}</span>
               <span>{p.currentStar}→{getEffectiveTargetStar(p)}</span>
             </div>
@@ -120,13 +162,7 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
                   {characters.slice(0, 3).map((c) => {
                     const idx = plans.findIndex((p) => p.id === c.id);
                     return (
-                      <span
-                        key={c.id}
-                        title={c.name}
-                        style={{ fontSize: "10px", lineHeight: 1, flexShrink: 0 }}
-                      >
-                        {getCharIcon(c, idx)}
-                      </span>
+                      <CharAvatar key={c.id} plan={c} index={idx} size="14px" />
                     );
                   })}
                 </div>
@@ -146,7 +182,7 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
               <div key={p.id} className={`rounded-lg p-3 border ${CHAR_COLORS[i]}`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-base leading-none">{getCharIcon(p, i)}</span>
+                    <CharAvatar plan={p} index={i} size="24px" />
                     <span className="font-medium text-foreground text-sm">{p.name}</span>
                   </div>
                   <span className="text-xs text-muted-foreground">
