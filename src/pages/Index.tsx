@@ -52,7 +52,7 @@ export default function Index() {
       </header>
 
       {/* Action buttons */}
-      <div className="max-w-lg mx-auto px-4 -mt-4 flex gap-3">
+      <div className="max-w-lg mx-auto px-4 -mt-4 flex gap-3 relative z-10">
         <Button
           className="flex-1 gradient-card border border-border text-foreground hover:text-foreground active:text-foreground hover:glow-primary h-12"
           variant="outline"
