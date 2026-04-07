@@ -12,16 +12,16 @@ const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
 
 // 卡片背景色（保留用于 summary cards）
 const CHAR_COLORS = [
-  "bg-violet-500/20 border-violet-500/40",
-  "bg-orange-500/20 border-orange-500/40",
   "bg-sky-500/20 border-sky-500/40",
-  "bg-pink-500/20 border-pink-500/40",
-  "bg-amber-500/20 border-amber-500/40",
-  "bg-rose-500/20 border-rose-500/40",
-  "bg-indigo-500/20 border-indigo-500/40",
-  "bg-fuchsia-500/20 border-fuchsia-500/40",
-  "bg-yellow-500/20 border-yellow-500/40",
-  "bg-red-500/20 border-red-500/40",
+  "bg-sky-500/20 border-sky-500/40",
+  "bg-sky-500/20 border-sky-500/40",
+  "bg-sky-500/20 border-sky-500/40",
+  "bg-sky-500/20 border-sky-500/40",
+  "bg-sky-500/20 border-sky-500/40",
+  "bg-sky-500/20 border-sky-500/40",
+  "bg-sky-500/20 border-sky-500/40",
+  "bg-sky-500/20 border-sky-500/40",
+  "bg-sky-500/20 border-sky-500/40",
 ];
 
 /** 取角色的图标 emoji，未设置时按 index 取默认值 */
