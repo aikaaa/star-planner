@@ -2,16 +2,16 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "Vite Dev Server",
+      "name": "TapTap Preview",
       "runtimeExecutable": "/usr/local/bin/node",
-      "runtimeArgs": ["node_modules/.bin/vite"],
-      "port": 8080
+      "runtimeArgs": ["/Users/chenji/Git/star-planner/.claude/worktrees/keen-wilson/node_modules/.bin/vite", "preview", "--port", "5175", "--host", "--root", "/Users/chenji/Git/star-planner"],
+      "port": 5175
     },
     {
-      "name": "Vite Preview",
+      "name": "UI Redesign Dev Server",
       "runtimeExecutable": "/usr/local/bin/node",
-      "runtimeArgs": ["node_modules/.bin/vite", "preview"],
-      "port": 4173
+      "runtimeArgs": ["/Users/chenji/Git/star-planner/.claude/worktrees/keen-wilson/node_modules/.bin/vite", "--config", "/Users/chenji/Git/star-planner/vite.config.ts", "--root", "/Users/chenji/Git/star-planner"],
+      "port": 5174
     }
   ]
 }
