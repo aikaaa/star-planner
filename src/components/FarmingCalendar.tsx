@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { CharacterPlan, getCharactersOnDate, getCompletionDate, getDaysNeeded, getEffectiveTargetStar, CHAR_ICON_OPTIONS } from "@/lib/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getAvatarUrl } from "@/lib/roleAvatars";
+import { getAvatarUrl, getRoleEmoji } from "@/lib/roleAvatars";
 
 interface FarmingCalendarProps {
   plans: CharacterPlan[];
@@ -60,13 +60,14 @@ function CharAvatar({
     );
   }
 
+  const emoji = getRoleEmoji(plan.name) ?? getCharIcon(plan, index);
   return (
     <span
       title={plan.name}
       className={className}
       style={{ fontSize: size, lineHeight: 1, flexShrink: 0 }}
     >
-      {getCharIcon(plan, index)}
+      {emoji}
     </span>
   );
 }

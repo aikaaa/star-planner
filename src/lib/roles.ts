@@ -13,8 +13,10 @@ const CDN_BASE = "https://cdn.jsdelivr.net/gh/aikaaa/star-planner@main/public/av
 export interface RoleEntry {
   /** 游戏内中文名（与 CharacterPlan.name 对应） */
   zh: string;
-  /** 头像文件名（不含扩展名），对应 /public/avatars/<en>.png */
+  /** 头像文件名（不含扩展名），对应 /public/avatars/<en>.png；无图片时留空 */
   en: string;
+  /** 无图片时的指定 emoji；未指定则随机取 CHAR_ICON_OPTIONS */
+  emoji?: string;
 }
 
 /** 角色列表，最新角色在最前面 */
@@ -104,9 +106,9 @@ export const ROLES: RoleEntry[] = [
   { zh: "乌莉娅",     en: "Ulya"       },
   { zh: "伊凡",       en: "Ivan"       },
   { zh: "芬恩",       en: "Finn"       },
-  { zh: "塞娜",       en: ""           }, // 暂无图片
-  { zh: "SP阿加塔",   en: ""           }, // 暂无图片
-  { zh: "阿尔曼",     en: ""           }, // 暂无图片
+  { zh: "塞娜",     en: "", emoji: "🦊" },
+  { zh: "SP阿加塔", en: "", emoji: "🐺" },
+  { zh: "阿尔曼",   en: "", emoji: "🦁" },
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -126,4 +128,9 @@ export function getAvatarUrl(roleName: string): string | null {
 /** 所有已映射角色的名称列表（调试用） */
 export function getMappedRoles(): string[] {
   return ROLES.map((r) => r.zh);
+}
+
+/** 获取角色的指定 emoji（无图片时使用）；无指定则返回 null */
+export function getRoleEmoji(roleName: string): string | null {
+  return ROLES.find((r) => r.zh === roleName)?.emoji ?? null;
 }

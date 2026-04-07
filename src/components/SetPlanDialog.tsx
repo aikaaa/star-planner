@@ -24,7 +24,6 @@ import {
 } from "@/lib/types";
 import { ROLE_LIST } from "@/lib/roleList";
 import { generateUUID } from "@/lib/supabase";
-import { getAvatarUrl } from "@/lib/roleAvatars";
 
 interface SetPlanDialogProps {
   open: boolean;
@@ -123,24 +122,6 @@ function RoleCombobox({ value, onChange, usedNames }: { value: string; onChange:
   );
 }
 
-/** 游戏头像预览（加载失败则显示 emoji） */
-function AvatarPreview({ name, fallbackEmoji }: { name: string; fallbackEmoji: string }) {
-  const [imgFailed, setImgFailed] = useState(false);
-  const avatarUrl = getAvatarUrl(name);
-
-  if (avatarUrl && !imgFailed) {
-    return (
-      <img
-        src={avatarUrl}
-        alt={name}
-        onError={() => setImgFailed(true)}
-        className="rounded-full object-cover border border-border"
-        style={{ width: 40, height: 40 }}
-      />
-    );
-  }
-  return <span style={{ fontSize: 32 }}>{fallbackEmoji}</span>;
-}
 
 function IconPicker({ value, onChange }: { value: string; onChange: (emoji: string) => void }) {
   const [open, setOpen] = useState(false);
@@ -352,21 +333,11 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                   usedNames={characters.map((c) => c.name).filter(Boolean)}
                 />
 
-                {/* 图标选择（角色有游戏头像时显示预览） */}
-                {char.name && getAvatarUrl(char.name) ? (
-                  <div>
-                    <Label className="text-muted-foreground text-xs">角色头像</Label>
-                    <div className="mt-1 flex items-center gap-2">
-                      <AvatarPreview name={char.name} fallbackEmoji={char.icon ?? CHAR_ICON_OPTIONS[index % CHAR_ICON_OPTIONS.length].emoji} />
-                      <span className="text-xs text-muted-foreground">游戏头像</span>
-                    </div>
-                  </div>
-                ) : (
-                  <IconPicker
-                    value={char.icon ?? CHAR_ICON_OPTIONS[index % CHAR_ICON_OPTIONS.length].emoji}
-                    onChange={(emoji) => updateCharacter(index, { icon: emoji })}
-                  />
-                )}
+                {/* 图标选择 */}
+                <IconPicker
+                  value={char.icon ?? CHAR_ICON_OPTIONS[index % CHAR_ICON_OPTIONS.length].emoji}
+                  onChange={(emoji) => updateCharacter(index, { icon: emoji })}
+                />
 
                 {/* 已有碎片 */}
                 <div>
