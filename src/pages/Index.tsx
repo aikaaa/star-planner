@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Settings, Users, Sparkles } from "lucide-react";
+import { Settings, Users, Sparkles, Sun, Moon } from "lucide-react";
+import { useTheme } from "@/lib/theme";
 import FarmingCalendar from "@/components/FarmingCalendar";
 import SetPlanDialog from "@/components/SetPlanDialog";
 import CommunityDialog from "@/components/CommunityDialog";
@@ -22,6 +23,7 @@ export default function Index() {
   const [plans, setPlans] = useState<CharacterPlan[]>(loadPlans);
   const [showSetPlan, setShowSetPlan] = useState(false);
   const [showCommunity, setShowCommunity] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(plans));
@@ -35,7 +37,14 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="gradient-primary px-4 py-6 sm:py-8 text-center">
+      <header className="gradient-primary px-4 py-6 sm:py-8 text-center relative">
+        <button
+          onClick={toggleTheme}
+          className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground transition-colors"
+          aria-label="切换主题"
+        >
+          {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </button>
         <div className="flex items-center justify-center gap-2 mb-1">
           <h1 className="text-xl sm:text-2xl font-bold text-primary-foreground">铃兰跑片助手</h1>
         </div>
