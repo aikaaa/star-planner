@@ -5,104 +5,104 @@
 @tailwind utilities;
 
 @layer base {
-  /* 深色主题（默认） */
+  /* 深色主题（默认）— 墨绿色系 */
   :root, .dark {
-    --background: 230 25% 10%;
-    --foreground: 220 20% 90%;
+    --background: 175 22% 8%;        /* #111a19 */
+    --foreground: 170 10% 75%;       /* #b8c5c2 */
 
-    --card: 230 20% 14%;
-    --card-foreground: 220 20% 90%;
+    --card: 172 23% 18%;             /* #263d39 */
+    --card-foreground: 170 10% 75%;
 
-    --popover: 230 20% 14%;
-    --popover-foreground: 220 20% 90%;
+    --popover: 172 23% 18%;
+    --popover-foreground: 170 10% 75%;
 
-    --primary: 265 90% 65%;
+    --primary: 172 38% 42%;          /* 比 #43776e 稍亮，适合按钮 */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 230 20% 20%;
-    --secondary-foreground: 220 20% 85%;
+    --secondary: 170 35% 13%;        /* #152c28 */
+    --secondary-foreground: 170 10% 75%;
 
-    --muted: 230 15% 18%;
-    --muted-foreground: 220 10% 55%;
+    --muted: 172 23% 15%;
+    --muted-foreground: 172 10% 52%; /* #78928d */
 
-    --accent: 45 100% 60%;
-    --accent-foreground: 230 25% 10%;
+    --accent: 45 100% 60%;           /* 保留金色用于星级 */
+    --accent-foreground: 175 22% 8%;
 
     --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 230 15% 22%;
-    --input: 230 15% 22%;
-    --ring: 265 90% 65%;
+    --border: 172 23% 22%;
+    --input: 172 23% 22%;
+    --ring: 172 38% 42%;
 
     --radius: 0.75rem;
 
     --star: 45 100% 60%;
     --success: 150 70% 45%;
-    --info: 200 85% 55%;
+    --info: 172 40% 50%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(265 90% 65%), hsl(200 85% 55%));
+    --gradient-primary: linear-gradient(135deg, hsl(172 38% 42%), hsl(160 45% 36%));
     --gradient-accent: linear-gradient(135deg, hsl(45 100% 60%), hsl(30 100% 55%));
-    --gradient-card: linear-gradient(145deg, hsl(230 20% 16%), hsl(230 20% 12%));
+    --gradient-card: linear-gradient(145deg, hsl(172 23% 20%), hsl(172 23% 14%));
 
-    --sidebar-background: 230 20% 12%;
-    --sidebar-foreground: 220 20% 85%;
-    --sidebar-primary: 265 90% 65%;
+    --sidebar-background: 170 35% 11%;
+    --sidebar-foreground: 170 10% 75%;
+    --sidebar-primary: 172 38% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 230 15% 18%;
-    --sidebar-accent-foreground: 220 20% 85%;
-    --sidebar-border: 230 15% 22%;
-    --sidebar-ring: 265 90% 65%;
+    --sidebar-accent: 172 23% 18%;
+    --sidebar-accent-foreground: 170 10% 75%;
+    --sidebar-border: 172 23% 20%;
+    --sidebar-ring: 172 38% 42%;
   }
 
-  /* 浅色主题 */
+  /* 浅色主题 — 薄荷绿/清爽绿 */
   .light {
-    --background: 220 30% 97%;
-    --foreground: 230 25% 15%;
+    --background: 160 25% 97%;       /* #f2f8f6 近白 */
+    --foreground: 172 23% 19%;       /* #263d39 深墨绿文字 */
 
     --card: 0 0% 100%;
-    --card-foreground: 230 25% 15%;
+    --card-foreground: 172 23% 19%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 230 25% 15%;
+    --popover-foreground: 172 23% 19%;
 
-    --primary: 265 85% 55%;
+    --primary: 172 38% 35%;          /* 深一些适合浅色背景 */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 20% 92%;
-    --secondary-foreground: 230 25% 20%;
+    --secondary: 165 22% 92%;        /* #e6f0ee 极浅绿 */
+    --secondary-foreground: 172 23% 19%;
 
-    --muted: 220 15% 92%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 165 22% 92%;
+    --muted-foreground: 172 18% 42%;
 
     --accent: 45 95% 48%;
-    --accent-foreground: 230 25% 10%;
+    --accent-foreground: 172 23% 10%;
 
     --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 85%;
-    --input: 220 15% 85%;
-    --ring: 265 85% 55%;
+    --border: 165 18% 84%;
+    --input: 165 18% 84%;
+    --ring: 172 38% 35%;
 
     --radius: 0.75rem;
 
     --star: 45 95% 48%;
     --success: 150 65% 38%;
-    --info: 200 80% 45%;
+    --info: 172 40% 42%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(265 85% 55%), hsl(200 80% 48%));
+    --gradient-primary: linear-gradient(135deg, hsl(172 38% 35%), hsl(160 45% 32%));
     --gradient-accent: linear-gradient(135deg, hsl(45 95% 48%), hsl(30 95% 48%));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(220 20% 96%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(165 22% 95%));
 
-    --sidebar-background: 220 25% 94%;
-    --sidebar-foreground: 230 25% 20%;
-    --sidebar-primary: 265 85% 55%;
+    --sidebar-background: 160 22% 94%;
+    --sidebar-foreground: 172 23% 19%;
+    --sidebar-primary: 172 38% 35%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 88%;
-    --sidebar-accent-foreground: 230 25% 20%;
-    --sidebar-border: 220 15% 82%;
-    --sidebar-ring: 265 85% 55%;
+    --sidebar-accent: 165 22% 87%;
+    --sidebar-accent-foreground: 172 23% 19%;
+    --sidebar-border: 165 15% 82%;
+    --sidebar-ring: 172 38% 35%;
   }
 }
 
@@ -128,7 +128,7 @@
     background: var(--gradient-card);
   }
   .glow-primary {
-    box-shadow: 0 0 20px hsl(265 90% 65% / 0.3);
+    box-shadow: 0 0 20px hsl(172 38% 42% / 0.35);
   }
   .glow-accent {
     box-shadow: 0 0 20px hsl(45 100% 60% / 0.3);
