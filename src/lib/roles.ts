@@ -8,9 +8,7 @@
  * CDN 地址：https://cdn.jsdelivr.net/gh/aikaaa/star-planner@main/public/avatars/<en>.png
  */
 
-const CDN_BASE = import.meta.env.DEV
-  ? `${import.meta.env.BASE_URL}avatars`
-  : "https://cdn.jsdelivr.net/gh/aikaaa/star-planner@main/public/avatars";
+const CDN_BASE = `${import.meta.env.BASE_URL}avatars`;
 
 export interface RoleEntry {
   /** 游戏内中文名（与 CharacterPlan.name 对应） */
