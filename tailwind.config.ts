@@ -5,6 +5,17 @@ export default {
   content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
   prefix: "",
   theme: {
+    borderRadius: {
+      none: "0",
+      sm: "4px",
+      DEFAULT: "4px",
+      md: "4px",
+      lg: "4px",
+      xl: "4px",
+      "2xl": "4px",
+      "3xl": "4px",
+      full: "9999px",
+    },
     container: {
       center: true,
       padding: "2rem",
@@ -63,8 +74,8 @@ export default {
       },
       borderRadius: {
         lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        md: "var(--radius)",
+        sm: "var(--radius)",
       },
       keyframes: {
         "accordion-down": {
@@ -90,5 +101,11 @@ export default {
       },
     },
   },
+  safelist: [
+    "pt-1","pt-2","pt-3","pt-4","pt-5","pt-6",
+    "pb-1","pb-2","pb-3","pb-4","pb-5","pb-6",
+    "mt-1","mt-2","mt-3","mt-4","mt-5","mt-6",
+    "mb-1","mb-2","mb-3","mb-4","mb-5","mb-6",
+  ],
   plugins: [require("tailwindcss-animate")],
 } satisfies Config;

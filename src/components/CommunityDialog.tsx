@@ -51,10 +51,10 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm max-h-[85vh] overflow-y-auto bg-card border-border">
+      <DialogContent className="max-w-sm max-h-[85vh] overflow-y-auto bg-background border-border">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-gradient text-xl">
-            <Trophy className="h-5 w-5 text-star" />
+          <DialogTitle className="flex items-center gap-2 text-gradient-title text-xl">
+            <Trophy className="h-5 w-5" style={{ color: "hsl(var(--star))" }} />
             近7天跑片热门角色 Top10
           </DialogTitle>
           {!loading && (
@@ -88,7 +88,7 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                   key={char.name}
                   className={cn(
                     "flex items-center gap-3 rounded-lg p-3 border border-border",
-                    index < 3 ? "gradient-card glow-accent" : "gradient-card"
+                    "gradient-card"
                   )}
                 >
                   <span className="text-xl w-8 text-center">
@@ -101,19 +101,19 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                       <span className="font-semibold text-foreground text-sm">{char.name}</span>
                       {char.topTargetStar != null && (
                         <span className="text-[10px] text-muted-foreground/70 shrink-0">
-                          更多人选择跑<span className="font-bold text-white">{char.topTargetStar}★</span>
+                          更多人选择跑<span className="font-bold text-foreground">{char.topTargetStar}★</span>
                         </span>
                       )}
                     </div>
-                    <div className="w-full bg-secondary rounded-full h-1.5 mt-1">
+                    <div className="w-full rounded-full h-1.5 mt-1" style={{ backgroundColor: "hsl(var(--primary) / 0.15)" }}>
                       <div
-                        className="bg-primary h-1.5 rounded-full transition-all"
-                        style={{ width: `${pct}%` }}
+                        className="h-1.5 rounded-full transition-all"
+                        style={{ width: `${pct}%`, backgroundColor: "hsl(var(--star))" }}
                       />
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <span className="text-sm font-bold text-star">{pct}%</span>
+                    <span className="text-sm font-bold" style={{ color: "hsl(var(--star))" }}>{pct}%</span>
                     <div className="text-xs text-muted-foreground">{char.count}人</div>
                   </div>
                 </div>

@@ -18,9 +18,9 @@ import {
   getTotalShardsNeeded,
   getTargetStarFromDays,
   getFreeTargetLabel,
+  getPartialProgress,
   parseLocalDate,
   toDateStr,
-  CHAR_ICON_OPTIONS,
 } from "@/lib/types";
 import { ROLE_LIST } from "@/lib/roleList";
 import { generateUUID } from "@/lib/supabase";
@@ -42,7 +42,7 @@ const emptyCharacter = (): CharacterPlan => ({
   startDate: toDateStr(new Date()),
 });
 
-function RoleCombobox({ value, onChange, usedNames }: { value: string; onChange: (v: string) => void; usedNames: string[] }) {
+function RoleCombobox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -64,7 +64,7 @@ function RoleCombobox({ value, onChange, usedNames }: { value: string; onChange:
         variant="outline"
         role="combobox"
         aria-expanded={open}
-        className="w-full mt-1 justify-between bg-secondary border-border text-foreground"
+        className="w-full mt-1 justify-between bg-transparent border-border text-foreground"
         onClick={() => { setOpen((v) => !v); setSearch(""); }}
       >
         {value || "选择角色"}
@@ -73,7 +73,6 @@ function RoleCombobox({ value, onChange, usedNames }: { value: string; onChange:
 
       {open && (
         <div className="mt-1 rounded-md border border-border bg-popover shadow-md">
-          {/* 搜索框 */}
           <div className="flex items-center border-b border-border px-3">
             <input
               autoFocus
@@ -84,7 +83,6 @@ function RoleCombobox({ value, onChange, usedNames }: { value: string; onChange:
               className="flex-1 bg-transparent py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none"
             />
           </div>
-          {/* 列表：纯 div，iOS Safari 可以正常滚动 */}
           <div
             style={{
               height: "220px",
@@ -95,25 +93,19 @@ function RoleCombobox({ value, onChange, usedNames }: { value: string; onChange:
             {filtered.length === 0 ? (
               <div className="py-6 text-center text-sm text-muted-foreground">未找到角色</div>
             ) : (
-              filtered.map((role) => {
-                const isUsed = role !== value && usedNames.includes(role);
-                return (
-                  <button
-                    key={role}
-                    type="button"
-                    disabled={isUsed}
-                    onClick={() => !isUsed && handleSelect(role)}
-                    className={cn(
-                      "flex w-full items-center px-3 py-2 text-sm text-left",
-                      isUsed ? "opacity-40 cursor-not-allowed" : "hover:bg-accent active:bg-accent",
-                    )}
-                  >
-                    <Check className={cn("mr-2 h-4 w-4 shrink-0", value === role ? "opacity-100" : "opacity-0")} />
-                    <span className="flex-1">{role}</span>
-                    {isUsed && <span className="ml-auto text-xs text-muted-foreground">已选</span>}
-                  </button>
-                );
-              })
+              filtered.map((role) => (
+                <button
+                  key={role}
+                  type="button"
+                  onClick={() => handleSelect(role)}
+                  className={cn(
+                    "flex w-full items-center px-3 py-2 text-sm text-left hover:bg-accent active:bg-accent",
+                  )}
+                >
+                  <Check className={cn("mr-2 h-4 w-4 shrink-0", value === role ? "opacity-100" : "opacity-0")} />
+                  <span className="flex-1">{role}</span>
+                </button>
+              ))
             )}
           </div>
         </div>
@@ -123,59 +115,12 @@ function RoleCombobox({ value, onChange, usedNames }: { value: string; onChange:
 }
 
 
-function IconPicker({ value, onChange }: { value: string; onChange: (emoji: string) => void }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div>
-      <Label className="text-muted-foreground text-xs">图标</Label>
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full mt-1 justify-between bg-secondary border-border text-foreground"
-        onClick={() => setOpen((v) => !v)}
-      >
-        <span className="text-xl">{value}</span>
-        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-      </Button>
-      {open && (
-        <div className="mt-1 rounded-md border border-border bg-popover shadow-md">
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(8, 1fr)",
-              gap: "4px",
-              padding: "8px",
-              height: "200px",
-              overflowY: "scroll",
-              WebkitOverflowScrolling: "touch",
-            }}
-          >
-            {CHAR_ICON_OPTIONS.map((opt) => (
-              <button
-                key={opt.emoji}
-                type="button"
-                title={opt.label}
-                onClick={() => { onChange(opt.emoji); setOpen(false); }}
-                className={cn(
-                  "flex items-center justify-center rounded-md text-2xl p-1 hover:bg-accent active:bg-accent transition-colors",
-                  value === opt.emoji ? "bg-accent ring-2 ring-primary" : ""
-                )}
-              >
-                {opt.emoji}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 function DatePickerButton({ date, onSelect, disabled }: { date: Date; onSelect: (d: Date) => void; disabled?: (d: Date) => boolean }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="w-full mt-1 justify-start bg-secondary border-border text-foreground text-xs px-2">
+        <Button variant="outline" className="w-full mt-1 justify-start bg-transparent border-border text-foreground text-xs px-2">
           <CalendarIcon className="mr-1 h-3 w-3" />
           {format(date, "yyyy/MM/dd", { locale: zhCN })}
         </Button>
@@ -242,22 +187,26 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
 
   const validateOverlap = (plans: CharacterPlan[]): string | null => {
     if (plans.length <= 3) return null;
-    const events: { date: number; delta: number }[] = [];
-    for (const p of plans) {
+    // 收集所有涉及的日期区间
+    const ranges = plans.map((p) => {
       const start = new Date(p.startDate);
       start.setHours(0, 0, 0, 0);
       const end = getCompletionDate(p);
       end.setHours(0, 0, 0, 0);
-      events.push({ date: start.getTime(), delta: 1 });
-      events.push({ date: end.getTime() + 86400000, delta: -1 });
-    }
-    events.sort((a, b) => a.date - b.date || a.delta - b.delta);
-    let concurrent = 0;
-    for (const e of events) {
-      concurrent += e.delta;
-      if (concurrent > 3) {
-        const d = new Date(e.date);
-        return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} 当天同时跑片角色超过3人，请调整日期`;
+      return { name: p.name, start: start.getTime(), end: end.getTime() };
+    });
+    // 按天检查，角色名去重后计数
+    const allDates = new Set(ranges.flatMap((r) => {
+      const dates: number[] = [];
+      for (let d = r.start; d <= r.end; d += 86400000) dates.push(d);
+      return dates;
+    }));
+    for (const ts of allDates) {
+      const active = ranges.filter((r) => ts >= r.start && ts <= r.end);
+      const uniqueNames = new Set(active.map((r) => r.name));
+      if (uniqueNames.size > 3) {
+        const d = new Date(ts);
+        return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} 当天不同角色超过3人，请调整日期`;
       }
     }
     return null;
@@ -277,9 +226,9 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-card border-border">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-background border-border">
         <DialogHeader>
-          <DialogTitle className="text-gradient text-xl">设置跑片计划</DialogTitle>
+          <DialogTitle className="text-gradient-title text-xl">设置跑片计划</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -318,7 +267,7 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                         "flex-1 py-1.5 rounded-md text-xs font-medium border transition-all",
                         char.farmingMode === mode
                           ? "gradient-primary text-primary-foreground border-transparent glow-primary"
-                          : "bg-secondary text-muted-foreground border-border hover:text-foreground"
+                          : "bg-transparent text-muted-foreground border-border hover:text-foreground"
                       )}
                     >
                       {mode === "star" ? "按星跑片" : "自由跑片"}
@@ -329,15 +278,33 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                 {/* 角色名称 */}
                 <RoleCombobox
                   value={char.name}
-                  onChange={(v) => updateCharacter(index, { name: v })}
-                  usedNames={characters.map((c) => c.name).filter(Boolean)}
+                  onChange={(v) => {
+                    // 查找同名角色的所有已有段，取结束时间最晚的一段
+                    const prevSegments = characters
+                      .filter((c, ci) => ci !== index && c.name === v);
+                    if (prevSegments.length > 0) {
+                      const last = prevSegments.reduce((a, b) =>
+                        getCompletionDate(a).getTime() >= getCompletionDate(b).getTime() ? a : b
+                      );
+                      const lastEnd = getCompletionDate(last);
+                      const days = getDaysNeeded(last);
+                      const { reachableStar, remainingShards } = getPartialProgress(last.currentStar, last.currentShards, days);
+                      // 次日开始
+                      const nextStart = new Date(lastEnd);
+                      nextStart.setDate(nextStart.getDate() + 1);
+                      updateCharacter(index, {
+                        name: v,
+                        currentStar: reachableStar,
+                        currentShards: remainingShards,
+                        targetStar: Math.min(reachableStar + 1, 5),
+                        startDate: toDateStr(nextStart),
+                      });
+                    } else {
+                      updateCharacter(index, { name: v });
+                    }
+                  }}
                 />
 
-                {/* 图标选择 */}
-                <IconPicker
-                  value={char.icon ?? CHAR_ICON_OPTIONS[index % CHAR_ICON_OPTIONS.length].emoji}
-                  onChange={(emoji) => updateCharacter(index, { icon: emoji })}
-                />
 
                 {/* 已有碎片 */}
                 <div>
@@ -356,7 +323,7 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                       value={char.currentShards === 0 ? "" : char.currentShards}
                       placeholder="0"
                       onChange={(e) => updateCharacter(index, { currentShards: Math.max(0, Number(e.target.value) || 0) })}
-                      className="bg-secondary border-border"
+                      className="bg-transparent border-border"
                     />
                     <span className="text-muted-foreground text-sm shrink-0">片</span>
                   </div>
@@ -377,7 +344,7 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                           });
                         }}
                       >
-                        <SelectTrigger className="mt-1 bg-secondary border-border">
+                        <SelectTrigger className="mt-1 bg-transparent border-border">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -395,7 +362,7 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                         value={String(char.targetStar)}
                         onValueChange={(v) => updateCharacter(index, { targetStar: Number(v) })}
                       >
-                        <SelectTrigger className="mt-1 bg-secondary border-border">
+                        <SelectTrigger className="mt-1 bg-transparent border-border">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -420,7 +387,7 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                       value={String(char.currentStar)}
                       onValueChange={(v) => updateCharacter(index, { currentStar: Number(v) })}
                     >
-                      <SelectTrigger className="mt-1 bg-secondary border-border">
+                      <SelectTrigger className="mt-1 bg-transparent border-border">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -468,7 +435,7 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                       <Button
                         variant="outline"
                         disabled
-                        className="w-full mt-1 justify-start bg-secondary border-border text-muted-foreground text-xs px-2 opacity-60"
+                        className="w-full mt-1 justify-start bg-transparent border-border text-muted-foreground text-xs px-2 opacity-60"
                       >
                         <CalendarIcon className="mr-1 h-3 w-3" />
                         {format(completionDate, "yyyy/MM/dd", { locale: zhCN })}

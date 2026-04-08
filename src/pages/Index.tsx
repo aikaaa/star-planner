@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Settings, Users, Sparkles, Sun, Moon } from "lucide-react";
+import { Settings, Flame, Sparkles, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import FarmingCalendar from "@/components/FarmingCalendar";
 import SetPlanDialog from "@/components/SetPlanDialog";
@@ -52,27 +52,29 @@ export default function Index() {
       </header>
 
       {/* Action buttons */}
-      <div className="max-w-lg mx-auto px-4 -mt-4 flex gap-3 relative z-10">
+      <div className="mx-auto px-4 -mt-4 flex gap-3 relative z-10" style={{ maxWidth: "600px" }}>
         <Button
-          className="flex-1 gradient-card border border-border text-foreground hover:text-foreground active:text-foreground hover:glow-primary h-12"
+          className="flex-1 gradient-card border border-border text-foreground hover:text-foreground active:text-foreground hover:glow-primary h-12 font-semibold"
+          style={{ borderRadius: "4px" }}
           variant="outline"
           onClick={() => setShowSetPlan(true)}
         >
-          <Settings className="mr-2 h-4 w-4 text-primary" />
+          <Settings className="mr-2 h-4 w-4 text-muted-foreground" />
           设置跑片
         </Button>
         <Button
-          className="flex-1 gradient-card border border-border text-foreground hover:text-foreground active:text-foreground hover:glow-accent h-12"
+          className="flex-1 gradient-card border border-border text-foreground hover:text-foreground active:text-foreground hover:glow-primary h-12 font-semibold"
+          style={{ borderRadius: "4px" }}
           variant="outline"
           onClick={() => setShowCommunity(true)}
         >
-          <Users className="mr-2 h-4 w-4 text-star" />
+          <Flame className="mr-2 h-4 w-4" style={{ color: "#f97316" }} />
           大家在跑谁
         </Button>
       </div>
 
       {/* Calendar */}
-      <div className="max-w-lg mx-auto px-4 py-6">
+      <div className="mx-auto px-4" style={{ maxWidth: "600px", paddingTop: "12px", paddingBottom: "32px" }}>
         {plans.length === 0 ? (
           <div className="gradient-card rounded-xl border border-border p-8 text-center">
             <div className="text-4xl mb-3">📋</div>
@@ -82,7 +84,7 @@ export default function Index() {
             </Button>
           </div>
         ) : (
-          <div className="gradient-card rounded-xl border border-border p-4">
+          <div className="gradient-card border border-border pb-4" style={{ paddingTop: "8px", paddingLeft: "12px", paddingRight: "12px", borderRadius: "4px" }}>
             <FarmingCalendar plans={plans} />
           </div>
         )}

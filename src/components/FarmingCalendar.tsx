@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
-import { CharacterPlan, getCharactersOnDate, getCompletionDate, getDaysNeeded, getEffectiveTargetStar, CHAR_ICON_OPTIONS } from "@/lib/types";
+import { CharacterPlan, getCharactersOnDate, getCompletionDate, getDaysNeeded, getEffectiveTargetStar, getPartialProgress, parseLocalDate, CHAR_ICON_OPTIONS } from "@/lib/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getAvatarUrl, getRoleEmoji } from "@/lib/roleAvatars";
+import { getAvatarUrl } from "@/lib/roleAvatars";
+import { CARD_SPACING } from "@/lib/cardSpacing";
 
 interface FarmingCalendarProps {
   plans: CharacterPlan[];
@@ -10,19 +11,11 @@ interface FarmingCalendarProps {
 
 const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
 
-// 卡片背景色（保留用于 summary cards）
-const CHAR_COLORS = [
-  "bg-sky-500/20 border-sky-500/40",
-  "bg-sky-500/20 border-sky-500/40",
-  "bg-sky-500/20 border-sky-500/40",
-  "bg-sky-500/20 border-sky-500/40",
-  "bg-sky-500/20 border-sky-500/40",
-  "bg-sky-500/20 border-sky-500/40",
-  "bg-sky-500/20 border-sky-500/40",
-  "bg-sky-500/20 border-sky-500/40",
-  "bg-sky-500/20 border-sky-500/40",
-  "bg-sky-500/20 border-sky-500/40",
-];
+// ── 卡片间距配置（单位 px）──────────────────────────────────
+// 修改这里即可调整卡片内所有行的上下间距
+const CARD_ROW_SPACING = 8;   // 每行计划的上下 padding（px）
+const CARD_HEADER_PB = 8;     // 头部到分割线的 padding-bottom（px）
+// ─────────────────────────────────────────────────────────────
 
 /** 取角色的图标 emoji，未设置时按 index 取默认值 */
 function getCharIcon(plan: CharacterPlan, index: number): string {
@@ -47,28 +40,45 @@ function CharAvatar({
   const [imgFailed, setImgFailed] = useState(false);
   const avatarUrl = getAvatarUrl(plan.name);
 
+  const sizeNum = parseFloat(size);
+  const unit = size.replace(String(sizeNum), "");
+  const fontSizeStr = isNaN(sizeNum) ? "0.48em" : `${sizeNum * 0.48}${unit}`;
+
+  const baseStyle = { width: size, height: size, minWidth: size, flexShrink: 0 };
+
   if (avatarUrl && !imgFailed) {
     return (
-      <img
-        src={avatarUrl}
-        alt={plan.name}
+      <div
         title={plan.name}
-        onError={() => setImgFailed(true)}
-        className={`rounded-full object-cover ${className}`}
-        style={{ width: size, height: size, flexShrink: 0 }}
-      />
+        className={`rounded-full overflow-hidden ${className}`}
+        style={{ ...baseStyle, background: "var(--avatar-circle-bg)" }}
+      >
+        <img
+          src={avatarUrl}
+          alt={plan.name}
+          onError={() => setImgFailed(true)}
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        />
+      </div>
     );
   }
 
-  const emoji = getRoleEmoji(plan.name) ?? getCharIcon(plan, index);
   return (
-    <span
+    <div
       title={plan.name}
-      className={className}
-      style={{ fontSize: size, lineHeight: 1, flexShrink: 0 }}
+      className={`rounded-full flex items-center justify-center font-medium relative ${className}`}
+      style={{
+        ...baseStyle,
+        fontSize: fontSizeStr,
+        background: "var(--avatar-circle-bg)",
+        color: "hsl(var(--muted-foreground))",
+      }}
     >
-      {emoji}
-    </span>
+      <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", overflow: "visible" }}>
+        <circle cx="50%" cy="50%" r="49%" stroke="hsl(var(--muted-foreground))" strokeDasharray="2 2" strokeWidth="1" fill="none" />
+      </svg>
+      {plan.name.charAt(0)}
+    </div>
   );
 }
 
@@ -99,11 +109,11 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
   return (
     <div className="w-full">
       {/* Month navigation */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-1">
         <Button variant="ghost" size="icon" onClick={prevMonth} className="text-muted-foreground hover:text-foreground">
           <ChevronLeft className="h-5 w-5" />
         </Button>
-        <h2 className="text-lg font-semibold text-foreground">
+        <h2 className="text-sm font-semibold text-foreground">
           {year}年{month + 1}月
         </h2>
         <Button variant="ghost" size="icon" onClick={nextMonth} className="text-muted-foreground hover:text-foreground">
@@ -113,12 +123,21 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
 
       {/* Legend */}
       {plans.length > 0 && (
-        <div className="flex flex-wrap gap-3 mb-4">
-          {plans.map((p, i) => (
-            <div key={p.id} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <CharAvatar plan={p} index={i} size="18px" />
-              <span>{p.name}</span>
-              <span>{p.currentStar}→{getEffectiveTargetStar(p)}</span>
+        <div className="flex flex-wrap gap-3 mb-2">
+          {Array.from(
+            plans.reduce((map, p) => {
+              if (!map.has(p.name)) map.set(p.name, { plan: p, segments: [] });
+              map.get(p.name)!.segments.push(p);
+              return map;
+            }, new Map<string, { plan: CharacterPlan; segments: CharacterPlan[] }>())
+          ).map(([name, { plan, segments }], i) => (
+            <div key={name} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <CharAvatar plan={plan} index={plans.findIndex(p => p.name === name)} size="24px" />
+              <span>{name}</span>
+              {segments.length === 1
+                ? <span>{segments[0].currentStar}→{getEffectiveTargetStar(segments[0])}</span>
+                : <span>{segments.map(s => `${s.currentStar}→${getEffectiveTargetStar(s)}`).join(", ")}</span>
+              }
             </div>
           ))}
         </div>
@@ -147,57 +166,130 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
           return (
             <div
               key={day}
-              className={`relative flex flex-col items-center justify-center rounded-md p-1 min-h-[2.5rem] sm:min-h-[3.5rem] text-sm transition-all ${
-                isToday
-                  ? "ring-2 ring-primary bg-primary/10"
-                  : hasChars
-                  ? "bg-secondary/50"
-                  : ""
-              }`}
+              className={`relative flex flex-col items-center justify-center p-2 text-xs transition-all`}
+              style={{ backgroundColor: "hsl(var(--primary) / 0.08)", minHeight: "3.5rem", borderRadius: "8px" }}
             >
-              <span className={`text-xs sm:text-sm leading-none ${isToday ? "font-bold text-primary" : "text-foreground"}`}>
+              {isToday && (
+                <span className="absolute inset-0 pointer-events-none z-10" style={{ boxShadow: "inset 0 0 0 2px hsl(var(--primary))", borderRadius: "8px" }} />
+              )}
+              <span className={`text-xs sm:text-xs leading-none ${isToday ? "font-bold text-primary" : "text-foreground"}`}>
                 {day}
               </span>
-              {hasChars && (
-                <div className="flex mt-0.5 overflow-hidden" style={{ gap: "1px" }}>
-                  {characters.slice(0, 3).map((c) => {
-                    const idx = plans.findIndex((p) => p.id === c.id);
-                    return (
-                      <CharAvatar key={c.id} plan={c} index={idx} size="14px" />
-                    );
-                  })}
-                </div>
-              )}
+              {hasChars && (() => {
+                const shown = characters.slice(0, 3);
+                const count = shown.length;
+                // 方案A：每个头像占格子宽度的 1/count，最大 22px
+                // 用 CSS 变量控制容器，每个头像撑满自己的槽
+                const slotSize = `min(22px, calc((min(100vw, 600px) - 48px) / ${7 * count}))`;
+                const overlap = count === 3 ? "-4px" : count === 2 ? "-2px" : "0px";
+                return (
+                  <div className="flex mt-0.5 justify-center items-center">
+                    {shown.map((c, ci) => {
+                      const idx = plans.findIndex((p) => p.id === c.id);
+                      return (
+                        <div key={c.id} style={{ width: slotSize, height: slotSize, flexShrink: 0, fontSize: slotSize, marginLeft: ci > 0 ? overlap : 0, zIndex: ci, position: "relative" }}>
+                          <CharAvatar plan={c} index={idx} size="100%" />
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </div>
           );
         })}
       </div>
 
-      {/* Summary cards */}
-      {plans.length > 0 && (
-        <div className="mt-4 space-y-2">
-          {plans.map((p, i) => {
-            const days = getDaysNeeded(p);
-            const endDate = getCompletionDate(p);
-            return (
-              <div key={p.id} className={`rounded-lg p-3 border ${CHAR_COLORS[i]}`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CharAvatar plan={p} index={i} size="24px" />
-                    <span className="font-medium text-foreground text-sm">{p.name}</span>
+      {/* Summary cards — 按开始时间排序，同名角色合并 */}
+      {plans.length > 0 && (() => {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        // 按开始时间 → 结束时间排序
+        const sorted = [...plans].sort((a, b) => {
+          const startDiff = parseLocalDate(a.startDate).getTime() - parseLocalDate(b.startDate).getTime();
+          if (startDiff !== 0) return startDiff;
+          return getCompletionDate(a).getTime() - getCompletionDate(b).getTime();
+        });
+
+        // 按角色名分组（保持首次出现顺序）
+        const groups = new Map<string, CharacterPlan[]>();
+        for (const p of sorted) {
+          if (!groups.has(p.name)) groups.set(p.name, []);
+          groups.get(p.name)!.push(p);
+        }
+
+        return (
+          <div className="mt-2 space-y-2">
+            {[...groups.entries()].map(([name, group], gi) => {
+              // 用第一条计划的头像
+              const first = group[0];
+              const firstIdx = plans.findIndex((p) => p.id === first.id);
+              // 找今天正在进行的段（今天在 startDate ~ endDate 之间）
+              const activeToday = group.find((p) => {
+                const s = parseLocalDate(p.startDate); s.setHours(0, 0, 0, 0);
+                const e = getCompletionDate(p); e.setHours(0, 0, 0, 0);
+                return todayStart >= s && todayStart <= e;
+              });
+              const todayLabel = (() => {
+                if (!activeToday) return null;
+                const s = parseLocalDate(activeToday.startDate); s.setHours(0, 0, 0, 0);
+                const daysElapsed = Math.max(0, Math.round((todayStart.getTime() - s.getTime()) / 86400000)) + 1;
+                const { reachableStar, remainingShards } = getPartialProgress(activeToday.currentStar, activeToday.currentShards, daysElapsed);
+                return reachableStar >= 5 ? "今日可达 5★ 满星" : `今日可达 ${reachableStar}★ 余 ${remainingShards} 片`;
+              })();
+
+              return (
+                <div
+                  key={name}
+                  className="rounded-lg p-3 bg-card shadow-sm"
+                  style={{ paddingTop: 8, paddingBottom: 8, border: "1px solid hsl(var(--border) / 0.7)" }}
+                  style={{ paddingTop: 10, paddingBottom: 8 }}
+                >
+                  <div className="flex items-center justify-between" style={{paddingBottom: CARD_HEADER_PB, borderBottom: "1px solid hsl(var(--border) / 0.5)"}}>
+                    <div className="flex items-center gap-2">
+                      <CharAvatar plan={first} index={firstIdx} size="32px" />
+                      <span className="font-semibold text-foreground text-sm">{name}</span>
+                    </div>
+                    {todayLabel && (
+                      <div className="text-xs text-muted-foreground">
+                        今日可达{" "}
+                        <span className="text-star font-bold">{todayLabel.replace(/今日可达 /, "")}</span>
+                      </div>
+                    )}
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    {p.currentStar}★ → {getEffectiveTargetStar(p)}★
-                  </span>
+                  {group.map((p) => {
+                    const days = getDaysNeeded(p);
+                    const endDate = getCompletionDate(p);
+                    const targetStar = getEffectiveTargetStar(p);
+                    const startD = parseLocalDate(p.startDate);
+                    const fmt = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}`;
+                    return (
+                      <div
+                        key={p.id}
+                        className="flex items-center justify-between"
+                        className="flex items-center justify-between"
+                        style={{
+                          paddingTop: CARD_ROW_SPACING,
+                          paddingBottom: CARD_ROW_SPACING,
+                          borderTop: group.indexOf(p) > 0 ? "1px solid hsl(var(--border) / 0.5)" : undefined,
+                        }}
+                      >
+                        <div className="text-xs text-muted-foreground">
+                          {p.currentStar}★ → {targetStar}★ &nbsp;预计 {days} 天
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {fmt(startD)} - {fmt(endDate)}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  预计 {days} 天 · 完成于 {endDate.getFullYear()}/{endDate.getMonth() + 1}/{endDate.getDate()}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        );
+      })()}
     </div>
   );
 }
