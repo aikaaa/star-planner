@@ -8,7 +8,9 @@
  * CDN 地址：https://cdn.jsdelivr.net/gh/aikaaa/star-planner@main/public/avatars/<en>.png
  */
 
-const CDN_BASE = "https://cdn.jsdelivr.net/gh/aikaaa/star-planner@main/public/avatars";
+const CDN_BASE = import.meta.env.DEV
+  ? `${import.meta.env.BASE_URL}avatars`
+  : "https://cdn.jsdelivr.net/gh/aikaaa/star-planner@main/public/avatars";
 
 export interface RoleEntry {
   /** 游戏内中文名（与 CharacterPlan.name 对应） */
@@ -115,8 +117,8 @@ export const ROLES: RoleEntry[] = [
 // 以下为派生数据，供各组件直接使用，无需修改
 // ─────────────────────────────────────────────────────────────
 
-/** 角色名列表（供下拉选择器使用，顺序与 ROLES 相同） */
-export const ROLE_LIST: string[] = ROLES.map((r) => r.zh);
+/** 角色名列表（供下拉选择器使用，最早角色在最前） */
+export const ROLE_LIST: string[] = [...ROLES].reverse().map((r) => r.zh);
 
 /** 角色名 → 头像 CDN URL（无图片时返回 null） */
 export function getAvatarUrl(roleName: string): string | null {
