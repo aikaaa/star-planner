@@ -243,8 +243,7 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
                 <div
                   key={name}
                   className="rounded-lg p-3 bg-card shadow-sm"
-                  style={{ paddingTop: 8, paddingBottom: 8, border: "1px solid hsl(var(--border) / 0.7)" }}
-                  style={{ paddingTop: 10, paddingBottom: 8 }}
+                  style={{ paddingTop: 10, paddingBottom: 8, border: "1px solid hsl(var(--border) / 0.7)" }}
                 >
                   <div className="flex items-center justify-between" style={{paddingBottom: CARD_HEADER_PB, borderBottom: "1px solid hsl(var(--border) / 0.5)"}}>
                     <div className="flex items-center gap-2">
@@ -267,7 +266,6 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
                     return (
                       <div
                         key={p.id}
-                        className="flex items-center justify-between"
                         className="flex items-center justify-between"
                         style={{
                           paddingTop: CARD_ROW_SPACING,
