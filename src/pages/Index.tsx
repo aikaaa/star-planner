@@ -84,7 +84,7 @@ export default function Index() {
             </Button>
           </div>
         ) : (
-          <div className="gradient-card border-fade-bottom pb-4" style={{ paddingTop: "8px", paddingLeft: "12px", paddingRight: "12px", borderRadius: "4px" }}>
+          <div className="gradient-card border border-border pb-4" style={{ paddingTop: "8px", paddingLeft: "12px", paddingRight: "12px", borderRadius: "4px" }}>
             <FarmingCalendar plans={plans} />
           </div>
         )}
