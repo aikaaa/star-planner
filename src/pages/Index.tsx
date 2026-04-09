@@ -56,7 +56,7 @@ export default function Index() {
         <Button
           className="flex-1 gradient-card border border-border text-foreground hover:text-foreground active:text-foreground hover:glow-primary h-12 font-semibold"
           style={{ borderRadius: "4px" }}
-          variant="outline"
+          variant="ghost"
           onClick={() => setShowSetPlan(true)}
         >
           <Settings className="mr-2 h-4 w-4 text-muted-foreground" />
@@ -65,7 +65,7 @@ export default function Index() {
         <Button
           className="flex-1 gradient-card border border-border text-foreground hover:text-foreground active:text-foreground hover:glow-primary h-12 font-semibold"
           style={{ borderRadius: "4px" }}
-          variant="outline"
+          variant="ghost"
           onClick={() => setShowCommunity(true)}
         >
           <Flame className="mr-2 h-4 w-4" style={{ color: "#f97316" }} />
