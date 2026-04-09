@@ -131,7 +131,7 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
               return map;
             }, new Map<string, { plan: CharacterPlan; segments: CharacterPlan[] }>())
           ).map(([name, { plan, segments }], i) => (
-            <div key={name} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <div key={name} className="flex items-center gap-1 text-xs text-muted-foreground">
               <CharAvatar plan={plan} index={plans.findIndex(p => p.name === name)} size="24px" />
               <span>{name}</span>
               {segments.length === 1
