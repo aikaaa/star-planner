@@ -163,4 +163,18 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+
+  .border-fade-bottom {
+    position: relative;
+  }
+  .border-fade-bottom::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 1px solid hsl(var(--border) / 0.7);
+    border-radius: inherit;
+    -webkit-mask-image: linear-gradient(to bottom, black 0%, black 70%, transparent 100%);
+    mask-image: linear-gradient(to bottom, black 0%, black 70%, transparent 100%);
+    pointer-events: none;
+  }
 }
