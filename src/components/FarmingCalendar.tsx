@@ -110,13 +110,13 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
     <div className="w-full">
       {/* Month navigation */}
       <div className="flex items-center justify-between mb-1">
-        <Button variant="ghost" size="icon" onClick={prevMonth} className="text-muted-foreground hover:text-foreground">
+        <Button variant="ghost" size="icon" onClick={prevMonth} className="text-muted-foreground hover:text-foreground rounded-[4px]">
           <ChevronLeft className="h-5 w-5" />
         </Button>
         <h2 className="text-sm font-semibold text-foreground">
           {year}年{month + 1}月
         </h2>
-        <Button variant="ghost" size="icon" onClick={nextMonth} className="text-muted-foreground hover:text-foreground">
+        <Button variant="ghost" size="icon" onClick={nextMonth} className="text-muted-foreground hover:text-foreground rounded-[4px]">
           <ChevronRight className="h-5 w-5" />
         </Button>
       </div>

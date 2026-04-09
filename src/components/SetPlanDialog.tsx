@@ -250,7 +250,7 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 text-destructive hover:text-destructive"
+                    className="h-7 w-7 text-destructive hover:text-destructive rounded-[4px]"
                     onClick={() => removeCharacter(index)}
                   >
                     <Trash2 className="h-4 w-4" />
