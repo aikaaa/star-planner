@@ -123,7 +123,7 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
 
       {/* Legend */}
       {plans.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-2">
+        <div className="flex flex-wrap gap-2 mb-2">
           {Array.from(
             plans.reduce((map, p) => {
               if (!map.has(p.name)) map.set(p.name, { plan: p, segments: [] });
