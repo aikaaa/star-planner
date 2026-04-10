@@ -1,5 +1,10 @@
 export type FarmingMode = "star" | "free";
 
+/** 展示用：SP前缀和中文之间加空格，如 "SP阿列克谢" → "SP 阿列克谢" */
+export function formatCharName(name: string): string {
+  return name.replace(/^SP(?=[\u4e00-\u9fff])/, "SP ");
+}
+
 /** 将 "YYYY-MM-DD" 解析为东八区时间，避免 UTC 偏移导致日期差一天 */
 export function parseLocalDate(dateStr: string): Date {
   return new Date(dateStr + "T00:00:00+08:00");
@@ -20,6 +25,7 @@ export interface CharacterPlan {
   currentStar: number;
   targetStar: number;
   currentShards: number;
+  bonusShards?: number; // 追忆/万能碎片可补充量（可选，默认0）
   startDate: string; // ISO date string
   endDate?: string;  // 自由跑片时由用户设置
   icon?: string;     // 用户自选的 emoji 图标
@@ -110,7 +116,7 @@ export function getDaysNeeded(plan: CharacterPlan): number {
     return Math.max(0, Math.round((end.getTime() - start.getTime()) / 86400000) + 1); // +1 包含结束当天
   }
   const totalNeeded = getTotalShardsNeeded(plan.currentStar, plan.targetStar);
-  const remaining = Math.max(0, totalNeeded - plan.currentShards);
+  const remaining = Math.max(0, totalNeeded - plan.currentShards - (plan.bonusShards ?? 0));
   return Math.ceil(remaining / 3); // 3 shards per day
 }
 
@@ -168,7 +174,7 @@ export function getCompletionDate(plan: CharacterPlan): Date {
   const days = getDaysNeeded(plan);
   const start = parseLocalDate(plan.startDate);
   const end = new Date(start);
-  end.setDate(end.getDate() + days);
+  end.setDate(end.getDate() + days - 1);
   return end;
 }
 
@@ -190,7 +196,7 @@ export function getCharactersOnDate(plans: CharacterPlan[], date: Date): Charact
 export function getEffectiveTargetStar(plan: CharacterPlan): number {
   if (plan.farmingMode === "free") {
     const days = getDaysNeeded(plan);
-    return getPartialProgress(plan.currentStar, plan.currentShards, days).reachableStar;
+    return getPartialProgress(plan.currentStar, plan.currentShards + (plan.bonusShards ?? 0), days).reachableStar;
   }
   return plan.targetStar;
 }

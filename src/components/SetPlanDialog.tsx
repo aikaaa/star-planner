@@ -17,7 +17,6 @@ import {
   getCompletionDate,
   getTotalShardsNeeded,
   getTargetStarFromDays,
-  getFreeTargetLabel,
   getPartialProgress,
   parseLocalDate,
   toDateStr,
@@ -47,7 +46,7 @@ function RoleCombobox({ value, onChange }: { value: string; onChange: (v: string
   const [search, setSearch] = useState("");
 
   const filtered = search.trim()
-    ? ROLE_LIST.filter((r) => r.includes(search.trim()))
+    ? ROLE_LIST.filter((r) => r.toLowerCase().includes(search.trim().toLowerCase()))
     : ROLE_LIST;
 
   const handleSelect = (role: string) => {
@@ -129,8 +128,10 @@ function DatePickerButton({ date, onSelect, disabled }: { date: Date; onSelect: 
         <Calendar
           mode="single"
           selected={date}
+          defaultMonth={date}
           onSelect={(d) => d && onSelect(d)}
           disabled={disabled}
+          locale={zhCN}
           className={cn("p-3 pointer-events-auto")}
         />
       </PopoverContent>
@@ -240,7 +241,6 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
             const freeDays = isFree
               ? Math.max(0, Math.round((endDateObj.getTime() - parseLocalDate(char.startDate).getTime()) / 86400000) + 1)
               : 0;
-            const freeLabel = isFree ? getFreeTargetLabel(char.currentStar, char.currentShards, freeDays) : "";
 
             return (
               <div key={char.id} className="gradient-card rounded-lg p-4 border border-border space-y-3">
@@ -305,27 +305,53 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                   }}
                 />
 
-
-                {/* 已有碎片 */}
-                <div>
-                  <Label className="text-muted-foreground text-xs">
-                    已有碎片
-                    {!isFree && (
-                      <span className="ml-1">
-                        （还需 {Math.max(0, getTotalShardsNeeded(char.currentStar, char.targetStar) - char.currentShards)} 片）
-                      </span>
-                    )}
-                  </Label>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Input
-                      type="number"
-                      min={0}
-                      value={char.currentShards === 0 ? "" : char.currentShards}
-                      placeholder="0"
-                      onChange={(e) => updateCharacter(index, { currentShards: Math.max(0, Number(e.target.value) || 0) })}
-                      className="bg-transparent border-border"
-                    />
-                    <span className="text-muted-foreground text-sm shrink-0">片</span>
+                {/* 已有碎片 + 追忆/万能碎片 */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-muted-foreground text-xs">
+                      已有碎片
+                      {!isFree && (
+                        <span className="ml-1">
+                          （还需 {Math.max(0, getTotalShardsNeeded(char.currentStar, char.targetStar) - char.currentShards - (char.bonusShards ?? 0))} 片）
+                        </span>
+                      )}
+                    </Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Input
+                        type="number"
+                        min={0}
+                        value={char.currentShards === 0 ? "" : char.currentShards}
+                        placeholder="0"
+                        onChange={(e) => {
+                          const newShards = Math.max(0, Number(e.target.value) || 0);
+                          const updates: Partial<CharacterPlan> = { currentShards: newShards };
+                          if (isFree) {
+                            const starPlan = { ...char, currentShards: newShards, farmingMode: "star" as FarmingMode };
+                            updates.endDate = toDateStr(getCompletionDate(starPlan));
+                          }
+                          updateCharacter(index, updates);
+                        }}
+                        className="bg-transparent border-border"
+                      />
+                      <span className="text-muted-foreground text-sm shrink-0">片</span>
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground text-xs">追忆/万能</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Input
+                        type="number"
+                        min={0}
+                        value={!char.bonusShards ? "" : char.bonusShards}
+                        placeholder="0"
+                        onChange={(e) => {
+                          const newBonus = Math.max(0, Number(e.target.value) || 0);
+                          updateCharacter(index, { bonusShards: newBonus });
+                        }}
+                        className="bg-transparent border-border"
+                      />
+                      <span className="text-muted-foreground text-sm shrink-0">片</span>
+                    </div>
                   </div>
                 </div>
 
@@ -445,16 +471,40 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                 </div>
 
                 {/* 底部信息 */}
-                {isFree ? (
-                  <div className="text-xs text-info flex items-center gap-1">
-                    🎯 预计可达：<span className="font-bold text-star">{freeLabel}</span>
-                    <span className="text-muted-foreground ml-1">（共 {freeDays} 天）</span>
-                  </div>
-                ) : (
-                  <div className="text-xs text-info flex items-center gap-1">
-                    ⏱ 预计需要 <span className="font-bold">{days}</span> 天完成
-                  </div>
-                )}
+                {isFree ? (() => {
+                  const { reachableStar, remainingShards: freeRemaining } = getPartialProgress(
+                    char.currentStar, char.currentShards + (char.bonusShards ?? 0), freeDays
+                  );
+                  const isMaxStar = reachableStar >= 5;
+                  const freeExcess = isMaxStar ? freeRemaining : 0;
+                  return (
+                    <div className="text-xs text-info flex items-center gap-1 flex-wrap">
+                      🎯 预计可达：
+                      <span className="font-bold text-star">
+                        {isMaxStar ? "5★ 满星" : `${reachableStar}★ 余 ${freeRemaining} 片`}
+                      </span>
+                      {freeExcess > 0 && (
+                        <span className="text-destructive font-medium">（超 {freeExcess} 片）</span>
+                      )}
+                      {isMaxStar && <span>🎉</span>}
+                      <span className="text-muted-foreground ml-1">（共 {freeDays} 天）</span>
+                    </div>
+                  );
+                })() : (() => {
+                  const remaining = Math.max(0, getTotalShardsNeeded(char.currentStar, char.targetStar) - char.currentShards - (char.bonusShards ?? 0));
+                  const excess = days > 0 ? days * 3 - remaining : 0;
+                  const bonusNeeded = excess > 0 ? 3 - excess : 0;
+                  return (
+                    <div className="text-xs text-info flex items-center gap-1 flex-wrap">
+                      ⏱ 预计需要 <span className="font-bold">{days}</span> 天完成
+                      {excess > 0 && (
+                        <span className="text-destructive font-medium">
+                          （超 {excess} 片），或补 {bonusNeeded} 片万能可 {days - 1} 天完成
+                        </span>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             );
           })}

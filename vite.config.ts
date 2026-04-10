@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import { viteSingleFile } from "vite-plugin-singlefile";
+import legacy from "@vitejs/plugin-legacy";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
@@ -17,7 +18,10 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     mode === "development" && componentTagger(),
-    mode === "production" && viteSingleFile(),
+    mode === "production" && !process.env.VITE_NO_SINGLEFILE && viteSingleFile(),
+    mode === "production" && process.env.VITE_LEGACY === "1" && legacy({
+      targets: ["android >= 5", "chrome >= 49", "ios >= 10"],
+    }),
   ].filter(Boolean),
   build: {
     target: ["es2015", "chrome60", "safari11"],

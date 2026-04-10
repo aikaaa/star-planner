@@ -5,7 +5,7 @@ import { useTheme } from "@/lib/theme";
 import FarmingCalendar from "@/components/FarmingCalendar";
 import SetPlanDialog from "@/components/SetPlanDialog";
 import CommunityDialog from "@/components/CommunityDialog";
-import { CharacterPlan, getEffectiveTargetStar } from "@/lib/types";
+import { CharacterPlan, getCompletionDate, getEffectiveTargetStar, parseLocalDate } from "@/lib/types";
 import { reportFarmingCharacters } from "@/lib/communityStats";
 
 const STORAGE_KEY = "shard-farming-plans";
@@ -31,7 +31,17 @@ export default function Index() {
 
   const handleSavePlans = (newPlans: CharacterPlan[]) => {
     setPlans(newPlans);
-    reportFarmingCharacters(newPlans.map((p) => ({ name: p.name, targetStar: getEffectiveTargetStar(p) })));
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const in7Days = new Date(today); in7Days.setDate(today.getDate() + 7);
+    reportFarmingCharacters(
+      newPlans
+        .filter((p) => {
+          const start = parseLocalDate(p.startDate);
+          const end = getCompletionDate(p);
+          return start <= in7Days && end >= today;
+        })
+        .map((p) => ({ name: p.name, targetStar: getEffectiveTargetStar(p) }))
+    );
   };
 
   return (

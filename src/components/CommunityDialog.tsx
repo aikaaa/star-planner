@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Trophy, Loader2, WifiOff, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchCommunityTop10, type CommunityCharacter } from "@/lib/communityStats";
-import { COMMUNITY_TOP_CHARACTERS } from "@/lib/types";
+import { COMMUNITY_TOP_CHARACTERS, formatCharName } from "@/lib/types";
 
 interface CommunityDialogProps {
   open: boolean;
@@ -98,7 +98,7 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-1">
-                      <span className="font-semibold text-foreground text-sm">{char.name}</span>
+                      <span className="font-semibold text-foreground text-sm">{formatCharName(char.name)}</span>
                       {char.topTargetStar != null && (
                         <span className="text-[10px] text-muted-foreground/70 shrink-0">
                           更多人选择跑<span className="font-bold text-primary">{char.topTargetStar}★</span>

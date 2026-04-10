@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { CharacterPlan, getCharactersOnDate, getCompletionDate, getDaysNeeded, getEffectiveTargetStar, getPartialProgress, parseLocalDate, CHAR_ICON_OPTIONS } from "@/lib/types";
+import { CharacterPlan, formatCharName, getCharactersOnDate, getCompletionDate, getDaysNeeded, getEffectiveTargetStar, getPartialProgress, parseLocalDate, CHAR_ICON_OPTIONS } from "@/lib/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getAvatarUrl } from "@/lib/roleAvatars";
@@ -133,7 +133,7 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
           ).map(([name, { plan, segments }], i) => (
             <div key={name} className="flex items-center gap-1 text-xs text-muted-foreground">
               <CharAvatar plan={plan} index={plans.findIndex(p => p.name === name)} size="24px" />
-              <span>{name}</span>
+              <span>{formatCharName(name)}</span>
               {segments.length === 1
                 ? <span>{segments[0].currentStar}→{getEffectiveTargetStar(segments[0])}</span>
                 : <span>{segments.map(s => `${s.currentStar}→${getEffectiveTargetStar(s)}`).join(", ")}</span>
@@ -231,12 +231,13 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
                 const e = getCompletionDate(p); e.setHours(0, 0, 0, 0);
                 return todayStart >= s && todayStart <= e;
               });
-              const todayLabel = (() => {
+              const todayInfo = (() => {
                 if (!activeToday) return null;
                 const s = parseLocalDate(activeToday.startDate); s.setHours(0, 0, 0, 0);
                 const daysElapsed = Math.max(0, Math.round((todayStart.getTime() - s.getTime()) / 86400000)) + 1;
-                const { reachableStar, remainingShards } = getPartialProgress(activeToday.currentStar, activeToday.currentShards, daysElapsed);
-                return reachableStar >= 5 ? "今日可达 5★ 满星" : `今日可达 ${reachableStar}★ 余 ${remainingShards} 片`;
+                const { reachableStar, remainingShards } = getPartialProgress(activeToday.currentStar, activeToday.currentShards + (activeToday.bonusShards ?? 0), daysElapsed);
+                const isExcess = reachableStar >= 5 && remainingShards > 0;
+                return { reachableStar, remainingShards, isExcess };
               })();
 
               return (
@@ -248,12 +249,21 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
                   <div className="flex items-center justify-between" style={{paddingBottom: CARD_HEADER_PB, borderBottom: "1px solid hsl(var(--border) / 0.5)"}}>
                     <div className="flex items-center gap-2">
                       <CharAvatar plan={first} index={firstIdx} size="32px" />
-                      <span className="font-semibold text-foreground text-sm">{name}</span>
+                      <span className="font-semibold text-foreground text-sm">{formatCharName(name)}</span>
                     </div>
-                    {todayLabel && (
+                    {todayInfo && (
                       <div className="text-xs text-muted-foreground">
                         今日可达{" "}
-                        <span className="text-star font-bold">{todayLabel.replace(/今日可达 /, "")}</span>
+                        {todayInfo.isExcess ? (
+                          <>
+                            <span className="text-star font-bold">5★ 满星</span>
+                            <span className="text-destructive font-bold"> 超 {todayInfo.remainingShards} 片</span>
+                          </>
+                        ) : todayInfo.reachableStar >= 5 ? (
+                          <span className="text-star font-bold">5★ 满星</span>
+                        ) : (
+                          <span className="text-star font-bold">{todayInfo.reachableStar}★ 余 {todayInfo.remainingShards} 片</span>
+                        )}
                       </div>
                     )}
                   </div>
@@ -263,6 +273,10 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
                     const targetStar = getEffectiveTargetStar(p);
                     const startD = parseLocalDate(p.startDate);
                     const fmt = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}`;
+                    const { remainingShards, reachableStar } = p.farmingMode === "free"
+                      ? getPartialProgress(p.currentStar, p.currentShards + (p.bonusShards ?? 0), days)
+                      : { remainingShards: 0, reachableStar: targetStar };
+                    const isExcess = reachableStar >= 5 && remainingShards > 0;
                     return (
                       <div
                         key={p.id}
@@ -274,7 +288,13 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
                         }}
                       >
                         <div className="text-xs text-muted-foreground">
-                          {p.currentStar}★ → {targetStar}★ &nbsp;预计 {days} 天
+                          {p.currentStar}★ → {targetStar}★
+                          {p.farmingMode === "free" && remainingShards > 0 && (
+                            isExcess
+                              ? <span className="text-destructive"> 超 {remainingShards} 片</span>
+                              : ` 余 ${remainingShards} 片`
+                          )}
+                          {" · "}预计 {days} 天
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {fmt(startD)} - {fmt(endDate)}
