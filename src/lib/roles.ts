@@ -2,11 +2,13 @@
  * 角色数据表 —— 单一数据源
  *
  * 排序规则：最新角色在最前面（倒序）
- * 新增角色：在数组最顶部插入一行即可
+ * 新增角色：直接在 Supabase characters 表插入一行即可，无需改代码
  *
  * 头像文件存放：/public/avatars/<en>.png
  * CDN 地址：https://cdn.jsdelivr.net/gh/aikaaa/star-planner@main/public/avatars/<en>.png
  */
+
+import { supabase } from "@/lib/supabase";
 
 const CDN_BASE = `${import.meta.env.BASE_URL}avatars`;
 
@@ -115,8 +117,36 @@ export const ROLES: RoleEntry[] = [
 // 以下为派生数据，供各组件直接使用，无需修改
 // ─────────────────────────────────────────────────────────────
 
-/** 角色名列表（供下拉选择器使用，最早角色在最前） */
+/** 角色名列表（本地兜底，最早角色在最前） */
 export const ROLE_LIST: string[] = [...ROLES].reverse().map((r) => r.zh);
+
+// ─────────────────────────────────────────────────────────────
+// 远程角色列表（从 Supabase characters 表拉取，失败时降级到本地）
+// ─────────────────────────────────────────────────────────────
+
+let _remoteRoles: RoleEntry[] | null = null;
+
+/** 从 Supabase 拉取角色列表，结果缓存在内存中 */
+export async function fetchRemoteRoles(): Promise<RoleEntry[]> {
+  if (_remoteRoles) return _remoteRoles;
+  if (!supabase) return ROLES;
+
+  const { data, error } = await supabase
+    .from("characters")
+    .select("zh, en")
+    .order("sort_order", { ascending: true });
+
+  if (error || !data || data.length === 0) return ROLES;
+
+  _remoteRoles = data.map((r: { zh: string; en: string }) => ({ zh: r.zh, en: r.en }));
+  return _remoteRoles;
+}
+
+/** 从远程角色列表中获取角色名列表（最新角色在最前） */
+export async function fetchRemoteRoleList(): Promise<string[]> {
+  const roles = await fetchRemoteRoles();
+  return [...roles].reverse().map((r) => r.zh);
+}
 
 /** 角色名 → 头像 CDN URL（无图片时返回 null） */
 export function getAvatarUrl(roleName: string): string | null {

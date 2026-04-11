@@ -21,7 +21,7 @@ import {
   parseLocalDate,
   toDateStr,
 } from "@/lib/types";
-import { ROLE_LIST } from "@/lib/roleList";
+import { ROLE_LIST, fetchRemoteRoleList } from "@/lib/roleList";
 import { generateUUID } from "@/lib/supabase";
 
 interface SetPlanDialogProps {
@@ -44,10 +44,15 @@ const emptyCharacter = (): CharacterPlan => ({
 function RoleCombobox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [roleList, setRoleList] = useState<string[]>(ROLE_LIST);
+
+  useEffect(() => {
+    fetchRemoteRoleList().then(setRoleList).catch(() => {/* 降级到本地 */});
+  }, []);
 
   const filtered = search.trim()
-    ? ROLE_LIST.filter((r) => r.toLowerCase().includes(search.trim().toLowerCase()))
-    : ROLE_LIST;
+    ? roleList.filter((r) => r.toLowerCase().includes(search.trim().toLowerCase()))
+    : roleList;
 
   const handleSelect = (role: string) => {
     onChange(role);
