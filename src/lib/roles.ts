@@ -11,6 +11,7 @@
 import { supabase } from "@/lib/supabase";
 
 const CDN_BASE = `${import.meta.env.BASE_URL}avatars`;
+const SUPABASE_AVATAR_BASE = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/avatars`;
 
 export interface RoleEntry {
   /** 游戏内中文名（与 CharacterPlan.name 对应） */
@@ -148,10 +149,15 @@ export async function fetchRemoteRoleList(): Promise<string[]> {
   return [...roles].reverse().map((r) => r.zh);
 }
 
-/** 角色名 → 头像 CDN URL（无图片时返回 null） */
+/** 角色名 → 头像 URL，优先 Supabase Storage，降级到本地 CDN */
 export function getAvatarUrl(roleName: string): string | null {
-  const role = ROLES.find((r) => r.zh === roleName);
+  // 先从远程角色列表查（已拉取时）
+  const remoteRole = _remoteRoles?.find((r) => r.zh === roleName);
+  const localRole = ROLES.find((r) => r.zh === roleName);
+  const role = remoteRole ?? localRole;
   if (!role || !role.en) return null;
+  // 优先 Supabase Storage
+  if (SUPABASE_AVATAR_BASE) return `${SUPABASE_AVATAR_BASE}/${role.en}.png`;
   return `${CDN_BASE}/${role.en}.png`;
 }
 

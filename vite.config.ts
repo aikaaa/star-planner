@@ -7,6 +7,7 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  root: path.resolve(__dirname),
   base: process.env.VITE_BASE ?? "/star-planner/",
   server: {
     host: "::",
