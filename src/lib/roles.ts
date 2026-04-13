@@ -127,6 +127,11 @@ export const ROLE_LIST: string[] = [...ROLES].reverse().map((r) => r.zh);
 
 let _remoteRoles: RoleEntry[] | null = null;
 
+/** 远程角色列表是否已加载完成 */
+export function isRemoteRolesLoaded(): boolean {
+  return _remoteRoles !== null;
+}
+
 /** 从 Supabase 拉取角色列表，结果缓存在内存中 */
 export async function fetchRemoteRoles(): Promise<RoleEntry[]> {
   if (_remoteRoles) return _remoteRoles;

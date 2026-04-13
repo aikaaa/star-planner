@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getAvatarUrl } from "@/lib/roleAvatars";
 import { CARD_SPACING } from "@/lib/cardSpacing";
-import { fetchRemoteRoles } from "@/lib/roles";
+import { fetchRemoteRoles, isRemoteRolesLoaded } from "@/lib/roles";
 
 interface FarmingCalendarProps {
   plans: CharacterPlan[];
@@ -39,6 +39,14 @@ function CharAvatar({
   className?: string;
 }) {
   const [imgFailed, setImgFailed] = useState(false);
+  const [rolesReady, setRolesReady] = useState(isRemoteRolesLoaded);
+
+  useEffect(() => {
+    if (!rolesReady) {
+      fetchRemoteRoles().then(() => setRolesReady(true));
+    }
+  }, [rolesReady]);
+
   const avatarUrl = getAvatarUrl(plan.name);
 
   const sizeNum = parseFloat(size);
@@ -46,6 +54,16 @@ function CharAvatar({
   const fontSizeStr = isNaN(sizeNum) ? "0.48em" : `${sizeNum * 0.48}${unit}`;
 
   const baseStyle = { width: size, height: size, minWidth: size, flexShrink: 0 };
+
+  // 远程数据未加载完且本地没有 URL → 显示空白占位，避免闪首字
+  if (!rolesReady && !avatarUrl) {
+    return (
+      <div
+        className={`rounded-full ${className}`}
+        style={{ ...baseStyle, background: "var(--avatar-circle-bg)" }}
+      />
+    );
+  }
 
   if (avatarUrl && !imgFailed) {
     return (
@@ -85,12 +103,6 @@ function CharAvatar({
 
 export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
   const [viewMonth, setViewMonth] = useState(() => new Date());
-  const [, setRolesLoaded] = useState(false);
-
-  // 远程角色列表加载完成后强制重渲染，确保头像 URL 使用最新数据
-  useEffect(() => {
-    fetchRemoteRoles().then(() => setRolesLoaded(true));
-  }, []);
 
   const year = viewMonth.getFullYear();
   const month = viewMonth.getMonth();
