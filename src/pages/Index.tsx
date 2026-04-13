@@ -7,6 +7,7 @@ import SetPlanDialog from "@/components/SetPlanDialog";
 import CommunityDialog from "@/components/CommunityDialog";
 import { CharacterPlan, getCompletionDate, getEffectiveTargetStar, parseLocalDate } from "@/lib/types";
 import { reportFarmingCharacters } from "@/lib/communityStats";
+import { fetchRemoteRoles } from "@/lib/roles";
 
 const STORAGE_KEY = "shard-farming-plans";
 
@@ -24,6 +25,11 @@ export default function Index() {
   const [showSetPlan, setShowSetPlan] = useState(false);
   const [showCommunity, setShowCommunity] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const [rolesReady, setRolesReady] = useState(false);
+
+  useEffect(() => {
+    fetchRemoteRoles().then(() => setRolesReady(true)).catch(() => setRolesReady(true));
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(plans));
@@ -43,6 +49,14 @@ export default function Index() {
         .map((p) => ({ name: p.name, targetStar: getEffectiveTargetStar(p) }))
     );
   };
+
+  if (!rolesReady) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
