@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { CharacterPlan, formatCharName, getCharactersOnDate, getCompletionDate, getDaysNeeded, getEffectiveTargetStar, getPartialProgress, parseLocalDate, CHAR_ICON_OPTIONS } from "@/lib/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getAvatarUrl } from "@/lib/roleAvatars";
 import { CARD_SPACING } from "@/lib/cardSpacing";
+import { fetchRemoteRoles } from "@/lib/roles";
 
 interface FarmingCalendarProps {
   plans: CharacterPlan[];
@@ -84,6 +85,12 @@ function CharAvatar({
 
 export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
   const [viewMonth, setViewMonth] = useState(() => new Date());
+  const [, setRolesLoaded] = useState(false);
+
+  // 远程角色列表加载完成后强制重渲染，确保头像 URL 使用最新数据
+  useEffect(() => {
+    fetchRemoteRoles().then(() => setRolesLoaded(true));
+  }, []);
 
   const year = viewMonth.getFullYear();
   const month = viewMonth.getMonth();
