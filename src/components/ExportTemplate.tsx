@@ -45,15 +45,17 @@ const FALLBACK_BG = [
 function AvatarPlaceholder({ size, index }: { size: number; index: number }) {
   const bg = FALLBACK_BG[index % FALLBACK_BG.length];
   const iconSize = Math.round(size * 0.55);
+  const offset = Math.round((size - iconSize) / 2);
   return (
     <div style={{
       width: size, height: size, borderRadius: "50%",
-      background: bg, display: "flex", alignItems: "center", justifyContent: "center",
-      flexShrink: 0,
+      background: bg, position: "relative", flexShrink: 0, overflow: "hidden",
     }}>
-      <svg width={iconSize} height={iconSize} viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M6 0C6 0 6.85334 2.69555 8.07889 3.92111C9.30445 5.14666 12 6 12 6C12 6 9.30445 6.85334 8.07889 8.07889C6.85334 9.30445 6 12 6 12C6 12 5.14666 9.30445 3.92111 8.07889C2.69555 6.85334 0 6 0 6C0 6 3.34379 4.69221 3.92111 3.92111C4.49842 3.15 6 0 6 0Z" fill="rgba(255,255,255,0.55)"/>
-      </svg>
+      <div style={{ position: "absolute", top: offset, left: offset }}>
+        <svg width={iconSize} height={iconSize} viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 0C6 0 6.85334 2.69555 8.07889 3.92111C9.30445 5.14666 12 6 12 6C12 6 9.30445 6.85334 8.07889 8.07889C6.85334 9.30445 6 12 6 12C6 12 5.14666 9.30445 3.92111 8.07889C2.69555 6.85334 0 6 0 6C0 6 3.34379 4.69221 3.92111 3.92111C4.49842 3.15 6 0 6 0Z" fill="rgba(255,255,255,0.55)"/>
+        </svg>
+      </div>
     </div>
   );
 }
@@ -415,8 +417,10 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
               <span style={{ color: C.primary, fontWeight: 700 }}>铃兰跑片助手</span>
             </div>
             {/* 第二行：提示语 */}
-            <div style={{ fontSize: 10, color: "#4E736E", marginTop: 8, display: "flex", alignItems: "center", gap: 3 }}>
-              <span style={{ color: "#4E736E", fontSize: 8, opacity: 0.5 }}>◆</span>
+            <div style={{ fontSize: 10, color: "#4E736E", marginTop: 8, display: "flex", alignItems: "center", gap: 4 }}>
+              <svg width={9} height={9} viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+                <path d="M6 0C6 0 6.85334 2.69555 8.07889 3.92111C9.30445 5.14666 12 6 12 6C12 6 9.30445 6.85334 8.07889 8.07889C6.85334 9.30445 6 12 6 12C6 12 5.14666 9.30445 3.92111 8.07889C2.69555 6.85334 0 6 0 6C0 6 3.34379 4.69221 3.92111 3.92111C4.49842 3.15 6 0 6 0Z" fill="#C1D6D3"/>
+              </svg>
               <span>保存图片，可直接导入计划</span>
             </div>
           </div>
