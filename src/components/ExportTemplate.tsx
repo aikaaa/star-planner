@@ -402,19 +402,20 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <span style={{ fontSize: 12, color: C.muted }}>TapTap 游戏工具</span>
               {/* 胶囊标签 */}
-              <div style={{
+              <button style={{
                 background: C.primary,
+                border: "none",
                 borderRadius: 4,
-                padding: "0 8px",
-                height: 20,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                padding: "3px 8px",
+                fontSize: 11,
+                color: "#fff",
+                fontWeight: 600,
+                letterSpacing: 0.2,
+                cursor: "default",
+                fontFamily: "'Noto Serif SC', 'Noto Serif', serif",
               }}>
-                <span style={{ fontSize: 11, color: "#fff", fontWeight: 600, letterSpacing: 0.2, lineHeight: "20px", display: "block" }}>
-                  铃兰跑片助手
-                </span>
-              </div>
+                ◆ 铃兰跑片助手
+              </button>
             </div>
             {/* 第二行：提示语 */}
             <div style={{ fontSize: 10, color: C.muted, marginTop: 4, display: "flex", alignItems: "center", gap: 3 }}>
