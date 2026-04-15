@@ -408,13 +408,14 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                 gap: 4,
                 background: C.primary,
                 borderRadius: 4,
-                padding: "2px 7px 2px 5px",
+                padding: "3px 7px 3px 5px",
+                lineHeight: 1,
               }}>
                 {/* 书签图标 */}
-                <svg width="10" height="12" viewBox="0 0 10 12" fill="none">
+                <svg width="10" height="11" viewBox="0 0 10 12" fill="none" style={{ display: "block" }}>
                   <path d="M1 1h8v10L5 8.5 1 11V1z" fill="none" stroke="#fff" strokeWidth="1.2" strokeLinejoin="round"/>
                 </svg>
-                <span style={{ fontSize: 11, color: "#fff", fontWeight: 600, letterSpacing: 0.2 }}>
+                <span style={{ fontSize: 11, color: "#fff", fontWeight: 600, letterSpacing: 0.2, lineHeight: 1 }}>
                   铃兰跑片助手
                 </span>
               </div>
