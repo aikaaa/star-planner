@@ -390,7 +390,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
 
         {/* ── 底部：水印 + 二维码 ─────────────────────────────────── */}
         <div style={{
-          padding: "12px 16px 16px",
+          padding: "12px 20px 16px",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
@@ -407,7 +407,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
             <img
               src={qrDataUrl}
               alt="QR"
-              style={{ width: 80, height: 80, borderRadius: 4, flexShrink: 0 }}
+              style={{ width: 80, height: 80, borderRadius: 8, flexShrink: 0 }}
             />
           )}
         </div>
