@@ -388,26 +388,50 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
           </div>
         </div>
 
-        {/* ── 底部：水印 + 二维码 ─────────────────────────────────── */}
+        {/* ── 底部：来源标注 + 二维码 ─────────────────────────────── */}
         <div style={{
-          padding: "8px 20px 16px",
+          padding: "8px 20px 14px",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          gap: 12,
         }}>
-          <div style={{ lineHeight: 1.5 }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: C.primary, letterSpacing: 0.3 }}>
-              铃兰跑片助手
+          {/* 左：平台标注 + 工具名胶囊 + 提示语 */}
+          <div>
+            {/* 第一行：平台 + 工具名胶囊 */}
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ fontSize: 12, color: C.muted }}>TapTap 游戏工具</span>
+              {/* 胶囊标签 */}
+              <div style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                background: C.primary,
+                borderRadius: 4,
+                padding: "2px 7px 2px 5px",
+              }}>
+                {/* 书签图标 */}
+                <svg width="10" height="12" viewBox="0 0 10 12" fill="none">
+                  <path d="M1 1h8v10L5 8.5 1 11V1z" fill="none" stroke="#fff" strokeWidth="1.2" strokeLinejoin="round"/>
+                </svg>
+                <span style={{ fontSize: 11, color: "#fff", fontWeight: 600, letterSpacing: 0.2 }}>
+                  铃兰跑片助手
+                </span>
+              </div>
             </div>
-            <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>
-              扫码可导入计划
+            {/* 第二行：提示语 */}
+            <div style={{ fontSize: 10, color: C.muted, marginTop: 4, display: "flex", alignItems: "center", gap: 3 }}>
+              <span style={{ color: C.primary, fontSize: 8 }}>◆</span>
+              <span>保存图片，可直接导入计划</span>
             </div>
           </div>
+
+          {/* 右：二维码 */}
           {qrDataUrl && (
             <img
               src={qrDataUrl}
               alt="QR"
-              style={{ width: 80, height: 80, borderRadius: 8, flexShrink: 0 }}
+              style={{ width: 72, height: 72, borderRadius: 8, flexShrink: 0 }}
             />
           )}
         </div>
