@@ -69,6 +69,7 @@ function TemplateAvatar({ plan, size }: { plan: CharacterPlan; size: number }) {
       <div style={{
         fontSize: Math.round(size * 0.42), color: C.muted,
         fontWeight: 500, lineHeight: "1", verticalAlign: "middle",
+        fontFamily: "Arial, sans-serif",
       }}>
         {plan.name.charAt(0)}
       </div>
