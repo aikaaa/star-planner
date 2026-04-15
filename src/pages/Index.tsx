@@ -5,6 +5,7 @@ import { useTheme } from "@/lib/theme";
 import FarmingCalendar from "@/components/FarmingCalendar";
 import SetPlanDialog from "@/components/SetPlanDialog";
 import CommunityDialog from "@/components/CommunityDialog";
+import ExportImportPanel from "@/components/ExportImportPanel";
 import { CharacterPlan, getCompletionDate, getEffectiveTargetStar, parseLocalDate } from "@/lib/types";
 import { reportFarmingCharacters } from "@/lib/communityStats";
 import { fetchRemoteRoles } from "@/lib/roles";
@@ -97,7 +98,7 @@ export default function Index() {
         </Button>
       </div>
 
-      {/* Calendar */}
+      {/* Calendar + Export/Import */}
       <div className="mx-auto px-4" style={{ maxWidth: "600px", paddingTop: "12px", paddingBottom: "32px" }}>
         {plans.length === 0 ? (
           <div className="gradient-card rounded-xl border border-border p-8 text-center">
@@ -112,6 +113,11 @@ export default function Index() {
             <FarmingCalendar plans={plans} />
           </div>
         )}
+
+        {/* 导入 / 导出 按钮 */}
+        <div className="mt-3">
+          <ExportImportPanel plans={plans} onImport={handleSavePlans} />
+        </div>
       </div>
 
       <SetPlanDialog open={showSetPlan} onOpenChange={setShowSetPlan} existingPlans={plans} onSave={handleSavePlans} />
