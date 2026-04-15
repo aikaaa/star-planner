@@ -405,10 +405,13 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
               <div style={{
                 background: C.primary,
                 borderRadius: 4,
-                padding: "3px 8px",
-                lineHeight: 1,
+                padding: "0 8px",
+                height: 20,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}>
-                <span style={{ fontSize: 11, color: "#fff", fontWeight: 600, letterSpacing: 0.2, lineHeight: 1 }}>
+                <span style={{ fontSize: 11, color: "#fff", fontWeight: 600, letterSpacing: 0.2, lineHeight: "20px", display: "block" }}>
                   铃兰跑片助手
                 </span>
               </div>
