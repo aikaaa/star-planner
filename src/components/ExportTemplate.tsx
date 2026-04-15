@@ -423,13 +423,18 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
             </div>
           </div>
 
-          {/* 右：二维码 */}
+          {/* 右：二维码（白底 padding + 圆角，不用 overflow:hidden，避免裁掉 QR 定位角） */}
           {qrDataUrl && (
-            <img
-              src={qrDataUrl}
-              alt="QR"
-              style={{ width: 72, height: 72, borderRadius: 8, flexShrink: 0 }}
-            />
+            <div style={{
+              padding: 4, borderRadius: 10, background: "#ffffff",
+              flexShrink: 0, lineHeight: 0,
+            }}>
+              <img
+                src={qrDataUrl}
+                alt="QR"
+                style={{ width: 64, height: 64, display: "block" }}
+              />
+            </div>
           )}
         </div>
       </div>
