@@ -35,18 +35,31 @@ const C = {
 
 const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
 
+// ── 占位头像背景色（按角色索引区分）────────────────────────────────
+const FALLBACK_BG = [
+  "#c8dbd8", "#b8cfd8", "#c8d4c0", "#d8c8c8",
+  "#ccc8d8", "#d4d0c0", "#c0d4cc", "#d0c8d4",
+];
+
 // ── 通用占位图标（无头像时显示）────────────────────────────────────
-function AvatarPlaceholder({ size }: { size: number }) {
+function AvatarPlaceholder({ size, index }: { size: number; index: number }) {
+  const bg = FALLBACK_BG[index % FALLBACK_BG.length];
   const iconSize = Math.round(size * 0.55);
   return (
-    <svg width={iconSize} height={iconSize} viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M6 0C6 0 6.85334 2.69555 8.07889 3.92111C9.30445 5.14666 12 6 12 6C12 6 9.30445 6.85334 8.07889 8.07889C6.85334 9.30445 6 12 6 12C6 12 5.14666 9.30445 3.92111 8.07889C2.69555 6.85334 0 6 0 6C0 6 3.34379 4.69221 3.92111 3.92111C4.49842 3.15 6 0 6 0Z" fill="rgba(255,255,255,0.55)"/>
-    </svg>
+    <div style={{
+      width: size, height: size, borderRadius: "50%",
+      background: bg, display: "flex", alignItems: "center", justifyContent: "center",
+      flexShrink: 0,
+    }}>
+      <svg width={iconSize} height={iconSize} viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 0C6 0 6.85334 2.69555 8.07889 3.92111C9.30445 5.14666 12 6 12 6C12 6 9.30445 6.85334 8.07889 8.07889C6.85334 9.30445 6 12 6 12C6 12 5.14666 9.30445 3.92111 8.07889C2.69555 6.85334 0 6 0 6C0 6 3.34379 4.69221 3.92111 3.92111C4.49842 3.15 6 0 6 0Z" fill="rgba(255,255,255,0.55)"/>
+      </svg>
+    </div>
   );
 }
 
 // ── 头像子组件（跨域 img + fallback 占位图标） ──────────────────────
-function TemplateAvatar({ plan, size }: { plan: CharacterPlan; size: number }) {
+function TemplateAvatar({ plan, size, index }: { plan: CharacterPlan; size: number; index: number }) {
   const [failed, setFailed] = useState(false);
   const avatarUrl = getAvatarUrl(plan.name);
 
@@ -68,19 +81,11 @@ function TemplateAvatar({ plan, size }: { plan: CharacterPlan; size: number }) {
     );
   }
 
-  return (
-    <div style={{
-      width: size, height: size, minWidth: size,
-      borderRadius: "50%", background: C.avatarBg,
-      flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
-    }}>
-      <AvatarPlaceholder size={size} />
-    </div>
-  );
+  return <AvatarPlaceholder size={size} index={index} />;
 }
 
 // ── 小头像（日历格用） ──────────────
-function CalAvatar({ plan, size }: { plan: CharacterPlan; size: number }) {
+function CalAvatar({ plan, size, index }: { plan: CharacterPlan; size: number; index: number }) {
   const [failed, setFailed] = useState(false);
   const avatarUrl = getAvatarUrl(plan.name);
   if (avatarUrl && !failed) {
@@ -98,15 +103,7 @@ function CalAvatar({ plan, size }: { plan: CharacterPlan; size: number }) {
       </div>
     );
   }
-  return (
-    <div style={{
-      width: size, height: size, borderRadius: "50%",
-      background: C.avatarBg, flexShrink: 0,
-      display: "flex", alignItems: "center", justifyContent: "center",
-    }}>
-      <AvatarPlaceholder size={size} />
-    </div>
-  );
+  return <AvatarPlaceholder size={size} index={index} />;
 }
 
 // ── 主组件 ────────────────────────────────────────────────────────
@@ -289,7 +286,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                               flexShrink: 0,
                             }}
                           >
-                            <CalAvatar plan={c} size={14} />
+                            <CalAvatar plan={c} size={14} index={plans.findIndex(p => p.id === c.id)} />
                           </div>
                         ))}
                       </div>
@@ -302,7 +299,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
 
           {/* 计划卡片 */}
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {[...groups.entries()].map(([name, group]) => {
+            {[...groups.entries()].map(([name, group], gi) => {
               const first = group[0];
 
               // 头部右侧星级摘要（提前计算，避免 IIFE 内 JSX 渲染不稳）
@@ -352,7 +349,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                     {/* 左：头像 + 名字（inline + verticalAlign:middle，比 flex 在 html2canvas 里更稳定） */}
                     <div style={{ lineHeight: "28px", fontSize: 0 }}>
                       <span style={{ display: "inline-block", verticalAlign: "middle" }}>
-                        <TemplateAvatar plan={first} size={28} />
+                        <TemplateAvatar plan={first} size={28} index={gi} />
                       </span>
                       <span style={{ display: "inline-block", verticalAlign: "middle", fontSize: 13, fontWeight: 600, lineHeight: 1, marginLeft: 8 }}>
                         {formatCharName(name)}
