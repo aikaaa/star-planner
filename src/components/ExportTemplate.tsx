@@ -359,7 +359,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
             <img
               src={qrDataUrl}
               alt="QR"
-              style={{ width: 64, height: 64, borderRadius: 4, flexShrink: 0 }}
+              style={{ width: 80, height: 80, borderRadius: 4, flexShrink: 0 }}
             />
           )}
         </div>

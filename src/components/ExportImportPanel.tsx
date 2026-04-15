@@ -48,15 +48,15 @@ export default function ExportImportPanel({ plans, onImport }: Props) {
 
       // 生成 QR 码 data URL
       const qr = await QRCode.toDataURL(socStr, {
-        width: 128,
-        margin: 1,
-        errorCorrectionLevel: "L",
-        color: { dark: "#26403c", light: "#ffffff" },
+        width: 300,   // 高分辨率生成，避免模糊
+        margin: 3,    // 足够的静区，提升识别率
+        errorCorrectionLevel: "M",
+        color: { dark: "#000000", light: "#ffffff" }, // 纯黑，jsQR 识别最稳
       });
       setQrDataUrl(qr);
 
       // 等 React 重渲染（带 QR 的模板）
-      await new Promise<void>(resolve => setTimeout(resolve, 120));
+      await new Promise<void>(resolve => setTimeout(resolve, 200));
 
       if (!templateRef.current) return;
 
