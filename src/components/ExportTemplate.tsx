@@ -398,24 +398,11 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
         }}>
           {/* 左：平台标注 + 工具名胶囊 + 提示语 */}
           <div>
-            {/* 第一行：平台 + 工具名胶囊 */}
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ fontSize: 12, color: C.muted }}>TapTap 游戏工具</span>
-              {/* 胶囊标签 */}
-              <button style={{
-                background: C.primary,
-                border: "none",
-                borderRadius: 4,
-                padding: "3px 8px",
-                fontSize: 11,
-                color: "#fff",
-                fontWeight: 600,
-                letterSpacing: 0.2,
-                cursor: "default",
-                fontFamily: "'Noto Serif SC', 'Noto Serif', serif",
-              }}>
-                ◆ 铃兰跑片助手
-              </button>
+            {/* 第一行：平台 · 工具名 */}
+            <div style={{ fontSize: 12, lineHeight: 1 }}>
+              <span style={{ color: C.muted }}>TapTap 游戏工具</span>
+              <span style={{ color: C.border, margin: "0 5px" }}>·</span>
+              <span style={{ color: C.primary, fontWeight: 700 }}>铃兰跑片助手</span>
             </div>
             {/* 第二行：提示语 */}
             <div style={{ fontSize: 10, color: C.muted, marginTop: 4, display: "flex", alignItems: "center", gap: 3 }}>
