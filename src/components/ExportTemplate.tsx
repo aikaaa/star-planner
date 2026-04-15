@@ -327,7 +327,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                   style={{
                     background: C.card,
                     borderRadius: 4,
-                    padding: "10px 12px 2px",
+                    padding: "10px 12px 8px",
                   }}
                 >
                   {/* 卡片头：头像 + 角色名（左）｜ 星级摘要（右） */}
@@ -348,7 +348,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                       </span>
                     </div>
                     {/* 右：星级摘要，全部绿色 */}
-                    <span style={{ fontSize: 12, color: C.primary, fontWeight: 600, flexShrink: 0 }}>
+                    <span style={{ fontSize: 12, color: "#BDAB7F", fontWeight: 600, flexShrink: 0 }}>
                       {headerStar.from}★ → {headerStar.to}★
                       {headerStar.shards > 0 && (
                         headerStar.excess
