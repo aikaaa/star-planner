@@ -58,18 +58,17 @@ function TemplateAvatar({ plan, size }: { plan: CharacterPlan; size: number }) {
     );
   }
 
-  // 用 position: absolute + transform 居中，比 lineHeight/flex 在 html2canvas 中更稳定
+  // 用 flex + line-height: 1 + vertical-align 处理中文基线问题
   return (
     <div style={{
       width: size, height: size, minWidth: size,
       borderRadius: "50%", background: C.avatarBg,
-      flexShrink: 0, position: "relative", overflow: "hidden",
+      flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
+      overflow: "hidden",
     }}>
       <div style={{
-        position: "absolute", top: "50%", left: "50%",
-        transform: "translate(-50%, -50%)",
         fontSize: Math.round(size * 0.42), color: C.muted,
-        fontWeight: 500, whiteSpace: "nowrap",
+        fontWeight: 500, lineHeight: "1", verticalAlign: "middle",
       }}>
         {plan.name.charAt(0)}
       </div>
@@ -96,18 +95,17 @@ function CalAvatar({ plan, size }: { plan: CharacterPlan; size: number }) {
       </div>
     );
   }
-  // 用 position: absolute + transform 居中，比 flex 在 html2canvas 中更稳定
+  // 用 flex + line-height: 1 处理中文基线问题
   return (
     <div style={{
       width: size, height: size, borderRadius: "50%",
       background: C.avatarBg, flexShrink: 0,
-      position: "relative", overflow: "hidden",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      overflow: "hidden",
     }}>
       <div style={{
-        position: "absolute", top: "50%", left: "50%",
-        transform: "translate(-50%, -50%)",
         fontSize: Math.round(size * 0.5), color: C.muted, fontWeight: 500,
-        whiteSpace: "nowrap",
+        lineHeight: "1", verticalAlign: "middle",
       }}>
         {plan.name.charAt(0)}
       </div>
