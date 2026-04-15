@@ -160,14 +160,31 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
         {/* ── 标题头部 ───────────────────────────────── */}
         <div style={{
           background: `linear-gradient(135deg, ${C.gradStart}, ${C.gradEnd})`,
-          padding: "20px 20px 16px",
-          textAlign: "center",
+          padding: "18px 20px 16px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
         }}>
-          <div style={{ fontSize: 17, fontWeight: 700, color: "#fff", marginBottom: 4, letterSpacing: 0.3 }}>
-            {title}
+          {/* 左：标题 + 副标题 */}
+          <div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", lineHeight: 1.2, letterSpacing: 0.5 }}>
+              跑片计划
+            </div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", marginTop: 4 }}>
+              铃兰之剑：为这和平的世界
+            </div>
           </div>
-          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.72)" }}>
-            铃兰之剑：为这和平的世界
+          {/* 右：日期区间，方括号样式 */}
+          <div style={{
+            fontSize: 13,
+            fontWeight: 600,
+            color: "#fff",
+            letterSpacing: 0.3,
+            flexShrink: 0,
+            lineHeight: 1,
+          }}>
+            [ {fmtShort(minDate)} - {fmtShort(maxDate)} ]
           </div>
         </div>
 
@@ -366,14 +383,18 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
 
         {/* ── 底部：水印 + 二维码 ─────────────────────────────────── */}
         <div style={{
-          padding: "10px 14px 14px",
+          padding: "12px 16px 16px",
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "flex-end",
+          alignItems: "center",
         }}>
-          <div style={{ fontSize: 11, color: C.muted, lineHeight: 1.6 }}>
-            <div style={{ fontWeight: 600, color: C.primary }}>铃兰跑片助手</div>
-            <div>扫码可导入计划</div>
+          <div style={{ lineHeight: 1.5 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.primary, letterSpacing: 0.3 }}>
+              铃兰跑片助手
+            </div>
+            <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>
+              扫码可导入计划
+            </div>
           </div>
           {qrDataUrl && (
             <img
