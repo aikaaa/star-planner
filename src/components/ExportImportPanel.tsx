@@ -11,7 +11,7 @@ import { Upload, Download, X, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
 import { CharacterPlan } from "@/lib/types";
-import { encodeSoc, decodeSoc, readQrFromImage } from "@/lib/socExport";
+import { encodeSocForQr, decodeSoc, downloadSocRef, readQrFromImage } from "@/lib/socExport";
 import ExportTemplate from "./ExportTemplate";
 import html2canvas from "html2canvas";
 import QRCode from "qrcode";
@@ -46,13 +46,14 @@ export default function ExportImportPanel({ plans, onImport }: Props) {
     setIsExporting(true);
 
     try {
-      const socStr = encodeSoc(plans);
+      // 数据短则直接编码，过长则上传 Supabase 返回短 ID
+      const qrContent = await encodeSocForQr(plans);
 
-      // 生成 QR 码 data URL
-      const qr = await QRCode.toDataURL(socStr, {
-        width: 200,   // 恰好匹配 html2canvas scale:2 × 100px 显示，无插值，像素最清晰
+      // 生成 QR 码 data URL（内容已足够短，版本低、模块大，jsQR 可靠识别）
+      const qr = await QRCode.toDataURL(qrContent, {
+        width: 200,
         margin: 2,
-        errorCorrectionLevel: "L",  // 降低纠错级别以减少模块数，确保 jsQR 可识别
+        errorCorrectionLevel: "L",
         color: { dark: "#000000", light: "#ffffff" },
       });
       setQrDataUrl(qr);
@@ -118,7 +119,20 @@ export default function ExportImportPanel({ plans, onImport }: Props) {
         setImportError("未能识别到二维码，请确认是铃兰跑片助手导出的图片");
         return;
       }
-      const data = decodeSoc(text);
+
+      // 短链模式：从 Supabase 拉取原始 SOC 字符串
+      let socText = text;
+      if (text.startsWith("[SOC]ref:")) {
+        const id = text.slice("[SOC]ref:".length);
+        const remote = await downloadSocRef(id);
+        if (!remote) {
+          setImportError("计划数据已过期或不存在，请重新导出");
+          return;
+        }
+        socText = remote;
+      }
+
+      const data = decodeSoc(socText);
       if (!data) {
         setImportError("二维码内容格式不正确");
         return;

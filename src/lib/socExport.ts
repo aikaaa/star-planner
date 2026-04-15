@@ -8,8 +8,12 @@
  */
 
 import { CharacterPlan } from "@/lib/types";
+import { supabase } from "@/lib/supabase";
 
 const PREFIX = "[SOC]";
+const REF_PREFIX = "[SOC]ref:";
+// 超过此长度改用 Supabase 短链，避免 QR 模块过密无法识别
+const DIRECT_MAX_LEN = 150;
 
 export interface SocData {
   server: string;
@@ -63,7 +67,7 @@ export function encodeSoc(plans: CharacterPlan[], server = "cn"): string {
   return `${PREFIX}${toB64(json)}`;
 }
 
-// ── 解码（兼容 v1 旧格式） ────────────────────────────────────────
+// ── 解码（兼容 v1 旧格式；ref: 需先由调用方 resolve） ─────────────
 export function decodeSoc(text: string): SocData | null {
   try {
     const trimmed = text.trim();
@@ -111,6 +115,41 @@ export function decodeSoc(text: string): SocData | null {
   } catch {
     return null;
   }
+}
+
+// ── 生成 8 位短 ID ────────────────────────────────────────────────
+function generateShortId(): string {
+  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+  return Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+}
+
+// ── 上传到 Supabase，返回短 ID ────────────────────────────────────
+export async function uploadSocRef(socStr: string): Promise<string> {
+  if (!supabase) throw new Error("Supabase 未配置");
+  const id = generateShortId();
+  const { error } = await supabase.from("shared_plans").insert({ id, data: socStr });
+  if (error) throw error;
+  return id;
+}
+
+// ── 从 Supabase 拉取数据 ──────────────────────────────────────────
+export async function downloadSocRef(id: string): Promise<string | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from("shared_plans")
+    .select("data")
+    .eq("id", id)
+    .single();
+  if (error || !data) return null;
+  return data.data as string;
+}
+
+// ── 决定用直接编码还是 Supabase 短链 ─────────────────────────────
+export async function encodeSocForQr(plans: CharacterPlan[]): Promise<string> {
+  const socStr = encodeSoc(plans);
+  if (socStr.length <= DIRECT_MAX_LEN) return socStr;
+  const id = await uploadSocRef(socStr);
+  return `${REF_PREFIX}${id}`;
 }
 
 // ── 从图片识别二维码 ──────────────────────────────────────────────
