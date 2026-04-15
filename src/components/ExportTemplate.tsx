@@ -216,7 +216,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
             </div>
 
             {/* 星期 header */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 3, marginBottom: 3 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 3, marginBottom: 6 }}>
               {WEEKDAYS.map(d => (
                 <div key={d} style={{
                   textAlign: "center", fontSize: 11,
