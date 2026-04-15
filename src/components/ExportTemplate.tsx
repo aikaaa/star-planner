@@ -35,7 +35,17 @@ const C = {
 
 const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
 
-// ── 头像子组件（跨域 img + fallback 首字） ────────────────────────
+// ── 通用占位图标（无头像时显示）────────────────────────────────────
+function AvatarPlaceholder({ size }: { size: number }) {
+  const iconSize = Math.round(size * 0.55);
+  return (
+    <svg width={iconSize} height={iconSize} viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6.12305 1.70312C6.49336 2.53875 7.04342 3.59225 7.72559 4.27441C8.40775 4.95658 9.46125 5.50664 10.2969 5.87695C10.3963 5.92102 10.4946 5.96036 10.5889 6C10.4946 6.03964 10.3963 6.07898 10.2969 6.12305C9.46125 6.49336 8.40775 7.04342 7.72559 7.72559C7.04342 8.40775 6.49336 9.46125 6.12305 10.2969C6.07898 10.3963 6.03964 10.4946 6 10.5889C5.96036 10.4946 5.92102 10.3963 5.87695 10.2969C5.50664 9.46125 4.95658 8.40775 4.27441 7.72559C3.59225 7.04342 2.53875 6.49336 1.70312 6.12305C1.58252 6.0696 1.46424 6.02152 1.35156 5.97461C1.54273 5.89049 1.74723 5.80001 1.95508 5.70312C2.41547 5.4885 2.90356 5.24518 3.31738 5.00293C3.70726 4.77469 4.10915 4.50405 4.32129 4.2207C4.6421 3.79219 5.18331 2.7659 5.62305 1.89746C5.73479 1.67679 5.83943 1.46066 5.9375 1.2627C5.99463 1.40207 6.05536 1.55039 6.12305 1.70312Z" stroke={C.muted} strokeOpacity="0.76"/>
+    </svg>
+  );
+}
+
+// ── 头像子组件（跨域 img + fallback 占位图标） ──────────────────────
 function TemplateAvatar({ plan, size }: { plan: CharacterPlan; size: number }) {
   const [failed, setFailed] = useState(false);
   const avatarUrl = getAvatarUrl(plan.name);
@@ -58,22 +68,13 @@ function TemplateAvatar({ plan, size }: { plan: CharacterPlan; size: number }) {
     );
   }
 
-  // 用 flex + line-height: 1 + vertical-align 处理中文基线问题
   return (
     <div style={{
       width: size, height: size, minWidth: size,
       borderRadius: "50%", background: C.avatarBg,
       flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
-      overflow: "hidden",
     }}>
-      <div style={{
-        width: "100%", height: "100%",
-        display: "table-cell", verticalAlign: "middle", textAlign: "center",
-        fontSize: Math.round(size * 0.4), color: C.muted,
-        fontWeight: 500, fontFamily: "Arial, sans-serif",
-      }}>
-        {plan.name.charAt(0)}
-      </div>
+      <AvatarPlaceholder size={size} />
     </div>
   );
 }
@@ -97,20 +98,13 @@ function CalAvatar({ plan, size }: { plan: CharacterPlan; size: number }) {
       </div>
     );
   }
-  // 用 flex + line-height: 1 处理中文基线问题
   return (
     <div style={{
       width: size, height: size, borderRadius: "50%",
       background: C.avatarBg, flexShrink: 0,
       display: "flex", alignItems: "center", justifyContent: "center",
-      overflow: "hidden",
     }}>
-      <div style={{
-        fontSize: Math.round(size * 0.5), color: C.muted, fontWeight: 500,
-        lineHeight: "1", verticalAlign: "middle",
-      }}>
-        {plan.name.charAt(0)}
-      </div>
+      <AvatarPlaceholder size={size} />
     </div>
   );
 }
