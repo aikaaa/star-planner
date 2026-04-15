@@ -9,6 +9,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Upload, Download, X, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/sonner";
 import { CharacterPlan } from "@/lib/types";
 import { encodeSoc, decodeSoc, readQrFromImage } from "@/lib/socExport";
 import ExportTemplate from "./ExportTemplate";
@@ -26,16 +27,17 @@ export default function ExportImportPanel({ plans, onImport }: Props) {
   const [importError, setImportError] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [isDragging, setIsDragging]   = useState(false);
+  const [isProcessingFile, setIsProcessingFile] = useState(false);
   const [qrDataUrl, setQrDataUrl]     = useState<string | null>(null);
 
   const templateRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 关闭时清空状态
   const closeImport = useCallback(() => {
     setShowImport(false);
     setImportText("");
     setImportError(null);
+    setIsProcessingFile(false);
   }, []);
 
   // ── 导出 ─────────────────────────────────────────────────────────
@@ -48,10 +50,10 @@ export default function ExportImportPanel({ plans, onImport }: Props) {
 
       // 生成 QR 码 data URL
       const qr = await QRCode.toDataURL(socStr, {
-        width: 300,   // 高分辨率生成，避免模糊
-        margin: 3,    // 足够的静区，提升识别率
+        width: 300,
+        margin: 3,
         errorCorrectionLevel: "M",
-        color: { dark: "#000000", light: "#ffffff" }, // 纯黑，jsQR 识别最稳
+        color: { dark: "#000000", light: "#ffffff" },
       });
       setQrDataUrl(qr);
 
@@ -74,12 +76,22 @@ export default function ExportImportPanel({ plans, onImport }: Props) {
       link.download = `铃兰跑片计划_${dateStr}.png`;
       link.href = canvas.toDataURL("image/png");
       link.click();
+
+      toast.success("导出成功");
     } catch (e) {
       console.error("[ExportImportPanel] 导出失败", e);
+      toast.error("导出失败，请重试");
     } finally {
       setIsExporting(false);
     }
   }, [plans]);
+
+  // ── 导入完成的统一处理 ────────────────────────────────────────────
+  const finishImport = useCallback((importedPlans: CharacterPlan[]) => {
+    onImport(importedPlans);
+    closeImport();
+    toast.success(`导入成功，共 ${importedPlans.length} 个角色计划`);
+  }, [onImport, closeImport]);
 
   // ── 导入：粘贴文本 ────────────────────────────────────────────────
   const handleImportText = useCallback(() => {
@@ -88,9 +100,8 @@ export default function ExportImportPanel({ plans, onImport }: Props) {
       setImportError("无法识别，请确认内容正确");
       return;
     }
-    onImport(data.plans);
-    closeImport();
-  }, [importText, onImport, closeImport]);
+    finishImport(data.plans);
+  }, [importText, finishImport]);
 
   // ── 导入：读取图片二维码 ──────────────────────────────────────────
   const handleFile = useCallback(async (file: File) => {
@@ -99,20 +110,24 @@ export default function ExportImportPanel({ plans, onImport }: Props) {
       return;
     }
     setImportError(null);
+    setIsProcessingFile(true);
 
-    const text = await readQrFromImage(file);
-    if (!text) {
-      setImportError("未能从图片识别到二维码，请确认是铃兰跑片助手导出的图片");
-      return;
+    try {
+      const text = await readQrFromImage(file);
+      if (!text) {
+        setImportError("未能识别到二维码，请确认是铃兰跑片助手导出的图片");
+        return;
+      }
+      const data = decodeSoc(text);
+      if (!data) {
+        setImportError("二维码内容格式不正确");
+        return;
+      }
+      finishImport(data.plans);
+    } finally {
+      setIsProcessingFile(false);
     }
-    const data = decodeSoc(text);
-    if (!data) {
-      setImportError("二维码内容格式不正确");
-      return;
-    }
-    onImport(data.plans);
-    closeImport();
-  }, [onImport, closeImport]);
+  }, [finishImport]);
 
   // ── 拖拽 ─────────────────────────────────────────────────────────
   const onDragOver  = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); };
@@ -189,7 +204,9 @@ export default function ExportImportPanel({ plans, onImport }: Props) {
               {/* 方式 1：图片上传 */}
               <div>
                 <p className="text-xs text-muted-foreground mb-2 font-medium">方式一：上传导出的图片</p>
-                <div
+
+                {/* input 覆盖整个区域，避免 JS 模拟点击在某些浏览器失效 */}
+                <label
                   className="rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors"
                   style={{
                     borderColor: isDragging
@@ -200,31 +217,46 @@ export default function ExportImportPanel({ plans, onImport }: Props) {
                       : "hsl(var(--muted) / 0.3)",
                     padding: "24px 16px",
                     minHeight: 100,
+                    display: "flex",
+                    position: "relative",
                   }}
-                  onClick={() => fileInputRef.current?.click()}
                   onDragOver={onDragOver}
                   onDragLeave={onDragLeave}
                   onDrop={onDrop}
                 >
-                  <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground text-center">
-                    点击选择图片，或将图片拖拽到此处
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    自动识别图中二维码
-                  </span>
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={e => {
-                    const file = e.target.files?.[0];
-                    if (file) handleFile(file);
-                    e.target.value = "";
-                  }}
-                />
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,image/*"
+                    style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }}
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (file) handleFile(file);
+                      e.target.value = "";
+                    }}
+                  />
+                  {isProcessingFile ? (
+                    <>
+                      <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                      <span className="text-sm text-muted-foreground">识别中…</span>
+                    </>
+                  ) : (
+                    <>
+                      <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground text-center">
+                        点击选择图片，或将图片拖拽到此处
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        自动识别图中二维码
+                      </span>
+                    </>
+                  )}
+                </label>
+
+                {importError && (
+                  <p className="text-xs mt-2" style={{ color: "hsl(var(--destructive))" }}>
+                    {importError}
+                  </p>
+                )}
               </div>
 
               {/* 分隔线 */}
@@ -244,18 +276,13 @@ export default function ExportImportPanel({ plans, onImport }: Props) {
                     padding: "10px 12px",
                     minHeight: 80,
                   }}
-                  placeholder={"粘贴以 [SOC] 开头的计划码…"}
+                  placeholder="粘贴以 [SOC] 开头的计划码…"
                   value={importText}
                   onChange={e => { setImportText(e.target.value); setImportError(null); }}
                   onKeyDown={e => {
                     if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) handleImportText();
                   }}
                 />
-                {importError && (
-                  <p className="text-xs mt-1.5" style={{ color: "hsl(var(--destructive))" }}>
-                    {importError}
-                  </p>
-                )}
                 <Button
                   className="mt-2 w-full gradient-primary text-primary-foreground"
                   style={{ borderRadius: 4 }}
