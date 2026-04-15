@@ -173,7 +173,7 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
                 <span className="absolute inset-0 pointer-events-none z-10" style={{ boxShadow: "inset 0 0 0 2px hsl(var(--primary))", borderRadius: "8px" }} />
               )}
               <span className={`text-xs sm:text-xs leading-none ${isToday ? "font-bold text-primary" : "text-foreground"}`}>
-                {day}
+                {isToday ? "今" : day}
               </span>
               {hasChars && (() => {
                 const shown = characters.slice(0, 3);
