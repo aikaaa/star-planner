@@ -153,14 +153,14 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
           color: C.fg,
           fontSize: 14,
           lineHeight: 1.5,
-          overflow: "hidden",
+          overflow: "visible",
           zIndex: -1,
         }}
       >
         {/* ── 标题头部 ───────────────────────────────── */}
         <div style={{
           background: `linear-gradient(135deg, ${C.gradStart}, ${C.gradEnd})`,
-          padding: "18px 20px 16px",
+          padding: "20px 20px 36px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -169,27 +169,35 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
           {/* 左：标题 + 副标题 */}
           <div>
             <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", lineHeight: 1.2, letterSpacing: 0.5 }}>
-              跑片计划
+              我的跑片计划
             </div>
             <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", marginTop: 4 }}>
               铃兰之剑：为这和平的世界
             </div>
           </div>
-          {/* 右：日期区间，方括号样式 */}
+          {/* 右：日期区间，金色方括号 */}
           <div style={{
-            fontSize: 13,
+            fontSize: 12,
             fontWeight: 600,
-            color: "#fff",
+            color: "hsl(40 80% 68%)",
             letterSpacing: 0.3,
             flexShrink: 0,
-            lineHeight: 1,
+            lineHeight: 1.4,
+            textAlign: "right",
           }}>
-            [ {fmtShort(minDate)} - {fmtShort(maxDate)} ]
+            [ {minDate.getFullYear()}/{fmtShort(minDate)}<br />- {maxDate.getFullYear()}/{fmtShort(maxDate)} ]
           </div>
         </div>
 
-        {/* ── 内容区 ─────────────────────────────────── */}
-        <div style={{ padding: "12px 12px 4px" }}>
+        {/* ── 内容区（白色圆角卡片上移覆盖绿色头部） ─── */}
+        <div style={{
+          margin: "0 10px",
+          marginTop: -20,
+          borderRadius: "12px 12px 0 0",
+          background: C.bg,
+          padding: "14px 10px 4px",
+          position: "relative",
+        }}>
 
           {/* 日历 */}
           <div style={{
