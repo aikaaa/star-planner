@@ -407,7 +407,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
               <span style={{ color: C.primary, fontWeight: 700 }}>铃兰跑片助手</span>
             </div>
             {/* 第二行：提示语 */}
-            <div style={{ fontSize: 10, color: "#4E736E", marginTop: 4, display: "flex", alignItems: "center", gap: 3 }}>
+            <div style={{ fontSize: 10, color: "#4E736E", marginTop: 8, display: "flex", alignItems: "center", gap: 3 }}>
               <span style={{ color: "#4E736E", fontSize: 8, opacity: 0.5 }}>◆</span>
               <span>保存图片，可直接导入计划</span>
             </div>
