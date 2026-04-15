@@ -338,10 +338,12 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                     paddingBottom: 8,
                     borderBottom: `1px solid ${C.border}80`,
                   }}>
-                    {/* 左：头像 + 名字（用 height 锚定，避免 html2canvas 对齐偏差） */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, height: 28 }}>
-                      <TemplateAvatar plan={first} size={28} />
-                      <span style={{ fontWeight: 600, fontSize: 13, lineHeight: "1", alignSelf: "center" }}>
+                    {/* 左：头像 + 名字（inline + verticalAlign:middle，比 flex 在 html2canvas 里更稳定） */}
+                    <div style={{ lineHeight: "28px", fontSize: 0 }}>
+                      <span style={{ display: "inline-block", verticalAlign: "middle" }}>
+                        <TemplateAvatar plan={first} size={28} />
+                      </span>
+                      <span style={{ display: "inline-block", verticalAlign: "middle", fontSize: 13, fontWeight: 600, lineHeight: 1, marginLeft: 8 }}>
                         {formatCharName(name)}
                       </span>
                     </div>
