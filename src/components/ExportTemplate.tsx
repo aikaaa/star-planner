@@ -270,43 +270,30 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
             {[...groups.entries()].map(([name, group]) => {
               const first = group[0];
 
-              // 头部右侧星级摘要
-              // 单段：currentStar→targetStar [余X片 / 超X片]
-              // 多段：首段currentStar → 末段effectiveTarget
-              const headerStarNode = (() => {
-                const starStyle = { color: C.star, fontWeight: 600 as const };
+              // 头部右侧星级摘要（提前计算，避免 IIFE 内 JSX 渲染不稳）
+              const headerStar = (() => {
                 if (group.length === 1) {
-                  const p = group[0];
+                  const p    = group[0];
                   const days = getDaysNeeded(p);
-                  const targetStar = getEffectiveTargetStar(p);
-                  const { remainingShards, reachableStar } =
-                    p.farmingMode === "free"
-                      ? getPartialProgress(p.currentStar, p.currentShards + (p.bonusShards ?? 0), days)
-                      : { remainingShards: 0, reachableStar: targetStar };
-                  const isExcess = reachableStar >= 5 && remainingShards > 0;
-                  return (
-                    <span style={{ fontSize: 12, color: C.muted }}>
-                      <span style={starStyle}>{p.currentStar}★</span>
-                      <span> → </span>
-                      <span style={starStyle}>{reachableStar}★</span>
-                      {remainingShards > 0 && (
-                        isExcess
-                          ? <span style={{ color: C.destructive }}> 超{remainingShards}片</span>
-                          : <span> 余{remainingShards}片</span>
-                      )}
-                    </span>
-                  );
+                  if (p.farmingMode === "free") {
+                    const { reachableStar, remainingShards } = getPartialProgress(
+                      p.currentStar, p.currentShards + (p.bonusShards ?? 0), days
+                    );
+                    return {
+                      from: p.currentStar,
+                      to:   reachableStar,
+                      shards: remainingShards,
+                      excess: reachableStar >= 5 && remainingShards > 0,
+                    };
+                  }
+                  return { from: p.currentStar, to: getEffectiveTargetStar(p), shards: 0, excess: false };
                 }
-                // 多段：首段 currentStar → 末段 effectiveTarget
-                const firstStar = group[0].currentStar;
-                const lastStar  = getEffectiveTargetStar(group[group.length - 1]);
-                return (
-                  <span style={{ fontSize: 12, color: C.muted }}>
-                    <span style={starStyle}>{firstStar}★</span>
-                    <span> → </span>
-                    <span style={starStyle}>{lastStar}★</span>
-                  </span>
-                );
+                return {
+                  from:  group[0].currentStar,
+                  to:    getEffectiveTargetStar(group[group.length - 1]),
+                  shards: 0,
+                  excess: false,
+                };
               })();
 
               return (
@@ -327,13 +314,22 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                     paddingBottom: 8,
                     borderBottom: `1px solid ${C.border}`,
                   }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {/* 左：头像 + 名字（用 height 锚定，避免 html2canvas 对齐偏差） */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, height: 28 }}>
                       <TemplateAvatar plan={first} size={28} />
-                      <span style={{ fontWeight: 600, fontSize: 13 }}>
+                      <span style={{ fontWeight: 600, fontSize: 13, lineHeight: "1", alignSelf: "center" }}>
                         {formatCharName(name)}
                       </span>
                     </div>
-                    {headerStarNode}
+                    {/* 右：星级摘要，全部绿色 */}
+                    <span style={{ fontSize: 12, color: C.primary, fontWeight: 600, flexShrink: 0 }}>
+                      {headerStar.from}★ → {headerStar.to}★
+                      {headerStar.shards > 0 && (
+                        headerStar.excess
+                          ? <span style={{ color: C.destructive }}> 超{headerStar.shards}片</span>
+                          : <span> 余{headerStar.shards}片</span>
+                      )}
+                    </span>
                   </div>
 
                   {/* 计划行：左「预计X天」｜ 右「M/D - M/D」 */}
