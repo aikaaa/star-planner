@@ -299,10 +299,11 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
               const headerStar = (() => {
                 if (group.length === 1) {
                   const p    = group[0];
-                  const days = getDaysNeeded(p);
                   if (p.farmingMode === "free") {
+                    const s = parseLocalDate(p.startDate); s.setHours(0, 0, 0, 0);
+                    const daysElapsed = Math.max(0, Math.round((today.getTime() - s.getTime()) / 86400000)) + 1;
                     const { reachableStar, remainingShards } = getPartialProgress(
-                      p.currentStar, p.currentShards + (p.bonusShards ?? 0), days
+                      p.currentStar, p.currentShards + (p.bonusShards ?? 0), daysElapsed
                     );
                     return {
                       from: p.currentStar,
