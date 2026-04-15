@@ -62,9 +62,9 @@ function TemplateAvatar({ plan, size }: { plan: CharacterPlan; size: number }) {
     <div style={{
       width: size, height: size, minWidth: size,
       borderRadius: "50%", background: C.avatarBg,
-      display: "flex", alignItems: "center", justifyContent: "center",
+      lineHeight: `${size}px`, textAlign: "center",
       fontSize: Math.round(size * 0.42), color: C.muted,
-      fontWeight: 500, flexShrink: 0,
+      fontWeight: 500, flexShrink: 0, verticalAlign: "middle",
     }}>
       {plan.name.charAt(0)}
     </div>
@@ -91,8 +91,8 @@ function CalAvatar({ plan, size }: { plan: CharacterPlan; size: number }) {
   return (
     <div style={{
       width: size, height: size, borderRadius: "50%",
-      background: C.avatarBg, display: "flex", alignItems: "center",
-      justifyContent: "center", fontSize: Math.round(size * 0.5), color: C.muted, flexShrink: 0,
+      background: C.avatarBg, lineHeight: `${size}px`, textAlign: "center",
+      fontSize: Math.round(size * 0.5), color: C.muted, flexShrink: 0,
     }}>
       {plan.name.charAt(0)}
     </div>
