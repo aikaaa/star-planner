@@ -184,9 +184,9 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
             lineHeight: 1,
             whiteSpace: "nowrap",
           }}>
-            <span style={{ color: "#BDAB7F" }}>[</span>
+            <span style={{ color: "#B9AD86" }}>[</span>
             <span style={{ color: "#fff" }}> {minDate.getFullYear()}/{fmtShort(minDate)} - {maxDate.getFullYear()}/{fmtShort(maxDate)} </span>
-            <span style={{ color: "#BDAB7F" }}>]</span>
+            <span style={{ color: "#B9AD86" }}>]</span>
           </div>
         </div>
 
@@ -348,7 +348,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                       </span>
                     </div>
                     {/* 右：星级摘要，全部绿色 */}
-                    <span style={{ fontSize: 12, color: "#BDAB7F", fontWeight: 600, flexShrink: 0 }}>
+                    <span style={{ fontSize: 12, color: "#B9AD86", fontWeight: 600, flexShrink: 0 }}>
                       {headerStar.from}★ → {headerStar.to}★
                       {headerStar.shards > 0 && (
                         headerStar.excess
