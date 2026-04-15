@@ -58,23 +58,30 @@ function TemplateAvatar({ plan, size }: { plan: CharacterPlan; size: number }) {
     );
   }
 
+  // 用 position: absolute + transform 居中，比 lineHeight/flex 在 html2canvas 中更稳定
   return (
     <div style={{
       width: size, height: size, minWidth: size,
       borderRadius: "50%", background: C.avatarBg,
-      lineHeight: `${size}px`, textAlign: "center",
-      fontSize: Math.round(size * 0.42), color: C.muted,
-      fontWeight: 500, flexShrink: 0, verticalAlign: "middle",
+      flexShrink: 0, position: "relative", overflow: "hidden",
     }}>
-      {plan.name.charAt(0)}
+      <div style={{
+        position: "absolute", top: "50%", left: "50%",
+        transform: "translate(-50%, -50%)",
+        fontSize: Math.round(size * 0.42), color: C.muted,
+        fontWeight: 500, whiteSpace: "nowrap",
+      }}>
+        {plan.name.charAt(0)}
+      </div>
     </div>
   );
 }
 
-// ── 小头像（日历格用，不维护 failed state，直接 img） ──────────────
+// ── 小头像（日历格用） ──────────────
 function CalAvatar({ plan, size }: { plan: CharacterPlan; size: number }) {
+  const [failed, setFailed] = useState(false);
   const avatarUrl = getAvatarUrl(plan.name);
-  if (avatarUrl) {
+  if (avatarUrl && !failed) {
     return (
       <div style={{
         width: size, height: size, borderRadius: "50%",
@@ -83,18 +90,27 @@ function CalAvatar({ plan, size }: { plan: CharacterPlan; size: number }) {
         <img
           src={avatarUrl}
           crossOrigin="anonymous"
+          onError={() => setFailed(true)}
           style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
         />
       </div>
     );
   }
+  // 用 position: absolute + transform 居中，比 flex 在 html2canvas 中更稳定
   return (
     <div style={{
       width: size, height: size, borderRadius: "50%",
-      background: C.avatarBg, lineHeight: `${size}px`, textAlign: "center",
-      fontSize: Math.round(size * 0.5), color: C.muted, flexShrink: 0,
+      background: C.avatarBg, flexShrink: 0,
+      position: "relative", overflow: "hidden",
     }}>
-      {plan.name.charAt(0)}
+      <div style={{
+        position: "absolute", top: "50%", left: "50%",
+        transform: "translate(-50%, -50%)",
+        fontSize: Math.round(size * 0.5), color: C.muted, fontWeight: 500,
+        whiteSpace: "nowrap",
+      }}>
+        {plan.name.charAt(0)}
+      </div>
     </div>
   );
 }
