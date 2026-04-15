@@ -243,7 +243,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                       {isToday ? "今" : day}
                     </span>
                     {count > 0 && (
-                      <div style={{ display: "flex", marginTop: 2, justifyContent: "center", alignItems: "center" }}>
+                      <div style={{ display: "flex", marginTop: 5, justifyContent: "center", alignItems: "center" }}>
                         {shown.map((c, ci) => (
                           <div
                             key={c.id}
@@ -269,6 +269,46 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {[...groups.entries()].map(([name, group]) => {
               const first = group[0];
+
+              // 头部右侧星级摘要
+              // 单段：currentStar→targetStar [余X片 / 超X片]
+              // 多段：首段currentStar → 末段effectiveTarget
+              const headerStarNode = (() => {
+                const starStyle = { color: C.star, fontWeight: 600 as const };
+                if (group.length === 1) {
+                  const p = group[0];
+                  const days = getDaysNeeded(p);
+                  const targetStar = getEffectiveTargetStar(p);
+                  const { remainingShards, reachableStar } =
+                    p.farmingMode === "free"
+                      ? getPartialProgress(p.currentStar, p.currentShards + (p.bonusShards ?? 0), days)
+                      : { remainingShards: 0, reachableStar: targetStar };
+                  const isExcess = reachableStar >= 5 && remainingShards > 0;
+                  return (
+                    <span style={{ fontSize: 12, color: C.muted }}>
+                      <span style={starStyle}>{p.currentStar}★</span>
+                      <span> → </span>
+                      <span style={starStyle}>{reachableStar}★</span>
+                      {remainingShards > 0 && (
+                        isExcess
+                          ? <span style={{ color: C.destructive }}> 超{remainingShards}片</span>
+                          : <span> 余{remainingShards}片</span>
+                      )}
+                    </span>
+                  );
+                }
+                // 多段：首段 currentStar → 末段 effectiveTarget
+                const firstStar = group[0].currentStar;
+                const lastStar  = getEffectiveTargetStar(group[group.length - 1]);
+                return (
+                  <span style={{ fontSize: 12, color: C.muted }}>
+                    <span style={starStyle}>{firstStar}★</span>
+                    <span> → </span>
+                    <span style={starStyle}>{lastStar}★</span>
+                  </span>
+                );
+              })();
+
               return (
                 <div
                   key={name}
@@ -279,32 +319,29 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                     padding: "10px 12px 2px",
                   }}
                 >
-                  {/* 卡片头：头像 + 角色名 */}
+                  {/* 卡片头：头像 + 角色名（左）｜ 星级摘要（右） */}
                   <div style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 8,
+                    justifyContent: "space-between",
                     paddingBottom: 8,
                     borderBottom: `1px solid ${C.border}`,
                   }}>
-                    <TemplateAvatar plan={first} size={28} />
-                    <span style={{ fontWeight: 600, fontSize: 13 }}>
-                      {formatCharName(name)}
-                    </span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <TemplateAvatar plan={first} size={28} />
+                      <span style={{ fontWeight: 600, fontSize: 13 }}>
+                        {formatCharName(name)}
+                      </span>
+                    </div>
+                    {headerStarNode}
                   </div>
 
-                  {/* 计划行 */}
+                  {/* 计划行：左「预计X天」｜ 右「M/D - M/D」 */}
                   {group.map((p, pi) => {
-                    const days       = getDaysNeeded(p);
-                    const endDate    = getCompletionDate(p);
-                    const targetStar = getEffectiveTargetStar(p);
-                    const startD     = parseLocalDate(p.startDate);
-                    const fmt        = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}`;
-                    const { remainingShards, reachableStar } =
-                      p.farmingMode === "free"
-                        ? getPartialProgress(p.currentStar, p.currentShards + (p.bonusShards ?? 0), days)
-                        : { remainingShards: 0, reachableStar: targetStar };
-                    const isExcess = reachableStar >= 5 && remainingShards > 0;
+                    const days   = getDaysNeeded(p);
+                    const endDate = getCompletionDate(p);
+                    const startD  = parseLocalDate(p.startDate);
+                    const fmt     = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}`;
 
                     return (
                       <div
@@ -320,21 +357,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                           color: C.muted,
                         }}
                       >
-                        <div>
-                          <span style={{ color: C.star, fontWeight: 600 }}>
-                            {p.currentStar}★
-                          </span>
-                          <span> → </span>
-                          <span style={{ color: C.star, fontWeight: 600 }}>
-                            {targetStar}★
-                          </span>
-                          {p.farmingMode === "free" && remainingShards > 0 && (
-                            isExcess
-                              ? <span style={{ color: C.destructive }}> 超 {remainingShards} 片</span>
-                              : <span> 余 {remainingShards} 片</span>
-                          )}
-                          <span> · 预计 {days} 天</span>
-                        </div>
+                        <div>预计 {days} 天</div>
                         <div>{fmt(startD)} – {fmt(endDate)}</div>
                       </div>
                     );
