@@ -336,7 +336,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                     alignItems: "center",
                     justifyContent: "space-between",
                     paddingBottom: 8,
-                    borderBottom: `1px solid ${C.border}`,
+                    borderBottom: `1px solid ${C.border}80`,
                   }}>
                     {/* 左：头像 + 名字（用 height 锚定，避免 html2canvas 对齐偏差） */}
                     <div style={{ display: "flex", alignItems: "center", gap: 8, height: 28 }}>
@@ -372,7 +372,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                           justifyContent: "space-between",
                           paddingTop: 8,
                           paddingBottom: 8,
-                          borderTop: pi > 0 ? `1px solid ${C.border}` : undefined,
+                          borderTop: pi > 0 ? `1px solid ${C.border}80` : undefined,
                           fontSize: 12,
                           color: C.muted,
                         }}
