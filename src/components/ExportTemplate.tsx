@@ -230,7 +230,8 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                       alignItems: "center",
                       justifyContent: "center",
                       padding: "3px 2px",
-                      boxShadow: isToday ? `inset 0 0 0 2px ${C.primary}` : undefined,
+                      border: isToday ? `2px solid ${C.primary}` : "2px solid transparent",
+                      boxSizing: "border-box",
                     }}
                   >
                     <span style={{
@@ -239,7 +240,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                       color: isToday ? C.primary : C.fg,
                       lineHeight: 1,
                     }}>
-                      {day}
+                      {isToday ? "今" : day}
                     </span>
                     {count > 0 && (
                       <div style={{ display: "flex", marginTop: 2, justifyContent: "center", alignItems: "center" }}>
