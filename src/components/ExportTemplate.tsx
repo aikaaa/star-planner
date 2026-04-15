@@ -175,17 +175,18 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
               铃兰之剑：为这和平的世界
             </div>
           </div>
-          {/* 右：日期区间，金色方括号 */}
+          {/* 右：日期区间，方括号金色，日期白色，不折行 */}
           <div style={{
             fontSize: 12,
             fontWeight: 600,
-            color: "hsl(40 80% 68%)",
             letterSpacing: 0.3,
             flexShrink: 0,
-            lineHeight: 1.4,
-            textAlign: "right",
+            lineHeight: 1,
+            whiteSpace: "nowrap",
           }}>
-            [ {minDate.getFullYear()}/{fmtShort(minDate)}<br />- {maxDate.getFullYear()}/{fmtShort(maxDate)} ]
+            <span style={{ color: "hsl(40 80% 68%)" }}>[</span>
+            <span style={{ color: "#fff" }}> {minDate.getFullYear()}/{fmtShort(minDate)} - {maxDate.getFullYear()}/{fmtShort(maxDate)} </span>
+            <span style={{ color: "hsl(40 80% 68%)" }}>]</span>
           </div>
         </div>
 
@@ -193,7 +194,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
         <div style={{
           margin: "0 10px",
           marginTop: -20,
-          borderRadius: "12px 12px 0 0",
+          borderRadius: "4px 4px 0 0",
           background: C.bg,
           padding: "14px 10px 4px",
           position: "relative",
@@ -202,7 +203,6 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
           {/* 日历 */}
           <div style={{
             background: C.card,
-            border: `1px solid ${C.border}`,
             borderRadius: 4,
             padding: "8px 10px 10px",
             marginBottom: 10,
@@ -326,7 +326,6 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                   key={name}
                   style={{
                     background: C.card,
-                    border: `1px solid ${C.border}`,
                     borderRadius: 4,
                     padding: "10px 12px 2px",
                   }}
