@@ -372,7 +372,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "space-between",
-                          paddingTop: 5,
+                          paddingTop: 3,
                           paddingBottom: 5,
                           borderTop: pi > 0 ? `1px solid ${C.border}80` : undefined,
                           fontSize: 12,
