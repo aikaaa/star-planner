@@ -171,7 +171,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
             <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", lineHeight: 1.2, letterSpacing: 0.5 }}>
               我的跑片计划
             </div>
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", marginTop: 4 }}>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", marginTop: 2 }}>
               铃兰之剑：为这和平的世界
             </div>
           </div>
@@ -390,7 +390,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
 
         {/* ── 底部：水印 + 二维码 ─────────────────────────────────── */}
         <div style={{
-          padding: "12px 20px 16px",
+          padding: "8px 20px 16px",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
