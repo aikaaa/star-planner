@@ -67,10 +67,10 @@ function TemplateAvatar({ plan, size }: { plan: CharacterPlan; size: number }) {
       overflow: "hidden",
     }}>
       <div style={{
+        width: "100%", height: "100%",
+        display: "table-cell", verticalAlign: "middle", textAlign: "center",
         fontSize: Math.round(size * 0.4), color: C.muted,
-        fontWeight: 500, lineHeight: `${size}px`,
-        fontFamily: "Arial, sans-serif", textAlign: "center",
-        paddingTop: Math.round(size * 0.05),
+        fontWeight: 500, fontFamily: "Arial, sans-serif",
       }}>
         {plan.name.charAt(0)}
       </div>
