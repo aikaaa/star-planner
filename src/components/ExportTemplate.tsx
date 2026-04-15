@@ -184,9 +184,9 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
             lineHeight: 1,
             whiteSpace: "nowrap",
           }}>
-            <span style={{ color: "hsl(40 80% 68%)" }}>[</span>
+            <span style={{ color: "#BDAB7F" }}>[</span>
             <span style={{ color: "#fff" }}> {minDate.getFullYear()}/{fmtShort(minDate)} - {maxDate.getFullYear()}/{fmtShort(maxDate)} </span>
-            <span style={{ color: "hsl(40 80% 68%)" }}>]</span>
+            <span style={{ color: "#BDAB7F" }}>]</span>
           </div>
         </div>
 
