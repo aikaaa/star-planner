@@ -50,9 +50,9 @@ export default function ExportImportPanel({ plans, onImport }: Props) {
 
       // 生成 QR 码 data URL
       const qr = await QRCode.toDataURL(socStr, {
-        width: 300,
-        margin: 3,
-        errorCorrectionLevel: "M",
+        width: 200,   // 恰好匹配 html2canvas scale:2 × 100px 显示，无插值，像素最清晰
+        margin: 2,
+        errorCorrectionLevel: "L",  // 降低纠错级别以减少模块数，确保 jsQR 可识别
         color: { dark: "#000000", light: "#ffffff" },
       });
       setQrDataUrl(qr);
