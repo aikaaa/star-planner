@@ -12,8 +12,6 @@ import { supabase } from "@/lib/supabase";
 
 const PREFIX = "[SOC]";
 const REF_PREFIX = "[SOC]ref:";
-// 超过此长度改用 Supabase 短链，避免 QR 模块过密无法识别
-const DIRECT_MAX_LEN = 150;
 
 export interface SocData {
   server: string;
@@ -144,12 +142,33 @@ export async function downloadSocRef(id: string): Promise<string | null> {
   return data.data as string;
 }
 
-// ── 决定用直接编码还是 Supabase 短链 ─────────────────────────────
+// ── 生成 QR 内容：始终上传 Supabase，返回完整 URL ────────────────
+// 扫码可直接打开网页并自动导入；同时保证 QR 内容足够短（version 2）
 export async function encodeSocForQr(plans: CharacterPlan[]): Promise<string> {
   const socStr = encodeSoc(plans);
-  if (socStr.length <= DIRECT_MAX_LEN) return socStr;
   const id = await uploadSocRef(socStr);
-  return `${REF_PREFIX}${id}`;
+  // 用当前页面 URL（去掉已有参数）作为 base，兼容 BrowserRouter/HashRouter
+  const base = window.location.href.split("?")[0].replace(/#.*$/, "");
+  return `${base}?import=${id}`;
+}
+
+// ── 从 QR/URL 字符串解析出 import ID，兼容新旧格式 ───────────────
+export function parseImportId(text: string): { type: "url" | "ref" | "direct"; id?: string; socText?: string } {
+  const trimmed = text.trim();
+  // 新格式：完整 URL，?import=id
+  if (trimmed.startsWith("http")) {
+    try {
+      const url = new URL(trimmed);
+      const id = url.searchParams.get("import");
+      if (id) return { type: "url", id };
+    } catch { /* fall through */ }
+  }
+  // 旧格式：[SOC]ref:xxxxxxxx
+  if (trimmed.startsWith(REF_PREFIX)) {
+    return { type: "ref", id: trimmed.slice(REF_PREFIX.length) };
+  }
+  // 直接 SOC 文本
+  return { type: "direct", socText: trimmed };
 }
 
 // ── 从图片识别二维码 ──────────────────────────────────────────────

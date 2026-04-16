@@ -37,8 +37,12 @@ const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
 
 // ── 占位头像背景色（按角色索引区分）────────────────────────────────
 const FALLBACK_BG = [
-  "#d0c8d4", "#b8cfd8", "#ccc8d8", "#d8c8c8",
-  "#c8d4c0", "#d4d0c0", "#c0d4cc", "#c8dbd8",
+  "#B0D6CA",
+  "#B0CED6",
+  "#B0BFD6",
+  "#DBD19D",
+  "#D3B0D6",
+  "#D6B0B1",
 ];
 
 // ── 通用占位图标（无头像时显示）────────────────────────────────────
@@ -177,25 +181,28 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
         }}>
           {/* 左：标题 + 副标题 */}
           <div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", lineHeight: 1.2, letterSpacing: 0.5 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "#fff", lineHeight: 1.2, letterSpacing: 0.5 }}>
               我的跑片计划
             </div>
             <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", marginTop: 8 }}>
               铃兰之剑：为这和平的世界
             </div>
           </div>
-          {/* 右：日期区间，方括号金色，日期白色，不折行 */}
-          <div style={{
-            fontSize: 12,
-            fontWeight: 600,
-            letterSpacing: 0.3,
-            flexShrink: 0,
-            lineHeight: 1,
-            whiteSpace: "nowrap",
-          }}>
-            <span style={{ color: "#B29756" }}>[</span>
-            <span style={{ color: "#fff" }}> {minDate.getFullYear()}/{fmtShort(minDate)} - {maxDate.getFullYear()}/{fmtShort(maxDate)} </span>
-            <span style={{ color: "#B29756" }}>]</span>
+          {/* 右：装饰 SVG + 日期区间 */}
+          <div style={{ flexShrink: 0, textAlign: "right" }}>
+            {/* 日期区间 */}
+            <div style={{
+              fontSize: 17,
+              fontWeight: 600,
+              letterSpacing: 0.3,
+              lineHeight: 1,
+              whiteSpace: "nowrap",
+              marginBottom: 4,
+            }}>
+              <span style={{ color: "#B9AD86" }}>[</span>
+              <span style={{ color: "#fff" }}> {minDate.getFullYear()}/{fmtShort(minDate)} - {maxDate.getFullYear()}/{fmtShort(maxDate)} </span>
+              <span style={{ color: "#B9AD86" }}>]</span>
+            </div>
           </div>
         </div>
 
@@ -340,31 +347,31 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                     padding: "10px 12px 8px",
                   }}
                 >
-                  {/* 卡片头：头像 + 角色名（左）｜ 星级摘要（右） */}
+                  {/* 卡片头：头像 + 角色名（左）｜ 星级摘要（右）
+                      float + lineHeight 方案，html2canvas 兼容性最好 */}
                   <div style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
+                    overflow: "hidden",
+                    lineHeight: "28px",
                     paddingBottom: 8,
                     borderBottom: `1px solid ${C.border}80`,
                   }}>
-                    {/* 左：头像 + 名字（inline + verticalAlign:middle，比 flex 在 html2canvas 里更稳定） */}
-                    <div style={{ lineHeight: "28px", fontSize: 0 }}>
-                      <span style={{ display: "inline-block", verticalAlign: "middle" }}>
-                        <TemplateAvatar plan={first} size={28} index={gi} />
-                      </span>
-                      <span style={{ display: "inline-block", verticalAlign: "middle", fontSize: 13, fontWeight: 600, lineHeight: 1, marginLeft: 8 }}>
-                        {formatCharName(name)}
-                      </span>
-                    </div>
-                    {/* 右：星级摘要，全部绿色 */}
-                    <span style={{ fontSize: 12, color: "#B29756", fontWeight: 600, flexShrink: 0 }}>
+                    {/* 右：先声明 float:right，让文字在 28px 行高里自然居中 */}
+                    <span style={{ float: "right", fontSize: 12, color: "#B29756", fontWeight: 600, whiteSpace: "nowrap" }}>
                       {headerStar.from}★ → {headerStar.to}★
                       {headerStar.shards > 0 && (
                         headerStar.excess
                           ? <span style={{ color: C.destructive }}> 超{headerStar.shards}片</span>
                           : <span> 余{headerStar.shards}片</span>
                       )}
+                    </span>
+                    {/* 左：头像 + 名字 */}
+                    <span style={{ display: "inline-block", verticalAlign: "middle", fontSize: 0 }}>
+                      <span style={{ display: "inline-block", verticalAlign: "middle" }}>
+                        <TemplateAvatar plan={first} size={28} index={gi} />
+                      </span>
+                      <span style={{ display: "inline-block", verticalAlign: "middle", fontSize: 13, fontWeight: 600, lineHeight: 1, marginLeft: 8 }}>
+                        {formatCharName(name)}
+                      </span>
                     </span>
                   </div>
 
@@ -418,8 +425,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
             </div>
             {/* 第二行：提示语 */}
             <div style={{ fontSize: 10, color: "#4E736E", marginTop: 8 }}>
-              <span style={{ color: "#C1D6D3" }}>◆ </span>
-              <span>保存图片，可直接导入计划</span>
+              保存图片，可直接导入计划
             </div>
           </div>
 
@@ -428,7 +434,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
             <img
               src={qrDataUrl}
               alt="QR"
-              style={{ width: 100, height: 100, display: "block", flexShrink: 0 }}
+              style={{ width: 72, height: 72, display: "block", flexShrink: 0 }}
             />
           )}
         </div>

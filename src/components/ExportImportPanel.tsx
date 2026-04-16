@@ -6,12 +6,13 @@
  * 导入：粘贴 SOC 文本 或 上传含二维码的图片
  */
 
-import { useState, useRef, useCallback, useEffect } from "react";
-import { Upload, Download, X, Image as ImageIcon } from "lucide-react";
+import { useState, useRef, useCallback, useEffect, forwardRef, useImperativeHandle } from "react";
+import { useSearchParams } from "react-router-dom";
+import { X, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
 import { CharacterPlan } from "@/lib/types";
-import { encodeSocForQr, decodeSoc, downloadSocRef, readQrFromImage } from "@/lib/socExport";
+import { encodeSocForQr, decodeSoc, downloadSocRef, readQrFromImage, parseImportId } from "@/lib/socExport";
 import ExportTemplate from "./ExportTemplate";
 import html2canvas from "html2canvas";
 import QRCode from "qrcode";
@@ -19,9 +20,15 @@ import QRCode from "qrcode";
 interface Props {
   plans: CharacterPlan[];
   onImport: (plans: CharacterPlan[]) => void;
+  onExportingChange?: (exporting: boolean) => void;
 }
 
-export default function ExportImportPanel({ plans, onImport }: Props) {
+export interface ExportImportHandle {
+  openImport: () => void;
+  startExport: () => void;
+}
+
+const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportImportPanel({ plans, onImport, onExportingChange }, ref) {
   const [showImport, setShowImport] = useState(false);
   const [importText, setImportText]   = useState("");
   const [importError, setImportError] = useState<string | null>(null);
@@ -29,8 +36,11 @@ export default function ExportImportPanel({ plans, onImport }: Props) {
   const [isDragging, setIsDragging]   = useState(false);
   const [isProcessingFile, setIsProcessingFile] = useState(false);
   const [qrDataUrl, setQrDataUrl]     = useState<string | null>(null);
+  // 待确认的导入数据（有现有计划时需用户确认替换）
+  const [pendingPlans, setPendingPlans] = useState<CharacterPlan[] | null>(null);
 
   const templateRef = useRef<HTMLDivElement>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // 关闭时清空状态
   const closeImport = useCallback(() => {
@@ -44,6 +54,7 @@ export default function ExportImportPanel({ plans, onImport }: Props) {
   const handleExport = useCallback(async () => {
     if (plans.length === 0) return;
     setIsExporting(true);
+    onExportingChange?.(true);
 
     try {
       // 数据短则直接编码，过长则上传 Supabase 返回短 ID
@@ -84,6 +95,7 @@ export default function ExportImportPanel({ plans, onImport }: Props) {
       toast.error("导出失败，请重试");
     } finally {
       setIsExporting(false);
+      onExportingChange?.(false);
     }
   }, [plans]);
 
@@ -91,18 +103,37 @@ export default function ExportImportPanel({ plans, onImport }: Props) {
   const finishImport = useCallback((importedPlans: CharacterPlan[]) => {
     onImport(importedPlans);
     closeImport();
+    setPendingPlans(null);
     toast.success(`导入成功，共 ${importedPlans.length} 个角色计划`);
   }, [onImport, closeImport]);
 
-  // ── 导入：粘贴文本 ────────────────────────────────────────────────
-  const handleImportText = useCallback(() => {
-    const data = decodeSoc(importText.trim());
-    if (!data) {
-      setImportError("无法识别，请确认内容正确");
-      return;
+  // ── 触发导入：有现有数据则弹确认，否则直接导入 ───────────────────
+  const triggerImport = useCallback((importedPlans: CharacterPlan[], currentPlans: CharacterPlan[]) => {
+    if (currentPlans.length > 0) {
+      setPendingPlans(importedPlans);
+      setShowImport(false);
+    } else {
+      finishImport(importedPlans);
     }
-    finishImport(data.plans);
-  }, [importText, finishImport]);
+  }, [finishImport]);
+
+  // ── 解析 QR/URL/文本，返回 SOC 字符串或 null ─────────────────────
+  const resolveSocText = useCallback(async (raw: string): Promise<string | null> => {
+    const parsed = parseImportId(raw);
+    if (parsed.type === "direct") return parsed.socText ?? null;
+    const id = parsed.id!;
+    const remote = await downloadSocRef(id);
+    return remote;
+  }, []);
+
+  // ── 导入：粘贴文本 ────────────────────────────────────────────────
+  const handleImportText = useCallback(async () => {
+    const socText = await resolveSocText(importText.trim());
+    if (!socText) { setImportError("计划数据已过期或不存在"); return; }
+    const data = decodeSoc(socText);
+    if (!data) { setImportError("无法识别，请确认内容正确"); return; }
+    triggerImport(data.plans, plans);
+  }, [importText, resolveSocText, triggerImport, plans]);
 
   // ── 导入：读取图片二维码 ──────────────────────────────────────────
   const handleFile = useCallback(async (file: File) => {
@@ -119,29 +150,41 @@ export default function ExportImportPanel({ plans, onImport }: Props) {
         setImportError("未能识别到二维码，请确认是铃兰跑片助手导出的图片");
         return;
       }
-
-      // 短链模式：从 Supabase 拉取原始 SOC 字符串
-      let socText = text;
-      if (text.startsWith("[SOC]ref:")) {
-        const id = text.slice("[SOC]ref:".length);
-        const remote = await downloadSocRef(id);
-        if (!remote) {
-          setImportError("计划数据已过期或不存在，请重新导出");
-          return;
-        }
-        socText = remote;
-      }
-
+      const socText = await resolveSocText(text);
+      if (!socText) { setImportError("计划数据已过期或不存在，请重新导出"); return; }
       const data = decodeSoc(socText);
-      if (!data) {
-        setImportError("二维码内容格式不正确");
-        return;
-      }
-      finishImport(data.plans);
+      if (!data) { setImportError("二维码内容格式不正确"); return; }
+      triggerImport(data.plans, plans);
     } finally {
       setIsProcessingFile(false);
     }
-  }, [finishImport]);
+  }, [resolveSocText, triggerImport, plans]);
+
+  // ── 页面加载时检测 ?import= 参数（扫码打开网页） ─────────────────
+  useEffect(() => {
+    const importId = searchParams.get("import");
+    if (!importId) return;
+    // 立即清除 URL 参数，避免刷新重复触发
+    setSearchParams({}, { replace: true });
+    (async () => {
+      try {
+        const remote = await downloadSocRef(importId);
+        if (!remote) { toast.error("计划数据已过期或不存在，请重新导出"); return; }
+        const data = decodeSoc(remote);
+        if (!data) { toast.error("计划数据格式错误"); return; }
+        triggerImport(data.plans, plans);
+      } catch {
+        toast.error("加载计划失败，请重试");
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── 暴露给父组件的方法 ────────────────────────────────────────────
+  useImperativeHandle(ref, () => ({
+    openImport: () => setShowImport(true),
+    startExport: handleExport,
+  }), [handleExport]);
 
   // ── 拖拽 ─────────────────────────────────────────────────────────
   const onDragOver  = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); };
@@ -163,33 +206,45 @@ export default function ExportImportPanel({ plans, onImport }: Props) {
 
   return (
     <>
+      {/* 替换确认弹窗 */}
+      {pendingPlans && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.5)" }}
+        >
+          <div
+            className="bg-card text-card-foreground rounded-xl shadow-2xl mx-4 w-full max-w-sm"
+            style={{ border: "1px solid hsl(var(--border))", padding: "24px" }}
+          >
+            <h3 className="font-semibold mb-2">替换现有计划？</h3>
+            <p className="text-sm text-muted-foreground mb-5">
+              当前已有 {plans.length} 个角色的计划，导入将替换全部数据，此操作不可撤销。
+            </p>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                style={{ borderRadius: 4 }}
+                onClick={() => setPendingPlans(null)}
+              >
+                取消
+              </Button>
+              <Button
+                className="flex-1 gradient-primary text-primary-foreground"
+                style={{ borderRadius: 4 }}
+                onClick={() => finishImport(pendingPlans)}
+              >
+                确认替换
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 离屏模板（html2canvas 截图用） */}
       {plans.length > 0 && (
         <ExportTemplate ref={templateRef} plans={plans} qrDataUrl={qrDataUrl} />
       )}
-
-      {/* 按钮行 */}
-      <div className="flex gap-3">
-        <Button
-          variant="ghost"
-          className="flex-1 gradient-card border border-border text-foreground hover:text-foreground h-10 text-sm font-medium"
-          style={{ borderRadius: 4 }}
-          onClick={() => setShowImport(true)}
-        >
-          <Upload className="mr-2 h-4 w-4 text-muted-foreground" />
-          导入计划
-        </Button>
-        <Button
-          variant="ghost"
-          className="flex-1 gradient-card border border-border text-foreground hover:text-foreground h-10 text-sm font-medium"
-          style={{ borderRadius: 4 }}
-          onClick={handleExport}
-          disabled={plans.length === 0 || isExporting}
-        >
-          <Download className="mr-2 h-4 w-4 text-muted-foreground" />
-          {isExporting ? "生成中…" : "导出图片"}
-        </Button>
-      </div>
 
       {/* 导入弹窗 */}
       {showImport && (
@@ -312,4 +367,6 @@ export default function ExportImportPanel({ plans, onImport }: Props) {
       )}
     </>
   );
-}
+});
+
+export default ExportImportPanel;
