@@ -38,6 +38,7 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
   const [qrDataUrl, setQrDataUrl]     = useState<string | null>(null);
   // 待确认的导入数据（有现有计划时需用户确认替换）
   const [pendingPlans, setPendingPlans] = useState<CharacterPlan[] | null>(null);
+  const [exportPreviewUrl, setExportPreviewUrl] = useState<string | null>(null);
 
   const templateRef = useRef<HTMLDivElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -81,15 +82,7 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
         logging: false,
       });
 
-      // 触发下载
-      const link = document.createElement("a");
-      const today = new Date();
-      const dateStr = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, "0")}${String(today.getDate()).padStart(2, "0")}`;
-      link.download = `铃兰跑片计划_${dateStr}.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-
-      toast.success("导出成功");
+      setExportPreviewUrl(canvas.toDataURL("image/png"));
     } catch (e) {
       console.error("[ExportImportPanel] 导出失败", e);
       toast.error("导出失败，请重试");
@@ -104,7 +97,7 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
     onImport(importedPlans);
     closeImport();
     setPendingPlans(null);
-    toast.success(`导入成功，共 ${importedPlans.length} 个角色计划`);
+    toast.success("已基于社区热门导入跑片计划，可继续设置");
   }, [onImport, closeImport]);
 
   // ── 触发导入：有现有数据则弹确认，否则直接导入 ───────────────────
@@ -206,6 +199,36 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
 
   return (
     <>
+      {/* 导出图片预览弹窗 */}
+      {exportPreviewUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.75)" }}
+          onClick={() => setExportPreviewUrl(null)}
+        >
+          <div
+            className="flex flex-col items-center gap-3 mx-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <img
+              src={exportPreviewUrl}
+              alt="导出图片"
+              style={{ maxWidth: "min(400px, 90vw)", maxHeight: "70vh", borderRadius: 8, display: "block" }}
+            />
+            <p className="text-sm" style={{ color: "rgba(255,255,255,0.8)" }}>
+              长按保存图片（电脑右键另存为）
+            </p>
+            <button
+              onClick={() => setExportPreviewUrl(null)}
+              className="text-xs px-4 py-1.5 rounded-full"
+              style={{ background: "rgba(255,255,255,0.15)", color: "#fff" }}
+            >
+              关闭
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 替换确认弹窗 */}
       {pendingPlans && (
         <div
@@ -272,7 +295,7 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
             <div className="p-4 space-y-4">
               {/* 方式 1：图片上传 */}
               <div>
-                <p className="text-xs text-muted-foreground mb-2 font-medium">方式一：上传导出的图片</p>
+                <p className="text-xs text-muted-foreground font-medium" style={{ marginBottom: 2 }}>方式一：上传导出的图片</p>
 
                 {/* input 覆盖整个区域，避免 JS 模拟点击在某些浏览器失效 */}
                 <label
@@ -337,11 +360,12 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
 
               {/* 方式 2：粘贴文本 */}
               <div>
-                <p className="text-xs text-muted-foreground mb-2 font-medium">方式二：粘贴计划码</p>
+                <p className="text-xs text-muted-foreground font-medium" style={{ marginBottom: 2 }}>方式二：粘贴计划码</p>
                 <textarea
-                  className="w-full rounded-lg text-sm bg-muted/40 text-foreground placeholder:text-muted-foreground resize-none outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full rounded-lg text-sm text-foreground placeholder:text-muted-foreground resize-none outline-none focus:ring-1 focus:ring-primary"
                   style={{
                     border: "1px solid hsl(var(--border))",
+                    background: "hsl(var(--muted) / 0.3)",
                     padding: "10px 12px",
                     minHeight: 80,
                   }}

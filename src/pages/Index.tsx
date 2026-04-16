@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Settings, Flame, Upload, Download, Copy, Sun, Moon, ArrowRight, ScanEye } from "lucide-react";
+import { Settings, Flame, Upload, Download, Copy, Sun, Moon, ArrowRight, Sparkles, RotateCcw, ImageDown } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import FarmingCalendar from "@/components/FarmingCalendar";
 import SetPlanDialog from "@/components/SetPlanDialog";
@@ -75,13 +75,33 @@ export default function Index() {
     fetchRemoteRoles().then(() => setRolesReady(true)).catch(() => setRolesReady(true));
   }, []);
 
-  // 无计划时拉取社区 Top3 作为示例预览数据
+  // 无计划时拉取社区 Top3，供一键试配使用
   useEffect(() => {
     if (plans.length > 0) return;
     fetchCommunityTop10().then(result => {
       if (result && result.data.length > 0) setPreviewChars(result.data.slice(0, 3));
     }).catch(() => {});
   }, [plans.length]);
+
+  // 一键试配：加载热门计划，不上报排行
+  const handleQuickTry = () => {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const chars = previewChars.length > 0
+      ? previewChars
+      : COMMUNITY_TOP_CHARACTERS.slice(0, 3).map(c => ({ name: c.name, topTargetStar: 5 as number }));
+    const trialPlans: CharacterPlan[] = chars.map((c, i) => ({
+      id: crypto.randomUUID(),
+      name: c.name,
+      farmingMode: "star" as const,
+      currentStar: Math.max(0, (c.topTargetStar ?? 5) - 2) as 0 | 1 | 2 | 3 | 4 | 5,
+      targetStar: (c.topTargetStar ?? 5) as 1 | 2 | 3 | 4 | 5,
+      currentShards: 0,
+      startDate: todayStr,
+    }));
+    // 直接 setPlans，不调用 handleSavePlans，避免上报排行
+    setPlans(trialPlans);
+    toast.success("已加载试配计划，可直接编辑");
+  };
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(plans));
@@ -102,22 +122,6 @@ export default function Index() {
     );
   };
 
-  // 示例计划：社区 Top3（或 fallback 静态数据），从今天开始
-  const previewPlans = useMemo<CharacterPlan[]>(() => {
-    const todayStr = new Date().toISOString().slice(0, 10);
-    const chars = previewChars.length > 0
-      ? previewChars
-      : COMMUNITY_TOP_CHARACTERS.slice(0, 3).map(c => ({ name: c.name, topTargetStar: 5 as number }));
-    return chars.map((c, i) => ({
-      id: `preview-${i}`,
-      name: c.name,
-      farmingMode: "star" as const,
-      currentStar: Math.max(0, (c.topTargetStar ?? 5) - 2) as 0 | 1 | 2 | 3 | 4 | 5,
-      targetStar: (c.topTargetStar ?? 5) as 1 | 2 | 3 | 4 | 5,
-      currentShards: 0,
-      startDate: todayStr,
-    }));
-  }, [previewChars]);
 
   if (!rolesReady) {
     return (
@@ -152,8 +156,8 @@ export default function Index() {
           variant="ghost"
           onClick={() => setShowSetPlan(true)}
         >
-          <Settings className="mr-2 h-4 w-4 text-muted-foreground" />
-          设置跑片
+          <Settings className="mr-2 h-4 w-4" />
+          设置计划
         </Button>
         <Button
           className="flex-1 gradient-card border border-border text-foreground hover:text-foreground active:text-foreground hover:glow-primary h-12 font-semibold"
@@ -169,42 +173,37 @@ export default function Index() {
       {/* Calendar + Export/Import */}
       <div className="mx-auto px-4" style={{ maxWidth: "600px", paddingTop: "12px", paddingBottom: "32px" }}>
         {plans.length === 0 ? (
-          /* 未配置：示例预览卡片 */
-          <div className="gradient-card border border-border" style={{ paddingTop: "8px", paddingLeft: "12px", paddingRight: "12px", paddingBottom: "12px", borderRadius: "4px" }}>
-            {/* 示例标签（不受遮罩影响） */}
-            <div className="flex items-center justify-between mb-1">
-              <div style={{ background: "hsl(var(--primary) / 0.08)", borderRadius: 2, padding: "1px 12px", textAlign: "left", width: "100%" }}>
-                <span className="text-foreground inline-flex items-center gap-1" style={{ fontSize: 12 }}>
-                  <ScanEye style={{ width: 12, height: 12, flexShrink: 0 }} />
-                  示例预览 · 基于当前社区热门角色
-                </span>
-              </div>
-            </div>
-            {/* 预览日历（半透明） */}
-            <div style={{ opacity: 0.55, pointerEvents: "none", userSelect: "none" }}>
-              <FarmingCalendar plans={previewPlans} />
-            </div>
-            {/* 底部按钮（不受遮罩影响） */}
-            <div className="flex gap-2" style={{ justifyContent: "space-between", marginTop: 16 }}>
+          /* 未配置：空状态卡片 */
+          <div className="gradient-card border border-border text-center" style={{ borderRadius: "4px", padding: "48px 32px 120px" }}>
+            <div className="text-4xl mb-3">📋</div>
+            <p className="text-muted-foreground text-sm">暂未设置跑片计划</p>
+            <div className="flex justify-center" style={{ gap: 12, marginTop: 32 }}>
               <Button
                 variant="outline"
-                size="sm"
-                className="text-xs h-8"
+                className="text-sm h-10 px-5"
                 style={{ borderRadius: 4 }}
                 onClick={() => exportImportRef.current?.openImport()}
               >
-                <Upload className="mr-1.5 h-3.5 w-3.5" />
+                <Upload className="mr-2 h-4 w-4" />
                 导入计划
               </Button>
-              <Button
-                size="sm"
-                className="gradient-primary text-primary-foreground text-xs h-8 glow-primary hover:opacity-90"
-                style={{ borderRadius: 4 }}
-                onClick={() => setShowSetPlan(true)}
-              >
-                开始设置
-                <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-              </Button>
+              <div style={{ position: "relative" }}>
+                <Button
+                  className="gradient-primary text-primary-foreground text-sm h-10 px-5 glow-primary"
+                  style={{ borderRadius: 4 }}
+                  onClick={handleQuickTry}
+                >
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  一键试配
+                </Button>
+                <span style={{
+                  position: "absolute", top: -6, right: -6,
+                  background: "#e84b4b", color: "#fff",
+                  fontSize: 10, fontWeight: 700, lineHeight: 1,
+                  padding: "2px 4px", borderRadius: 3,
+                  pointerEvents: "none",
+                }}>NEW</span>
+              </div>
             </div>
           </div>
         ) : (
@@ -212,17 +211,29 @@ export default function Index() {
           <div className="gradient-card border border-border" style={{ paddingTop: "8px", paddingLeft: "12px", paddingRight: "12px", paddingBottom: "12px", borderRadius: "4px" }}>
             <FarmingCalendar plans={plans} />
             <div className="flex gap-2" style={{ justifyContent: "space-between", marginTop: 16 }}>
-              {/* 左：导入计划 */}
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs h-8"
-                style={{ borderRadius: 4 }}
-                onClick={() => exportImportRef.current?.openImport()}
-              >
-                <Upload className="mr-1.5 h-3.5 w-3.5" />
-                导入计划
-              </Button>
+              {/* 左：重置计划 + 导入计划 */}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-8"
+                  style={{ borderRadius: 4 }}
+                  onClick={() => { setPlans([]); toast.success("已恢复默认设置"); }}
+                >
+                  <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                  重置
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-8"
+                  style={{ borderRadius: 4 }}
+                  onClick={() => exportImportRef.current?.openImport()}
+                >
+                  <Upload className="mr-1.5 h-3.5 w-3.5" />
+                  导入计划
+                </Button>
+              </div>
               {/* 右：复制计划码 + 导出/分享 */}
               <div className="flex gap-2">
                 <Button
@@ -247,8 +258,8 @@ export default function Index() {
                 >
                   {isExporting
                     ? <div className="mr-1.5 h-3.5 w-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
-                    : <Download className="mr-1.5 h-3.5 w-3.5" />}
-                  {isExporting ? "生成中…" : "导出/分享"}
+                    : <ImageDown className="mr-1.5 h-3.5 w-3.5" />}
+                  {isExporting ? "生成中…" : "截图保存"}
                 </Button>
               </div>
             </div>

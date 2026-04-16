@@ -97,6 +97,10 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  const startDateSet = useMemo(() => new Set(
+    plans.map(p => { const d = parseLocalDate(p.startDate); d.setHours(0, 0, 0, 0); return d.getTime(); })
+  ), [plans]);
+
   const calendarDays = useMemo(() => {
     const days: { day: number; characters: CharacterPlan[] }[] = [];
     for (let d = 1; d <= daysInMonth; d++) {
@@ -160,7 +164,8 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
         {calendarDays.map(({ day, characters }) => {
           const date = new Date(year, month, day);
           date.setHours(0, 0, 0, 0);
-          const isToday = date.getTime() === today.getTime();
+          const isToday     = date.getTime() === today.getTime();
+          const isStartDate = startDateSet.has(date.getTime());
           const hasChars = characters.length > 0;
 
           return (
@@ -171,6 +176,11 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
             >
               {isToday && (
                 <span className="absolute inset-0 pointer-events-none z-10" style={{ boxShadow: "inset 0 0 0 2px hsl(var(--primary))", borderRadius: "8px" }} />
+              )}
+              {isStartDate && (
+                <svg width={8} height={8} viewBox="0 0 12 12" fill="none" style={{ position: "absolute", top: 5, right: 5, zIndex: 10, pointerEvents: "none" }}>
+                  <path d="M6 0C6 0 6.85334 2.69555 8.07889 3.92111C9.30445 5.14666 12 6 12 6C12 6 9.30445 6.85334 8.07889 8.07889C6.85334 9.30445 6 12 6 12C6 12 5.14666 9.30445 3.92111 8.07889C2.69555 6.85334 0 6 0 6C0 6 3.34379 4.69221 3.92111 3.92111C4.49842 3.15 6 0 6 0Z" fill="#B9AD86"/>
+                </svg>
               )}
               <span className={`text-xs sm:text-xs leading-none ${isToday ? "font-bold text-primary" : "text-foreground"}`}>
                 {isToday ? "今" : day}
@@ -198,6 +208,12 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
             </div>
           );
         })}
+      </div>
+
+      {/* 图例 */}
+      <div className="flex items-center gap-1 mt-2 mb-1">
+        <span style={{ fontSize: 9, color: "#B9AD86", lineHeight: 1 }}>✦</span>
+        <span className="text-xs text-muted-foreground">阵容变动日</span>
       </div>
 
       {/* Summary cards — 按开始时间排序，同名角色合并 */}

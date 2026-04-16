@@ -56,8 +56,9 @@ function AvatarPlaceholder({ size, index }: { size: number; index: number }) {
       background: bg, position: "relative", flexShrink: 0, overflow: "hidden",
     }}>
       <div style={{ position: "absolute", top: offset, left: offset }}>
-        <svg width={iconSize} height={iconSize} viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M6 0C6 0 6.85334 2.69555 8.07889 3.92111C9.30445 5.14666 12 6 12 6C12 6 9.30445 6.85334 8.07889 8.07889C6.85334 9.30445 6 12 6 12C6 12 5.14666 9.30445 3.92111 8.07889C2.69555 6.85334 0 6 0 6C0 6 3.34379 4.69221 3.92111 3.92111C4.49842 3.15 6 0 6 0Z" fill="rgba(255,255,255,0.55)"/>
+        <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="rgba(255,255,255,0.55)" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="8" r="4"/>
+          <path d="M4 21c0-4.418 3.582-8 8-8s8 3.582 8 8H4z"/>
         </svg>
       </div>
     </div>
@@ -141,6 +142,11 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
 
     const today = new Date(); today.setHours(0, 0, 0, 0);
 
+    // 阵容变动日集合（时间戳）
+    const startDateSet = new Set(
+      plans.map(p => { const d = parseLocalDate(p.startDate); d.setHours(0, 0, 0, 0); return d.getTime(); })
+    );
+
     // 按开始时间排序，再按角色名分组
     const sorted = [...plans].sort((a, b) => {
       const sd = parseLocalDate(a.startDate).getTime() - parseLocalDate(b.startDate).getTime();
@@ -192,7 +198,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
           <div style={{ flexShrink: 0, textAlign: "right" }}>
             {/* 日期区间 */}
             <div style={{
-              fontSize: 17,
+              fontSize: 16,
               fontWeight: 600,
               letterSpacing: 0.3,
               lineHeight: 1,
@@ -252,7 +258,8 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                 const day  = idx + 1;
                 const date = new Date(calYear, calMonth, day);
                 date.setHours(0, 0, 0, 0);
-                const isToday = date.getTime() === today.getTime();
+                const isToday     = date.getTime() === today.getTime();
+                const isStartDate = startDateSet.has(date.getTime());
                 const chars   = getCharactersOnDate(plans, date);
                 const shown   = chars.slice(0, 3);
                 const count   = shown.length;
@@ -275,6 +282,13 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                       boxSizing: "border-box",
                     }}
                   >
+                    {isStartDate && (
+                      <span style={{
+                        position: "absolute", top: 2, right: 3,
+                        fontSize: 8, lineHeight: 1, color: "#B9AD86",
+                        fontFamily: "sans-serif",
+                      }}>✦</span>
+                    )}
                     <span style={{
                       fontSize: 11,
                       fontWeight: isToday ? 700 : 400,
@@ -303,6 +317,12 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                   </div>
                 );
               })}
+            </div>
+
+            {/* 图例说明 */}
+            <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 8 }}>
+              <span style={{ fontSize: 9, color: "#B9AD86", lineHeight: 1, fontFamily: "sans-serif" }}>✦</span>
+              <span style={{ fontSize: 10, color: "#888", lineHeight: 1 }}>阵容变动日</span>
             </div>
           </div>
 
@@ -389,9 +409,9 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "space-between",
-                          paddingTop: 3,
-                          paddingBottom: 5,
-                          borderTop: pi > 0 ? `1px solid ${C.border}80` : undefined,
+                          paddingTop: 4,
+                          paddingBottom: 4,
+                          borderTop: undefined,
                           fontSize: 12,
                           color: C.muted,
                         }}
