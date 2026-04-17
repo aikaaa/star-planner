@@ -101,7 +101,7 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
     onImport(importedPlans);
     closeImport();
     setPendingPlans(null);
-    toast.success("已基于社区热门导入跑片计划，可继续设置");
+    toast.success("导入成功");
   }, [onImport, closeImport]);
 
   // ── 触发导入：有现有数据则弹确认，否则直接导入 ───────────────────
