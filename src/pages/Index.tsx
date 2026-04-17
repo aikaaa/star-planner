@@ -144,9 +144,9 @@ export default function Index() {
         </button>
         <div className="flex items-center justify-center gap-2 mb-1">
           <h1 className="text-xl sm:text-2xl font-bold text-primary-foreground" style={{ display: "flex", alignItems: "center" }}>
-            <span style={{ opacity: 0.4, fontWeight: 400, fontSize: 15, lineHeight: 1, marginRight: 7}}>✦</span>
+            <span style={{ opacity: 0.4, fontWeight: 400, fontSize: 16, lineHeight: 1, marginRight: 7}}>✦</span>
             <span style={{ letterSpacing: "0.1em" }}>铃兰跑片助手</span>
-            <span style={{ opacity: 0.4, fontWeight: 400, fontSize: 15, lineHeight: 1, marginLeft: 5 }}>✧</span>
+            <span style={{ opacity: 0.4, fontWeight: 400, fontSize: 16, lineHeight: 1, marginLeft: 5 }}>✧</span>
           </h1>
         </div>
         <p className="text-primary-foreground/70 text-xs sm:text-sm">管理你的角色碎片养成进度</p>

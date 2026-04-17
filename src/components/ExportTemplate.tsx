@@ -204,7 +204,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
         }}>
           {/* 左：标题 + 副标题 */}
           <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", lineHeight: 1.2, letterSpacing: 0.5 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "#fff", lineHeight: 1.2, letterSpacing: 0.5 }}>
               我的跑片计划
             </div>
             <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", marginTop: 8 }}>
