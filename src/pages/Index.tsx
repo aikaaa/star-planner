@@ -144,9 +144,9 @@ export default function Index() {
         </button>
         <div className="flex items-center justify-center gap-2 mb-1">
           <h1 className="text-xl sm:text-2xl font-bold text-primary-foreground" style={{ display: "flex", alignItems: "center" }}>
-            <span style={{ opacity: 0.4, fontWeight: 400, fontSize: 16, lineHeight: 1, marginRight: 7}}>✦</span>
+            <span className="text-lg sm:text-base" style={{ opacity: 0.4, fontWeight: 400, lineHeight: 1, marginRight: 7}}>✦</span>
             <span style={{ letterSpacing: "0.1em" }}>铃兰跑片助手</span>
-            <span style={{ opacity: 0.4, fontWeight: 400, fontSize: 16, lineHeight: 1, marginLeft: 5 }}>✧</span>
+            <span className="text-lg sm:text-base" style={{ opacity: 0.4, fontWeight: 400, lineHeight: 1, marginLeft: 5 }}>✧</span>
           </h1>
         </div>
         <p className="text-primary-foreground/70 text-xs sm:text-sm">管理你的角色碎片养成进度</p>
@@ -249,7 +249,7 @@ export default function Index() {
                   size="sm"
                   className="flex-1 text-xs h-8"
                   style={{ borderRadius: 4 }}
-                  onClick={() => { setPlans([]); toast.success("已恢复默认设置"); }}
+                  onClick={() => { setPlans([]); setTimeout(() => toast.success("已恢复默认设置"), 50); }}
                 >
                   <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
                   重置
