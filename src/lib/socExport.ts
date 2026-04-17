@@ -8,7 +8,7 @@
  */
 
 import { CharacterPlan } from "@/lib/types";
-import { supabase } from "@/lib/supabase";
+import { supabase, generateUUID } from "@/lib/supabase";
 
 const PREFIX = "[SOC]";
 const REF_PREFIX = "[SOC]ref:";
@@ -89,7 +89,7 @@ export function decodeSoc(text: string): SocData | null {
       // v2：短字段名
       if (!Array.isArray(raw.p)) return null;
       plans = (raw.p as PlanCompact[]).map(c => ({
-        id:           crypto.randomUUID(),
+        id:           generateUUID(),
         name:         c.n,
         farmingMode:  c.fm as "star" | "free",
         currentStar:  c.cs,
@@ -105,7 +105,7 @@ export function decodeSoc(text: string): SocData | null {
       if (!Array.isArray(raw.plans)) return null;
       plans = (raw.plans as Partial<CharacterPlan>[]).map(p => ({
         ...p,
-        id: p.id ?? crypto.randomUUID(),
+        id: p.id ?? generateUUID(),
       } as CharacterPlan));
     }
 
