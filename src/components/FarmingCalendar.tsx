@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { CharacterPlan, formatCharName, getCharactersOnDate, getCompletionDate, getDaysNeeded, getEffectiveTargetStar, getPartialProgress, parseLocalDate, CHAR_ICON_OPTIONS } from "@/lib/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,21 @@ interface FarmingCalendarProps {
 }
 
 const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
+
+const AVATAR_BG      = ["#B0D6CA", "#B0CED6", "#B0BFD6", "#D6B0B1", "#DBD19D", "#D3B0D6"];
+const AVATAR_BG_DARK = ["#6C877E", "#528693", "#647693", "#896161", "#7E7962", "#7B647D"];
+
+function useIsDark() {
+  const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setDark(document.documentElement.classList.contains("dark"));
+    });
+    observer.observe(document.documentElement, { attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
+  return dark;
+}
 
 // ── 卡片间距配置（单位 px）──────────────────────────────────
 // 修改这里即可调整卡片内所有行的上下间距
@@ -38,6 +53,7 @@ function CharAvatar({
   className?: string;
 }) {
   const [imgFailed, setImgFailed] = useState(false);
+  const isDark = useIsDark();
   const avatarUrl = getAvatarUrl(plan.name);
 
   const sizeNum = parseFloat(size);
@@ -66,17 +82,14 @@ function CharAvatar({
   return (
     <div
       title={plan.name}
-      className={`rounded-full flex items-center justify-center font-medium relative ${className}`}
+      className={`rounded-full flex items-center justify-center font-medium ${className}`}
       style={{
         ...baseStyle,
         fontSize: fontSizeStr,
-        background: "var(--avatar-circle-bg)",
-        color: "hsl(var(--muted-foreground))",
+        background: (isDark ? AVATAR_BG_DARK : AVATAR_BG)[index % AVATAR_BG.length],
+        color: isDark ? "#13221F" : "#fff",
       }}
     >
-      <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", overflow: "visible" }}>
-        <circle cx="50%" cy="50%" r="49%" stroke="hsl(var(--muted-foreground))" strokeDasharray="2 2" strokeWidth="1" fill="none" />
-      </svg>
       {plan.name.charAt(0)}
     </div>
   );
@@ -100,6 +113,25 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
   const startDateSet = useMemo(() => new Set(
     plans.map(p => { const d = parseLocalDate(p.startDate); d.setHours(0, 0, 0, 0); return d.getTime(); })
   ), [plans]);
+
+  // 颜色索引分配：
+  //   - 无头像角色（getAvatarUrl 返回 null）按首次出场顺序依次取色 0, 1, 2...
+  //   - 有 URL 但图片可能加载失败的角色排在无头像组之后，避免重复
+  const charColorIndex = useMemo(() => {
+    const noAvatarChars: string[] = [];
+    const withAvatarChars: string[] = [];
+    const seen = new Set<string>();
+    plans.forEach(p => {
+      if (seen.has(p.name)) return;
+      seen.add(p.name);
+      if (!getAvatarUrl(p.name)) noAvatarChars.push(p.name);
+      else withAvatarChars.push(p.name);
+    });
+    const map = new Map<string, number>();
+    noAvatarChars.forEach((name, i) => map.set(name, i));
+    withAvatarChars.forEach((name, i) => map.set(name, noAvatarChars.length + i));
+    return map;
+  }, [plans]);
 
   const calendarDays = useMemo(() => {
     const days: { day: number; characters: CharacterPlan[] }[] = [];
@@ -136,7 +168,7 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
             }, new Map<string, { plan: CharacterPlan; segments: CharacterPlan[] }>())
           ).map(([name, { plan, segments }], i) => (
             <div key={name} className="flex items-center gap-1 text-xs text-muted-foreground">
-              <CharAvatar plan={plan} index={plans.findIndex(p => p.name === name)} size="24px" />
+              <CharAvatar plan={plan} index={charColorIndex.get(name) ?? 0} size="24px" />
               <span>{formatCharName(name)}</span>
               {segments.length === 1
                 ? <span>{segments[0].currentStar}→{getEffectiveTargetStar(segments[0])}</span>
@@ -178,7 +210,7 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
                 <span className="absolute inset-0 pointer-events-none z-10" style={{ boxShadow: "inset 0 0 0 2px hsl(var(--primary))", borderRadius: "8px" }} />
               )}
               {isStartDate && (
-                <svg width={8} height={8} viewBox="0 0 12 12" fill="none" style={{ position: "absolute", top: 5, right: 5, zIndex: 10, pointerEvents: "none" }}>
+                <svg width={8} height={8} viewBox="0 0 12 12" fill="none" style={{ position: "absolute", top: 7, right: 6, zIndex: 10, pointerEvents: "none" }}>
                   <path d="M6 0C6 0 6.85334 2.69555 8.07889 3.92111C9.30445 5.14666 12 6 12 6C12 6 9.30445 6.85334 8.07889 8.07889C6.85334 9.30445 6 12 6 12C6 12 5.14666 9.30445 3.92111 8.07889C2.69555 6.85334 0 6 0 6C0 6 3.34379 4.69221 3.92111 3.92111C4.49842 3.15 6 0 6 0Z" fill="#B9AD86"/>
                 </svg>
               )}
@@ -195,10 +227,9 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
                 return (
                   <div className="flex mt-0.5 justify-center items-center">
                     {shown.map((c, ci) => {
-                      const idx = plans.findIndex((p) => p.id === c.id);
                       return (
                         <div key={c.id} style={{ width: slotSize, height: slotSize, flexShrink: 0, fontSize: slotSize, marginLeft: ci > 0 ? overlap : 0, zIndex: ci, position: "relative" }}>
-                          <CharAvatar plan={c} index={idx} size="100%" />
+                          <CharAvatar plan={c} index={charColorIndex.get(c.name) ?? 0} size="100%" />
                         </div>
                       );
                     })}
@@ -212,7 +243,9 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
 
       {/* 图例 */}
       <div className="flex items-center gap-1 mt-2 mb-1">
-        <span style={{ fontSize: 9, color: "#B9AD86", lineHeight: 1 }}>✦</span>
+        <svg width={8} height={8} viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0 }}>
+          <path d="M6 0C6 0 6.85334 2.69555 8.07889 3.92111C9.30445 5.14666 12 6 12 6C12 6 9.30445 6.85334 8.07889 8.07889C6.85334 9.30445 6 12 6 12C6 12 5.14666 9.30445 3.92111 8.07889C2.69555 6.85334 0 6 0 6C0 6 3.34379 4.69221 3.92111 3.92111C4.49842 3.15 6 0 6 0Z" fill="#B9AD86"/>
+        </svg>
         <span className="text-xs text-muted-foreground">阵容变动日</span>
       </div>
 
@@ -240,7 +273,7 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
             {[...groups.entries()].map(([name, group], gi) => {
               // 用第一条计划的头像
               const first = group[0];
-              const firstIdx = plans.findIndex((p) => p.id === first.id);
+              const firstIdx = charColorIndex.get(name) ?? 0;
               // 找今天正在进行的段（今天在 startDate ~ endDate 之间）
               const activeToday = group.find((p) => {
                 const s = parseLocalDate(p.startDate); s.setHours(0, 0, 0, 0);

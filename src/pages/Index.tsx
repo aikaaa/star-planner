@@ -143,7 +143,11 @@ export default function Index() {
           {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </button>
         <div className="flex items-center justify-center gap-2 mb-1">
-          <h1 className="text-xl sm:text-2xl font-bold text-primary-foreground">铃兰跑片助手</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-primary-foreground" style={{ display: "flex", alignItems: "center" }}>
+            <span style={{ opacity: 0.4, fontWeight: 400, fontSize: 15, lineHeight: 1, marginRight: 7}}>✦</span>
+            <span style={{ letterSpacing: "0.1em" }}>铃兰跑片助手</span>
+            <span style={{ opacity: 0.4, fontWeight: 400, fontSize: 15, lineHeight: 1, marginLeft: 5 }}>✧</span>
+          </h1>
         </div>
         <p className="text-primary-foreground/70 text-xs sm:text-sm">管理你的角色碎片养成进度</p>
       </header>
@@ -181,7 +185,7 @@ export default function Index() {
               <Button
                 variant="outline"
                 className="text-sm h-10 px-5"
-                style={{ borderRadius: 4 }}
+                style={{ borderRadius: 4, background: "hsl(var(--card))" }}
                 onClick={() => exportImportRef.current?.openImport()}
               >
                 <Upload className="mr-2 h-4 w-4" />
@@ -210,13 +214,40 @@ export default function Index() {
           /* 已配置：日历卡片 + 卡片下方右对齐的操作按钮 */
           <div className="gradient-card border border-border" style={{ paddingTop: "8px", paddingLeft: "12px", paddingRight: "12px", paddingBottom: "12px", borderRadius: "4px" }}>
             <FarmingCalendar plans={plans} />
-            <div className="flex gap-2" style={{ justifyContent: "space-between", marginTop: 16 }}>
-              {/* 左：重置计划 + 导入计划 */}
+            <div className="flex flex-col gap-2" style={{ marginTop: 16 }}>
+              {/* 第一行：截图保存 */}
+              <Button
+                size="sm"
+                className="w-full gradient-primary text-primary-foreground text-xs h-8"
+                style={{ borderRadius: 4 }}
+                disabled={isExporting}
+                onClick={() => exportImportRef.current?.startExport()}
+              >
+                {isExporting
+                  ? <div className="mr-1.5 h-3.5 w-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                  : <ImageDown className="mr-1.5 h-3.5 w-3.5" />}
+                {isExporting ? "生成中…" : "截图保存"}
+              </Button>
+              {/* 第二行：复制计划码 */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full text-xs h-8"
+                style={{ borderRadius: 4 }}
+                disabled={isCopying}
+                onClick={handleCopyCode}
+              >
+                {isCopying
+                  ? <div className="mr-1.5 h-3.5 w-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                  : <Copy className="mr-1.5 h-3.5 w-3.5" />}
+                复制计划码
+              </Button>
+              {/* 第三行：重置 + 导入计划 */}
               <div className="flex gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-xs h-8"
+                  className="flex-1 text-xs h-8"
                   style={{ borderRadius: 4 }}
                   onClick={() => { setPlans([]); toast.success("已恢复默认设置"); }}
                 >
@@ -226,40 +257,12 @@ export default function Index() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-xs h-8"
+                  className="flex-1 text-xs h-8"
                   style={{ borderRadius: 4 }}
                   onClick={() => exportImportRef.current?.openImport()}
                 >
                   <Upload className="mr-1.5 h-3.5 w-3.5" />
                   导入计划
-                </Button>
-              </div>
-              {/* 右：复制计划码 + 导出/分享 */}
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-xs h-8"
-                  style={{ borderRadius: 4 }}
-                  disabled={isCopying}
-                  onClick={handleCopyCode}
-                >
-                  {isCopying
-                    ? <div className="mr-1.5 h-3.5 w-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
-                    : <Copy className="mr-1.5 h-3.5 w-3.5" />}
-                  复制计划码
-                </Button>
-                <Button
-                  size="sm"
-                  className="gradient-primary text-primary-foreground text-xs h-8"
-                  style={{ borderRadius: 4 }}
-                  disabled={isExporting}
-                  onClick={() => exportImportRef.current?.startExport()}
-                >
-                  {isExporting
-                    ? <div className="mr-1.5 h-3.5 w-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
-                    : <ImageDown className="mr-1.5 h-3.5 w-3.5" />}
-                  {isExporting ? "生成中…" : "截图保存"}
                 </Button>
               </div>
             </div>

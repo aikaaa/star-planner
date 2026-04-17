@@ -39,6 +39,7 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
   // 待确认的导入数据（有现有计划时需用户确认替换）
   const [pendingPlans, setPendingPlans] = useState<CharacterPlan[] | null>(null);
   const [exportPreviewUrl, setExportPreviewUrl] = useState<string | null>(null);
+  const [exportFileName, setExportFileName] = useState<string>("SocPlan.png");
 
   const templateRef = useRef<HTMLDivElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -82,6 +83,9 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
         logging: false,
       });
 
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+      setExportFileName(`SocPlan_${dateStr}.png`);
       setExportPreviewUrl(canvas.toDataURL("image/png"));
     } catch (e) {
       console.error("[ExportImportPanel] 导出失败", e);
@@ -215,16 +219,26 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
               alt="导出图片"
               style={{ maxWidth: "min(400px, 90vw)", maxHeight: "70vh", borderRadius: 8, display: "block" }}
             />
-            <p className="text-sm" style={{ color: "rgba(255,255,255,0.8)" }}>
-              长按保存图片（电脑右键另存为）
+            <p className="text-sm" style={{ color: "rgba(255,255,255,0.55)" }}>
+              移动端长按图片保存
             </p>
-            <button
-              onClick={() => setExportPreviewUrl(null)}
-              className="text-xs px-4 py-1.5 rounded-full"
-              style={{ background: "rgba(255,255,255,0.15)", color: "#fff" }}
-            >
-              关闭
-            </button>
+            <div className="flex gap-2">
+              <a
+                href={exportPreviewUrl}
+                download={exportFileName}
+                className="text-xs px-4 py-1.5 rounded-full"
+                style={{ background: "rgba(255,255,255,0.9)", color: "#333", textDecoration: "none" }}
+              >
+                下载图片
+              </a>
+              <button
+                onClick={() => setExportPreviewUrl(null)}
+                className="text-xs px-4 py-1.5 rounded-full"
+                style={{ background: "rgba(255,255,255,0.15)", color: "#fff" }}
+              >
+                关闭
+              </button>
+            </div>
           </div>
         </div>
       )}

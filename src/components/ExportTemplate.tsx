@@ -40,9 +40,9 @@ const FALLBACK_BG = [
   "#B0D6CA",
   "#B0CED6",
   "#B0BFD6",
+  "#D6B0B1",
   "#DBD19D",
   "#D3B0D6",
-  "#D6B0B1",
 ];
 
 // ── 通用占位图标（无头像时显示）────────────────────────────────────
@@ -147,6 +147,23 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
       plans.map(p => { const d = parseLocalDate(p.startDate); d.setHours(0, 0, 0, 0); return d.getTime(); })
     );
 
+    // 颜色索引：无头像角色优先顺序分配，有URL角色排后（避免图片失败时撞色）
+    const charColorIndex = (() => {
+      const noAvatarChars: string[] = [];
+      const withAvatarChars: string[] = [];
+      const seen = new Set<string>();
+      plans.forEach(p => {
+        if (seen.has(p.name)) return;
+        seen.add(p.name);
+        if (!getAvatarUrl(p.name)) noAvatarChars.push(p.name);
+        else withAvatarChars.push(p.name);
+      });
+      const map = new Map<string, number>();
+      noAvatarChars.forEach((name, i) => map.set(name, i));
+      withAvatarChars.forEach((name, i) => map.set(name, noAvatarChars.length + i));
+      return map;
+    })();
+
     // 按开始时间排序，再按角色名分组
     const sorted = [...plans].sort((a, b) => {
       const sd = parseLocalDate(a.startDate).getTime() - parseLocalDate(b.startDate).getTime();
@@ -187,7 +204,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
         }}>
           {/* 左：标题 + 副标题 */}
           <div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: "#fff", lineHeight: 1.2, letterSpacing: 0.5 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", lineHeight: 1.2, letterSpacing: 0.5 }}>
               我的跑片计划
             </div>
             <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", marginTop: 8 }}>
@@ -205,9 +222,9 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
               whiteSpace: "nowrap",
               marginBottom: 4,
             }}>
-              <span style={{ color: "#B9AD86" }}>[</span>
-              <span style={{ color: "#fff" }}> {minDate.getFullYear()}/{fmtShort(minDate)} - {maxDate.getFullYear()}/{fmtShort(maxDate)} </span>
-              <span style={{ color: "#B9AD86" }}>]</span>
+              <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 14 }}>✧ </span>
+              <span style={{ color: "#fff" }}>{minDate.getFullYear()}/{fmtShort(minDate)} - {maxDate.getFullYear()}/{fmtShort(maxDate)}</span>
+              <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 14 }}> ✦</span>
             </div>
           </div>
         </div>
@@ -284,9 +301,9 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                   >
                     {isStartDate && (
                       <span style={{
-                        position: "absolute", top: 2, right: 3,
+                        position: "absolute", top: 0, right: 4,
                         fontSize: 8, lineHeight: 1, color: "#B9AD86",
-                        fontFamily: "sans-serif",
+                        display: "block",
                       }}>✦</span>
                     )}
                     <span style={{
@@ -309,7 +326,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                               flexShrink: 0,
                             }}
                           >
-                            <CalAvatar plan={c} size={14} index={plans.findIndex(p => p.id === c.id)} />
+                            <CalAvatar plan={c} size={14} index={charColorIndex.get(c.name) ?? 0} />
                           </div>
                         ))}
                       </div>
@@ -320,9 +337,8 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
             </div>
 
             {/* 图例说明 */}
-            <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 8 }}>
-              <span style={{ fontSize: 9, color: "#B9AD86", lineHeight: 1, fontFamily: "sans-serif" }}>✦</span>
-              <span style={{ fontSize: 10, color: "#888", lineHeight: 1 }}>阵容变动日</span>
+            <div style={{ marginTop: 8, fontSize: 10, color: "#888", lineHeight: 1 }}>
+              <span style={{ fontSize: 10, color: "#B9AD86", position: "relative", top: 0 }}>✦</span>{" "}阵容变动日
             </div>
           </div>
 
@@ -387,7 +403,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                     {/* 左：头像 + 名字 */}
                     <span style={{ display: "inline-block", verticalAlign: "middle", fontSize: 0 }}>
                       <span style={{ display: "inline-block", verticalAlign: "middle" }}>
-                        <TemplateAvatar plan={first} size={28} index={gi} />
+                        <TemplateAvatar plan={first} size={28} index={charColorIndex.get(name) ?? 0} />
                       </span>
                       <span style={{ display: "inline-block", verticalAlign: "middle", fontSize: 13, fontWeight: 600, lineHeight: 1, marginLeft: 8 }}>
                         {formatCharName(name)}
