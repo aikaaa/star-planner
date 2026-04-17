@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:tap": "VITE_BASE=./ VITE_NO_SINGLEFILE=1 VITE_LEGACY=1 vite build && rm -rf dist/avatars",
+    "build:tap": "VITE_BASE=./ VITE_NO_SINGLEFILE=1 VITE_LEGACY=1 VITE_QR_BASE_URL=https://www.taptap.cn/tools/27703 vite build && rm -rf dist/avatars",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",

@@ -147,8 +147,9 @@ export async function downloadSocRef(id: string): Promise<string | null> {
 export async function encodeSocForQr(plans: CharacterPlan[]): Promise<string> {
   const socStr = encodeSoc(plans);
   const id = await uploadSocRef(socStr);
-  // 用当前页面 URL（去掉已有参数）作为 base，兼容 BrowserRouter/HashRouter
-  const base = window.location.href.split("?")[0].replace(/#.*$/, "");
+  // TAP 包固定指向 TAP 地址，其他环境用当前页面 URL
+  const base = import.meta.env.VITE_QR_BASE_URL
+    ?? window.location.href.split("?")[0].replace(/#.*$/, "");
   return `${base}?import=${id}`;
 }
 
