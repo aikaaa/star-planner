@@ -11,6 +11,7 @@ import { useSearchParams } from "react-router-dom";
 import { X, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
+import { useI18n } from "@/lib/i18n";
 import { CharacterPlan } from "@/lib/types";
 import { encodeSocForQr, decodeSoc, downloadSocRef, readQrFromImage, parseImportId } from "@/lib/socExport";
 import ExportTemplate from "./ExportTemplate";
@@ -29,6 +30,7 @@ export interface ExportImportHandle {
 }
 
 const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportImportPanel({ plans, onImport, onExportingChange }, ref) {
+  const { t } = useI18n();
   const [showImport, setShowImport] = useState(false);
   const [importText, setImportText]   = useState("");
   const [importError, setImportError] = useState<string | null>(null);
@@ -89,7 +91,7 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
       setExportPreviewUrl(canvas.toDataURL("image/png"));
     } catch (e) {
       console.error("[ExportImportPanel] 导出失败", e);
-      toast.error("导出失败，请重试");
+      toast.error(t.toast.exportFail);
     } finally {
       setIsExporting(false);
       onExportingChange?.(false);
@@ -101,7 +103,7 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
     onImport(importedPlans);
     closeImport();
     setPendingPlans(null);
-    toast.success("导入成功");
+    toast.success(t.toast.importSuccess);
   }, [onImport, closeImport]);
 
   // ── 触发导入：有现有数据则弹确认，否则直接导入 ───────────────────
@@ -126,16 +128,16 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
   // ── 导入：粘贴文本 ────────────────────────────────────────────────
   const handleImportText = useCallback(async () => {
     const socText = await resolveSocText(importText.trim());
-    if (!socText) { setImportError("计划数据已过期或不存在"); return; }
+    if (!socText) { setImportError(t.toast.planExpired); return; }
     const data = decodeSoc(socText);
-    if (!data) { setImportError("无法识别，请确认内容正确"); return; }
+    if (!data) { setImportError(t.importDialog.errorQRFormat); return; }
     triggerImport(data.plans, plans);
   }, [importText, resolveSocText, triggerImport, plans]);
 
   // ── 导入：读取图片二维码 ──────────────────────────────────────────
   const handleFile = useCallback(async (file: File) => {
     if (!file.type.startsWith("image/")) {
-      setImportError("请上传图片文件");
+      setImportError(t.importDialog.errorNotImage);
       return;
     }
     setImportError(null);
@@ -144,13 +146,13 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
     try {
       const text = await readQrFromImage(file);
       if (!text) {
-        setImportError("未能识别到二维码，请确认是铃兰跑片助手导出的图片");
+        setImportError(t.importDialog.errorNoQR);
         return;
       }
       const socText = await resolveSocText(text);
-      if (!socText) { setImportError("计划数据已过期或不存在，请重新导出"); return; }
+      if (!socText) { setImportError(t.toast.planExpired); return; }
       const data = decodeSoc(socText);
-      if (!data) { setImportError("二维码内容格式不正确"); return; }
+      if (!data) { setImportError(t.importDialog.errorQRFormat); return; }
       triggerImport(data.plans, plans);
     } finally {
       setIsProcessingFile(false);
@@ -166,12 +168,12 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
     (async () => {
       try {
         const remote = await downloadSocRef(importId);
-        if (!remote) { toast.error("计划数据已过期或不存在，请重新导出"); return; }
+        if (!remote) { toast.error(t.toast.planExpired); return; }
         const data = decodeSoc(remote);
-        if (!data) { toast.error("计划数据格式错误"); return; }
+        if (!data) { toast.error(t.toast.planFormatError); return; }
         triggerImport(data.plans, plans);
       } catch {
-        toast.error("加载计划失败，请重试");
+        toast.error(t.toast.planLoadFail);
       }
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -220,7 +222,7 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
               style={{ maxWidth: "min(400px, 90vw)", maxHeight: "70vh", borderRadius: 8, display: "block" }}
             />
             <p className="text-sm" style={{ color: "rgba(255,255,255,0.55)" }}>
-              移动端长按图片保存
+              {t.export.saveInstruction}
             </p>
             <div className="flex gap-2">
               <a
@@ -229,14 +231,14 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
                 className="text-xs px-4 py-1.5 rounded-full"
                 style={{ background: "rgba(255,255,255,0.9)", color: "#333", textDecoration: "none" }}
               >
-                下载图片
+                {t.export.download}
               </a>
               <button
                 onClick={() => setExportPreviewUrl(null)}
                 className="text-xs px-4 py-1.5 rounded-full"
                 style={{ background: "rgba(255,255,255,0.15)", color: "#fff" }}
               >
-                关闭
+                {t.export.close}
               </button>
             </div>
           </div>
@@ -253,9 +255,9 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
             className="bg-card text-card-foreground rounded-xl shadow-2xl mx-4 w-full max-w-sm"
             style={{ border: "1px solid hsl(var(--border))", padding: "24px" }}
           >
-            <h3 className="font-semibold mb-2">替换现有计划？</h3>
+            <h3 className="font-semibold mb-2">{t.importDialog.replaceTitle}</h3>
             <p className="text-sm text-muted-foreground mb-5">
-              当前已有 {plans.length} 个角色的计划，导入将替换全部数据，此操作不可撤销。
+              {t.importDialog.replaceDesc1} {plans.length} {t.importDialog.replaceDesc2}
             </p>
             <div className="flex gap-3">
               <Button
@@ -264,14 +266,14 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
                 style={{ borderRadius: 4 }}
                 onClick={() => setPendingPlans(null)}
               >
-                取消
+                {t.importDialog.cancel}
               </Button>
               <Button
                 className="flex-1 gradient-primary text-primary-foreground"
                 style={{ borderRadius: 4 }}
                 onClick={() => finishImport(pendingPlans)}
               >
-                确认替换
+                {t.importDialog.confirmReplace}
               </Button>
             </div>
           </div>
@@ -297,7 +299,7 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
             {/* 弹窗头部 */}
             <div className="flex items-center justify-between px-4 pt-4 pb-3"
               style={{ borderBottom: "1px solid hsl(var(--border) / 0.6)" }}>
-              <span className="font-semibold text-sm">导入跑片计划</span>
+              <span className="font-semibold text-sm">{t.importDialog.title}</span>
               <button
                 onClick={closeImport}
                 className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded"
@@ -309,7 +311,7 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
             <div className="p-4 space-y-4">
               {/* 方式 1：图片上传 */}
               <div>
-                <p className="text-xs text-muted-foreground font-medium" style={{ marginBottom: 2 }}>方式一：上传导出的图片</p>
+                <p className="text-xs text-muted-foreground font-medium" style={{ marginBottom: 2 }}>{t.importDialog.method1}</p>
 
                 {/* input 覆盖整个区域，避免 JS 模拟点击在某些浏览器失效 */}
                 <label
@@ -343,16 +345,16 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
                   {isProcessingFile ? (
                     <>
                       <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-                      <span className="text-sm text-muted-foreground">识别中…</span>
+                      <span className="text-sm text-muted-foreground">{t.importDialog.recognizing}</span>
                     </>
                   ) : (
                     <>
                       <ImageIcon className="h-8 w-8 text-muted-foreground" />
                       <span className="text-sm text-muted-foreground text-center">
-                        点击选择图片，或将图片拖拽到此处
+                        {t.importDialog.uploadInstruction}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        自动识别图中二维码
+                        {t.importDialog.uploadHint}
                       </span>
                     </>
                   )}
@@ -368,22 +370,22 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
               {/* 分隔线 */}
               <div className="flex items-center gap-3">
                 <div className="flex-1 h-px" style={{ background: "hsl(var(--border) / 0.6)" }} />
-                <span className="text-xs text-muted-foreground">或</span>
+                <span className="text-xs text-muted-foreground">{t.importDialog.or}</span>
                 <div className="flex-1 h-px" style={{ background: "hsl(var(--border) / 0.6)" }} />
               </div>
 
               {/* 方式 2：粘贴文本 */}
               <div>
-                <p className="text-xs text-muted-foreground font-medium" style={{ marginBottom: 2 }}>方式二：粘贴计划码</p>
+                <p className="text-xs text-muted-foreground font-medium" style={{ marginBottom: 2 }}>{t.importDialog.method2}</p>
                 <textarea
-                  className="w-full rounded-lg text-sm text-foreground placeholder:text-muted-foreground resize-none outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full rounded-lg text-xs text-foreground placeholder:text-sm placeholder:text-muted-foreground resize-none outline-none focus:ring-1 focus:ring-primary"
                   style={{
                     border: "1px solid hsl(var(--border))",
                     background: "hsl(var(--muted) / 0.3)",
                     padding: "10px 12px",
                     minHeight: 80,
                   }}
-                  placeholder="粘贴以 [SOC] 开头的计划码…"
+                  placeholder={t.importDialog.codePlaceholder}
                   value={importText}
                   onChange={e => { setImportText(e.target.value); setImportError(null); }}
                   onKeyDown={e => {
@@ -396,7 +398,7 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
                   onClick={handleImportText}
                   disabled={!importText.trim()}
                 >
-                  确认导入
+                  {t.importDialog.confirmImport}
                 </Button>
               </div>
             </div>

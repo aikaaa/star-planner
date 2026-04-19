@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Settings, Flame, Upload, Download, Copy, Sun, Moon, ArrowRight, Sparkles, RotateCcw, ImageDown } from "lucide-react";
 import { useTheme } from "@/lib/theme";
+import { useI18n } from "@/lib/i18n";
 import FarmingCalendar from "@/components/FarmingCalendar";
 import SetPlanDialog from "@/components/SetPlanDialog";
 import CommunityDialog from "@/components/CommunityDialog";
@@ -28,6 +29,7 @@ export default function Index() {
   const [showSetPlan, setShowSetPlan] = useState(false);
   const [showCommunity, setShowCommunity] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const { t, lang, toggleLang } = useI18n();
   const [rolesReady, setRolesReady] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -59,13 +61,13 @@ export default function Index() {
         document.body.removeChild(ta);
       }
       if (copied) {
-        toast.success("复制成功");
+        toast.success(t.toast.copySuccess);
       } else {
-        toast.error("复制失败，请手动复制");
+        toast.error(t.toast.copyFail);
       }
     } catch (e) {
       console.error("[copy]", e);
-      toast.error("复制失败，请重试");
+      toast.error(t.toast.copyFail2);
     } finally {
       setIsCopying(false);
     }
@@ -100,7 +102,7 @@ export default function Index() {
     }));
     // 直接 setPlans，不调用 handleSavePlans，避免上报排行
     setPlans(trialPlans);
-    toast.success("已加载试配计划，可直接编辑");
+    toast.success(t.toast.trialLoaded);
   };
 
   useEffect(() => {
@@ -135,21 +137,32 @@ export default function Index() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="gradient-primary px-4 py-6 sm:py-8 text-center relative">
-        <button
-          onClick={toggleTheme}
-          className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground transition-colors"
-          aria-label="切换主题"
-        >
-          {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </button>
-        <div className="flex items-center justify-center gap-2 mb-1">
-          <h1 className="text-xl sm:text-2xl font-bold text-primary-foreground" style={{ display: "flex", alignItems: "center" }}>
+        <div className="grid items-center mb-1" style={{ gridTemplateColumns: "1fr auto 1fr" }}>
+          <div />
+          <h1 className={`${lang === "en" ? "text-base sm:text-2xl" : "text-xl sm:text-2xl"} font-bold text-primary-foreground whitespace-nowrap`} style={{ display: "flex", alignItems: "center" }}>
             <span className="text-lg sm:text-base" style={{ opacity: 0.4, fontWeight: 400, lineHeight: 1, marginRight: 7}}>✦</span>
-            <span style={{ letterSpacing: "0.1em" }}>铃兰跑片助手</span>
+            <span style={{ letterSpacing: "0.1em" }}>{t.app.title}</span>
             <span className="text-lg sm:text-base" style={{ opacity: 0.4, fontWeight: 400, lineHeight: 1, marginLeft: 5 }}>✧</span>
           </h1>
+          <div className="flex items-center justify-end gap-1">
+            <button
+              onClick={toggleLang}
+              className="p-2 rounded-full bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground transition-colors text-xs font-bold leading-none"
+              aria-label="切换语言"
+              style={{ minWidth: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center" }}
+            >
+              {lang === "cn" ? "EN" : "中"}
+            </button>
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-full bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground transition-colors"
+              aria-label="切换主题"
+            >
+              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
-        <p className="text-primary-foreground/70 text-xs sm:text-sm">管理你的角色碎片养成进度</p>
+        <p className="text-primary-foreground/70 text-xs sm:text-sm">{t.app.subtitle}</p>
       </header>
 
       {/* Action buttons */}
@@ -161,7 +174,7 @@ export default function Index() {
           onClick={() => setShowSetPlan(true)}
         >
           <Settings className="mr-2 h-4 w-4" />
-          设置计划
+          {t.actions.setPlan}
         </Button>
         <Button
           className="flex-1 gradient-card border border-border text-foreground hover:text-foreground active:text-foreground hover:glow-primary h-12 font-semibold"
@@ -170,7 +183,7 @@ export default function Index() {
           onClick={() => setShowCommunity(true)}
         >
           <Flame className="mr-2 h-4 w-4" style={{ color: "#f97316" }} />
-          大家在跑谁
+          {t.actions.community}
         </Button>
       </div>
 
@@ -180,7 +193,7 @@ export default function Index() {
           /* 未配置：空状态卡片 */
           <div className="gradient-card border border-border text-center" style={{ borderRadius: "4px", padding: "48px 32px 120px" }}>
             <div className="text-4xl mb-3">📋</div>
-            <p className="text-muted-foreground text-sm">暂未设置跑片计划</p>
+            <p className="text-muted-foreground text-sm">{t.empty.noPlan}</p>
             <div className="flex justify-center" style={{ gap: 12, marginTop: 32 }}>
               <Button
                 variant="outline"
@@ -189,7 +202,7 @@ export default function Index() {
                 onClick={() => exportImportRef.current?.openImport()}
               >
                 <Upload className="mr-2 h-4 w-4" />
-                导入计划
+                {t.actions.importPlan}
               </Button>
               <div style={{ position: "relative" }}>
                 <Button
@@ -198,7 +211,7 @@ export default function Index() {
                   onClick={handleQuickTry}
                 >
                   <Sparkles className="mr-2 h-4 w-4" />
-                  一键试配
+                  {t.actions.trialPlan}
                 </Button>
                 <span style={{
                   position: "absolute", top: -6, right: -6,
@@ -226,7 +239,7 @@ export default function Index() {
                 {isExporting
                   ? <div className="mr-1.5 h-3.5 w-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
                   : <ImageDown className="mr-1.5 h-3.5 w-3.5" />}
-                {isExporting ? "生成中…" : "截图保存"}
+                {isExporting ? t.actions.generating : t.actions.screenshot}
               </Button>
               {/* 第二行：复制计划码 */}
               <Button
@@ -240,7 +253,7 @@ export default function Index() {
                 {isCopying
                   ? <div className="mr-1.5 h-3.5 w-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
                   : <Copy className="mr-1.5 h-3.5 w-3.5" />}
-                复制计划码
+                {t.actions.copyCode}
               </Button>
               {/* 第三行：重置 + 导入计划 */}
               <div className="flex gap-2">
@@ -249,10 +262,10 @@ export default function Index() {
                   size="sm"
                   className="flex-1 text-xs h-8"
                   style={{ borderRadius: 4 }}
-                  onClick={() => { setPlans([]); setTimeout(() => toast.success("已恢复默认设置"), 50); }}
+                  onClick={() => { setPlans([]); setTimeout(() => toast.success(t.toast.resetDone), 50); }}
                 >
                   <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-                  重置
+                  {t.actions.reset}
                 </Button>
                 <Button
                   variant="outline"
@@ -262,7 +275,7 @@ export default function Index() {
                   onClick={() => exportImportRef.current?.openImport()}
                 >
                   <Upload className="mr-1.5 h-3.5 w-3.5" />
-                  导入计划
+                  {t.actions.importPlan}
                 </Button>
               </div>
             </div>

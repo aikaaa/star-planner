@@ -2,6 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "Vite Dev Server",
+      "runtimeExecutable": "/usr/local/bin/node",
+      "runtimeArgs": ["/Users/chenji/Git/star-planner/node_modules/.bin/vite", "--config", "/Users/chenji/Git/star-planner/vite.config.ts"],
+      "port": 8080
+    },
+    {
       "name": "TapTap Preview",
       "runtimeExecutable": "/usr/local/bin/node",
       "runtimeArgs": ["/Users/chenji/Git/star-planner/.claude/worktrees/keen-wilson/node_modules/.bin/vite", "preview", "--port", "5175", "--host", "--root", "/Users/chenji/Git/star-planner"],

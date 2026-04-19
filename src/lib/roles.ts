@@ -175,3 +175,11 @@ export function getMappedRoles(): string[] {
 export function getRoleEmoji(roleName: string): string | null {
   return ROLES.find((r) => r.zh === roleName)?.emoji ?? null;
 }
+
+/** 角色名 → 英文名（优先远程，降级本地，无英文名则返回中文名） */
+export function getEnName(zhName: string): string {
+  const remoteRole = _remoteRoles?.find((r) => r.zh === zhName);
+  const localRole = ROLES.find((r) => r.zh === zhName);
+  const en = (remoteRole ?? localRole)?.en;
+  return (en || zhName).replace(/_/g, " ");
+}

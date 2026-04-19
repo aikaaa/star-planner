@@ -15,6 +15,8 @@ import {
   parseLocalDate,
 } from "@/lib/types";
 import { getAvatarUrl } from "@/lib/roleAvatars";
+import { getEnName } from "@/lib/roles";
+import { useI18n } from "@/lib/i18n";
 
 // ── 浅色主题硬编码色值 ────────────────────────────────────────────
 const C = {
@@ -33,7 +35,8 @@ const C = {
   gradEnd:     "#2a6355",
 };
 
-const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
+const WEEKDAYS    = ["日", "一", "二", "三", "四", "五", "六"];
+const WEEKDAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 // ── 占位头像背景色（按角色索引区分）────────────────────────────────
 const FALLBACK_BG = [
@@ -121,6 +124,9 @@ export interface ExportTemplateProps {
 
 const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
   ({ plans, qrDataUrl }, ref) => {
+    const { lang, t } = useI18n();
+    const weekdays = lang === "en" ? WEEKDAYS_EN : WEEKDAYS;
+    const charDisplayName = (zh: string) => lang === "en" ? getEnName(zh) : formatCharName(zh);
     if (plans.length === 0) return null;
 
     // 日期范围
@@ -205,10 +211,10 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
           {/* 左：标题 + 副标题 */}
           <div>
             <div style={{ fontSize: 16, fontWeight: 700, color: "#fff", lineHeight: 1.2, letterSpacing: 0.5 }}>
-              我的跑片计划
+              {t.exportTemplate.planTitle}
             </div>
             <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", marginTop: 8 }}>
-              铃兰之剑：为这和平的世界
+              {t.exportTemplate.gameName}
             </div>
           </div>
           {/* 右：装饰 SVG + 日期区间 */}
@@ -251,12 +257,14 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
               textAlign: "center", fontSize: 13, fontWeight: 600,
               color: C.fg, marginBottom: 6,
             }}>
-              {calYear}年{calMonth + 1}月
+              {lang === "en"
+              ? `${new Date(calYear, calMonth).toLocaleString("en", { month: "long" })} ${calYear}`
+              : `${calYear}年${calMonth + 1}月`}
             </div>
 
             {/* 星期 header */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 3, marginBottom: 6 }}>
-              {WEEKDAYS.map(d => (
+              {weekdays.map(d => (
                 <div key={d} style={{
                   textAlign: "center", fontSize: 11,
                   color: C.muted, padding: "1px 0", fontWeight: 500,
@@ -312,7 +320,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                       color: isToday ? C.primary : C.fg,
                       lineHeight: 1,
                     }}>
-                      {isToday ? "今" : day}
+                      {isToday ? t.exportTemplate.todayLabel : day}
                     </span>
                     {count > 0 && (
                       <div style={{ display: "flex", marginTop: 5, justifyContent: "center", alignItems: "center" }}>
@@ -338,7 +346,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
 
             {/* 图例说明 */}
             <div style={{ marginTop: 8, fontSize: 10, color: "#888", lineHeight: 1 }}>
-              <span style={{ fontSize: 10, color: "#B9AD86", position: "relative", top: 0 }}>✦</span>{" "}阵容变动日
+              <span style={{ fontSize: 10, color: "#B9AD86", position: "relative", top: 0 }}>✦</span>{" "}{t.exportTemplate.rosterChangeDay}
             </div>
           </div>
 
@@ -395,9 +403,15 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                     <span style={{ float: "right", fontSize: 12, color: "#B29756", fontWeight: 600, whiteSpace: "nowrap" }}>
                       {headerStar.from}★ → {headerStar.to}★
                       {headerStar.shards > 0 && (
-                        headerStar.excess
-                          ? <span style={{ color: C.destructive }}> 超{headerStar.shards}片</span>
-                          : <span> 余{headerStar.shards}片</span>
+                        lang === "en" ? (
+                          headerStar.excess
+                            ? <span style={{ color: C.destructive }}> {headerStar.shards} Excess</span>
+                            : <span> {headerStar.shards} Left</span>
+                        ) : (
+                          headerStar.excess
+                            ? <span style={{ color: C.destructive }}> 超{headerStar.shards}片</span>
+                            : <span> 余{headerStar.shards}片</span>
+                        )
                       )}
                     </span>
                     {/* 左：头像 + 名字 */}
@@ -406,7 +420,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                         <TemplateAvatar plan={first} size={28} index={charColorIndex.get(name) ?? 0} />
                       </span>
                       <span style={{ display: "inline-block", verticalAlign: "middle", fontSize: 13, fontWeight: 600, lineHeight: 1, marginLeft: 8 }}>
-                        {formatCharName(name)}
+                        {charDisplayName(name)}
                       </span>
                     </span>
                   </div>
@@ -432,7 +446,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                           color: C.muted,
                         }}
                       >
-                        <div>预计 {days} 天</div>
+                        <div>{lang === "en" ? `ETA ${days}d` : `预计 ${days} 天`}</div>
                         <div>{fmt(startD)} – {fmt(endDate)}</div>
                       </div>
                     );
@@ -455,13 +469,13 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
           <div>
             {/* 第一行：平台 · 工具名 */}
             <div style={{ fontSize: 12, lineHeight: 1 }}>
-              <span style={{ color: C.muted }}>TapTap 游戏工具</span>
+              <span style={{ color: C.muted }}>{t.exportTemplate.footerPlatform}</span>
               <span style={{ color: C.border, margin: "0 5px" }}>·</span>
-              <span style={{ color: C.primary, fontWeight: 700 }}>铃兰跑片助手</span>
+              <span style={{ color: C.primary, fontWeight: 700 }}>{t.exportTemplate.footerTool}</span>
             </div>
             {/* 第二行：提示语 */}
             <div style={{ fontSize: 10, color: "#4E736E", marginTop: 8 }}>
-              保存图片，可直接导入计划
+              {t.exportTemplate.footerHint}
             </div>
           </div>
 

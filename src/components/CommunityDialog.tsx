@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trophy, Loader2, WifiOff, Clock } from "lucide-react";
+import { Trophy, Loader2, WifiOff, Clock, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchCommunityTop10, type CommunityCharacter } from "@/lib/communityStats";
 import { COMMUNITY_TOP_CHARACTERS, formatCharName } from "@/lib/types";
+import { getEnName } from "@/lib/roles";
+import { useI18n } from "@/lib/i18n";
 
 interface CommunityDialogProps {
   open: boolean;
@@ -12,19 +14,9 @@ interface CommunityDialogProps {
 
 const medals = ["🥇", "🥈", "🥉"];
 
-function formatUpdatedAt(date: Date): string {
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  if (diffMins < 1) return "刚刚更新";
-  if (diffMins < 60) return `${diffMins} 分钟前更新`;
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours} 小时前更新`;
-  const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays} 天前更新`;
-}
-
 export default function CommunityDialog({ open, onOpenChange }: CommunityDialogProps) {
+  const { t, lang } = useI18n();
+  const getCharName = (zh: string) => lang === "en" ? getEnName(zh) : formatCharName(zh);
   const [chars, setChars] = useState<CommunityCharacter[]>([]);
   const [loading, setLoading] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
@@ -47,6 +39,18 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
     });
   }, [open]);
 
+  function formatUpdatedAt(date: Date): string {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return t.communityDialog.justUpdated;
+    if (diffMins < 60) return `${diffMins} ${t.communityDialog.minutesAgo}`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours} ${t.communityDialog.hoursAgo}`;
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays} ${t.communityDialog.daysAgo}`;
+  }
+
   const totalCount = chars.reduce((sum, c) => sum + c.count, 0);
 
   return (
@@ -55,19 +59,19 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-gradient-title text-xl">
             <Trophy className="h-5 w-5" style={{ color: "hsl(var(--star))" }} />
-            近7天跑片热门角色 Top10
+            {t.communityDialog.title}
           </DialogTitle>
           {!loading && (
             <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
               {isReal ? (
                 <>
                   <Clock className="h-3 w-3 shrink-0" />
-                  <span>{updatedAt ? formatUpdatedAt(updatedAt) : "数据已加载"}</span>
+                  <span>{updatedAt ? formatUpdatedAt(updatedAt) : t.communityDialog.loaded}</span>
                 </>
               ) : (
                 <>
                   <WifiOff className="h-3 w-3" />
-                  <span>暂未连接统计服务，显示示例数据</span>
+                  <span>{t.communityDialog.noService}</span>
                 </>
               )}
             </p>
@@ -77,7 +81,7 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            <span className="ml-2 text-sm text-muted-foreground">加载中…</span>
+            <span className="ml-2 text-sm text-muted-foreground">{t.communityDialog.loading}</span>
           </div>
         ) : (
           <div className="space-y-2">
@@ -98,10 +102,10 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-1">
-                      <span className="font-semibold text-foreground text-sm">{formatCharName(char.name)}</span>
+                      <span className="font-semibold text-foreground text-sm">{getCharName(char.name)}</span>
                       {char.topTargetStar != null && (
                         <span className="text-[10px] text-muted-foreground/70 shrink-0">
-                          更多人选择跑<span className="font-bold text-primary">{char.topTargetStar}★</span>
+                          {t.communityDialog.morePeople} <span className="font-bold text-primary">{char.topTargetStar}★</span>
                         </span>
                       )}
                     </div>
@@ -114,7 +118,10 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                   </div>
                   <div className="text-right shrink-0">
                     <span className="text-sm font-bold" style={{ color: "hsl(var(--star))" }}>{pct}%</span>
-                    <div className="text-xs text-muted-foreground">{char.count}人</div>
+                    <div className="text-xs text-muted-foreground flex items-center justify-end gap-0.5">
+                      <User className="h-3 w-3" style={{ color: "hsl(var(--star))" }} />
+                      <span style={{ color: "hsl(var(--star))" }}>{char.count}</span>
+                    </div>
                   </div>
                 </div>
               );
