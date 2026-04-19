@@ -327,7 +327,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                       color: isToday ? C.primary : C.fg,
                       lineHeight: 1,
                     }}>
-                      {isToday ? t.exportTemplate.todayLabel : day}
+                      {isToday && lang === "cn" ? t.exportTemplate.todayLabel : day}
                     </span>
                     {count > 0 && (
                       <div style={{ display: "flex", marginTop: 5, justifyContent: "center", alignItems: "center" }}>
