@@ -540,7 +540,7 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                   if (lang === "en") {
                     return (
                       <div className="text-xs text-info flex items-center gap-1 flex-wrap">
-                        ⏱ ETA <span className="font-bold">{days}</span>d
+                        ⏱ ETA <span className="font-bold">{days}d</span>
                         {excess > 0 && (
                           days > 0 ? (
                             <span className="text-destructive font-medium">
