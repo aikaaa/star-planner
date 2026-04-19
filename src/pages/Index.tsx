@@ -11,6 +11,7 @@ import { CharacterPlan, COMMUNITY_TOP_CHARACTERS, getCompletionDate, getEffectiv
 import { fetchCommunityTop10, reportFarmingCharacters, type CommunityCharacter } from "@/lib/communityStats";
 import { fetchRemoteRoles } from "@/lib/roles";
 import { encodeSoc } from "@/lib/socExport";
+import { generateUUID } from "@/lib/supabase";
 import { toast } from "@/components/ui/sonner";
 
 const STORAGE_KEY = "shard-farming-plans";
@@ -92,7 +93,7 @@ export default function Index() {
       ? previewChars
       : COMMUNITY_TOP_CHARACTERS.slice(0, 3).map(c => ({ name: c.name, topTargetStar: 5 as number }));
     const trialPlans: CharacterPlan[] = chars.map((c, i) => ({
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       name: c.name,
       farmingMode: "star" as const,
       currentStar: Math.max(0, (c.topTargetStar ?? 5) - 2) as 0 | 1 | 2 | 3 | 4 | 5,
