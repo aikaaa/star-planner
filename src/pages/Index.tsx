@@ -138,13 +138,7 @@ export default function Index() {
       {/* Header */}
       <header className="gradient-primary px-4 py-6 sm:py-8 text-center relative">
         <div className="grid items-center mb-1" style={{ gridTemplateColumns: "1fr auto 1fr" }}>
-          <div />
-          <h1 className={`${lang === "en" ? "text-base sm:text-2xl" : "text-xl sm:text-2xl"} font-bold text-primary-foreground whitespace-nowrap`} style={{ display: "flex", alignItems: "center" }}>
-            <span className="text-lg sm:text-base" style={{ opacity: 0.4, fontWeight: 400, lineHeight: 1, marginRight: 7}}>✦</span>
-            <span style={lang === "cn" ? { letterSpacing: "0.1em" } : undefined}>{t.app.title}</span>
-            <span className="text-lg sm:text-base" style={{ opacity: 0.4, fontWeight: 400, lineHeight: 1, marginLeft: 5 }}>✧</span>
-          </h1>
-          <div className="flex items-center justify-end gap-1">
+          <div className="flex items-center justify-start">
             <button
               onClick={toggleLang}
               className="p-2 rounded-full bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground transition-colors text-xs font-bold leading-none"
@@ -153,6 +147,13 @@ export default function Index() {
             >
               {lang === "cn" ? "EN" : "中"}
             </button>
+          </div>
+          <h1 className={`${lang === "en" ? "text-base sm:text-2xl" : "text-xl sm:text-2xl"} font-bold text-primary-foreground whitespace-nowrap`} style={{ display: "flex", alignItems: "center" }}>
+            <span className="text-lg sm:text-base" style={{ opacity: 0.4, fontWeight: 400, lineHeight: 1, marginRight: 7}}>✦</span>
+            <span style={lang === "cn" ? { letterSpacing: "0.1em" } : undefined}>{t.app.title}</span>
+            <span className="text-lg sm:text-base" style={{ opacity: 0.4, fontWeight: 400, lineHeight: 1, marginLeft: 5 }}>✧</span>
+          </h1>
+          <div className="flex items-center justify-end">
             <button
               onClick={toggleTheme}
               className="p-2 rounded-full bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground transition-colors"
