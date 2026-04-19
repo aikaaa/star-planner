@@ -136,8 +136,8 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="gradient-primary px-4 py-6 sm:py-8 text-center relative">
-        <div className="grid items-center mb-1" style={{ gridTemplateColumns: "1fr auto 1fr" }}>
+      <header className="gradient-primary py-6 sm:py-8 text-center relative">
+        <div className="mx-auto px-4 grid items-center mb-1" style={{ maxWidth: "600px", gridTemplateColumns: "1fr auto 1fr" }}>
           <div className="flex items-center justify-start">
             <button
               onClick={toggleLang}
