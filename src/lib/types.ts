@@ -1,5 +1,10 @@
 export type FarmingMode = "star" | "free";
 
+/** 展示用：SP前缀和中文之间加空格，如 "SP阿列克谢" → "SP 阿列克谢" */
+export function formatCharName(name: string): string {
+  return name.replace(/^SP(?=[\u4e00-\u9fff])/, "SP ");
+}
+
 /** 将 "YYYY-MM-DD" 解析为东八区时间，避免 UTC 偏移导致日期差一天 */
 export function parseLocalDate(dateStr: string): Date {
   return new Date(dateStr + "T00:00:00+08:00");
@@ -20,18 +25,78 @@ export interface CharacterPlan {
   currentStar: number;
   targetStar: number;
   currentShards: number;
+  bonusShards?: number; // 追忆/万能碎片可补充量（可选，默认0）
   startDate: string; // ISO date string
   endDate?: string;  // 自由跑片时由用户设置
+  icon?: string;     // 用户自选的 emoji 图标
 }
 
 export interface FarmingPlan {
   characters: CharacterPlan[];
 }
 
+export interface CharIconOption {
+  emoji: string;
+  label: string;
+}
+
+export const CHAR_ICON_OPTIONS: CharIconOption[] = [
+  // 小动物
+  { emoji: "🐱", label: "猫咪" },
+  { emoji: "🐶", label: "小狗" },
+  { emoji: "🐰", label: "兔子" },
+  { emoji: "🐻", label: "熊熊" },
+  { emoji: "🐼", label: "熊猫" },
+  { emoji: "🐸", label: "青蛙" },
+  { emoji: "🐧", label: "企鹅" },
+  { emoji: "🐦", label: "小鸟" },
+  { emoji: "🦊", label: "狐狸" },
+  { emoji: "🐺", label: "狼" },
+  { emoji: "🦁", label: "狮子" },
+  { emoji: "🐯", label: "老虎" },
+  { emoji: "🐨", label: "考拉" },
+  { emoji: "🐮", label: "奶牛" },
+  { emoji: "🐷", label: "猪猪" },
+  { emoji: "🐙", label: "章鱼" },
+  { emoji: "🦋", label: "蝴蝶" },
+  { emoji: "🐢", label: "乌龟" },
+  { emoji: "🦄", label: "独角兽" },
+  { emoji: "🐉", label: "龙" },
+  // 水果食物
+  { emoji: "🍏", label: "青苹果" },
+  { emoji: "🍅", label: "番茄" },
+  { emoji: "🫐", label: "蓝莓" },
+  { emoji: "🍇", label: "葡萄" },
+  { emoji: "🍊", label: "橘子" },
+  { emoji: "🍓", label: "草莓" },
+  { emoji: "🍑", label: "桃子" },
+  { emoji: "🍒", label: "樱桃" },
+  // 自然天气
+  { emoji: "🌸", label: "樱花" },
+  { emoji: "🌻", label: "向日葵" },
+  { emoji: "🍀", label: "四叶草" },
+  { emoji: "🌈", label: "彩虹" },
+  { emoji: "⭐", label: "星星" },
+  { emoji: "🌙", label: "月亮" },
+  { emoji: "🔥", label: "火焰" },
+  { emoji: "❄️", label: "雪花" },
+  { emoji: "⚡", label: "闪电" },
+  { emoji: "🌊", label: "海浪" },
+  // 其他
+  { emoji: "💎", label: "钻石" },
+  { emoji: "🏆", label: "奖杯" },
+  { emoji: "🎯", label: "靶心" },
+  { emoji: "🎵", label: "音符" },
+  { emoji: "🎮", label: "游戏" },
+  { emoji: "🗡️", label: "剑" },
+  { emoji: "🛡️", label: "盾" },
+  { emoji: "👑", label: "王冠" },
+];
+
 // Shards needed for each star upgrade
 export const SHARD_COSTS: Record<string, number> = {
   "1-2": 20,
-  "2-3": 50,
+  "2-3": 60,
   "3-4": 100,
   "4-5": 120,
 };
@@ -48,10 +113,10 @@ export function getDaysNeeded(plan: CharacterPlan): number {
   if (plan.farmingMode === "free" && plan.endDate) {
     const start = parseLocalDate(plan.startDate);
     const end = parseLocalDate(plan.endDate);
-    return Math.max(0, Math.round((end.getTime() - start.getTime()) / 86400000));
+    return Math.max(0, Math.round((end.getTime() - start.getTime()) / 86400000) + 1); // +1 包含结束当天
   }
   const totalNeeded = getTotalShardsNeeded(plan.currentStar, plan.targetStar);
-  const remaining = Math.max(0, totalNeeded - plan.currentShards);
+  const remaining = Math.max(0, totalNeeded - plan.currentShards - (plan.bonusShards ?? 0));
   return Math.ceil(remaining / 3); // 3 shards per day
 }
 
@@ -109,7 +174,7 @@ export function getCompletionDate(plan: CharacterPlan): Date {
   const days = getDaysNeeded(plan);
   const start = parseLocalDate(plan.startDate);
   const end = new Date(start);
-  end.setDate(end.getDate() + days);
+  end.setDate(end.getDate() + days - 1);
   return end;
 }
 
@@ -131,7 +196,7 @@ export function getCharactersOnDate(plans: CharacterPlan[], date: Date): Charact
 export function getEffectiveTargetStar(plan: CharacterPlan): number {
   if (plan.farmingMode === "free") {
     const days = getDaysNeeded(plan);
-    return getPartialProgress(plan.currentStar, plan.currentShards, days).reachableStar;
+    return getPartialProgress(plan.currentStar, plan.currentShards + (plan.bonusShards ?? 0), days).reachableStar;
   }
   return plan.targetStar;
 }

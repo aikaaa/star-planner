@@ -20,9 +20,12 @@ export interface CommunityResult {
 /**
  * 上报当前用户正在跑的角色（每次保存计划时调用）。
  * 先删除该设备的旧记录，再批量插入新记录，保证数据准确。
+ * 仅在生产环境上报，开发/测试环境不上报。
  */
 export async function reportFarmingCharacters(characters: CharacterReport[]): Promise<void> {
   if (!supabase) return;
+  // 开发环境不上报到数据库
+  if (import.meta.env.DEV) return;
   const deviceId = getDeviceId();
 
   await supabase.from("character_farm_reports").delete().eq("device_id", deviceId);

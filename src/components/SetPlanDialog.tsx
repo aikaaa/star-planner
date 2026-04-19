@@ -8,7 +8,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Plus, Trash2, Star, Check, ChevronsUpDown } from "lucide-react";
 import { format } from "date-fns";
-import { zhCN } from "date-fns/locale";
+import { zhCN, enUS } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import {
   CharacterPlan,
@@ -17,11 +17,13 @@ import {
   getCompletionDate,
   getTotalShardsNeeded,
   getTargetStarFromDays,
-  getFreeTargetLabel,
+  getPartialProgress,
   parseLocalDate,
   toDateStr,
 } from "@/lib/types";
-import { ROLE_LIST } from "@/lib/roleList";
+import { ROLES, fetchRemoteRoles, type RoleEntry } from "@/lib/roles";
+import { generateUUID } from "@/lib/supabase";
+import { useI18n } from "@/lib/i18n";
 
 interface SetPlanDialogProps {
   open: boolean;
@@ -31,7 +33,7 @@ interface SetPlanDialogProps {
 }
 
 const emptyCharacter = (): CharacterPlan => ({
-  id: crypto.randomUUID(),
+  id: generateUUID(),
   name: "",
   farmingMode: "star",
   currentStar: 1,
@@ -40,49 +42,62 @@ const emptyCharacter = (): CharacterPlan => ({
   startDate: toDateStr(new Date()),
 });
 
-function RoleCombobox({ value, onChange, usedNames }: { value: string; onChange: (v: string) => void; usedNames: string[] }) {
+function RoleCombobox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { t, lang } = useI18n();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [roleEntries, setRoleEntries] = useState<RoleEntry[]>([...ROLES].reverse());
+
+  useEffect(() => {
+    fetchRemoteRoles().then((roles) => setRoleEntries([...roles].reverse())).catch(() => {});
+  }, []);
+
+  const getDisplayName = (entry: RoleEntry) =>
+    lang === "en" && entry.en ? entry.en.replace(/_/g, " ") : entry.zh;
 
   const filtered = search.trim()
-    ? ROLE_LIST.filter((r) => r.includes(search.trim()))
-    : ROLE_LIST;
+    ? roleEntries.filter((r) => {
+        const q = search.trim().toLowerCase();
+        return getDisplayName(r).toLowerCase().includes(q) || r.zh.toLowerCase().includes(q);
+      })
+    : roleEntries;
 
-  const handleSelect = (role: string) => {
-    onChange(role);
+  const selectedEntry = roleEntries.find((r) => r.zh === value);
+  const displayValue = selectedEntry ? getDisplayName(selectedEntry) : value;
+
+  const handleSelect = (zh: string) => {
+    onChange(zh);
     setOpen(false);
     setSearch("");
   };
 
   return (
     <div>
-      <Label className="text-muted-foreground text-xs">角色名称</Label>
+      <Label className="text-muted-foreground text-xs">{t.setPlanDialog.characterName}</Label>
       <Button
         type="button"
         variant="outline"
         role="combobox"
         aria-expanded={open}
-        className="w-full mt-1 justify-between bg-secondary border-border text-foreground"
+        className="w-full mt-1 justify-between bg-transparent border-border text-foreground"
         onClick={() => { setOpen((v) => !v); setSearch(""); }}
       >
-        {value || "选择角色"}
+        {displayValue || t.setPlanDialog.selectCharacter}
         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
       </Button>
 
       {open && (
         <div className="mt-1 rounded-md border border-border bg-popover shadow-md">
-          {/* 搜索框 */}
           <div className="flex items-center border-b border-border px-3">
             <input
               autoFocus
               type="text"
-              placeholder="搜索角色..."
+              placeholder={t.setPlanDialog.searchCharacter}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="flex-1 bg-transparent py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none"
             />
           </div>
-          {/* 列表：纯 div，iOS Safari 可以正常滚动 */}
           <div
             style={{
               height: "220px",
@@ -91,27 +106,21 @@ function RoleCombobox({ value, onChange, usedNames }: { value: string; onChange:
             }}
           >
             {filtered.length === 0 ? (
-              <div className="py-6 text-center text-sm text-muted-foreground">未找到角色</div>
+              <div className="py-6 text-center text-sm text-muted-foreground">{t.setPlanDialog.notFound}</div>
             ) : (
-              filtered.map((role) => {
-                const isUsed = role !== value && usedNames.includes(role);
-                return (
-                  <button
-                    key={role}
-                    type="button"
-                    disabled={isUsed}
-                    onClick={() => !isUsed && handleSelect(role)}
-                    className={cn(
-                      "flex w-full items-center px-3 py-2 text-sm text-left",
-                      isUsed ? "opacity-40 cursor-not-allowed" : "hover:bg-accent active:bg-accent",
-                    )}
-                  >
-                    <Check className={cn("mr-2 h-4 w-4 shrink-0", value === role ? "opacity-100" : "opacity-0")} />
-                    <span className="flex-1">{role}</span>
-                    {isUsed && <span className="ml-auto text-xs text-muted-foreground">已选</span>}
-                  </button>
-                );
-              })
+              filtered.map((entry) => (
+                <button
+                  key={entry.zh}
+                  type="button"
+                  onClick={() => handleSelect(entry.zh)}
+                  className={cn(
+                    "flex w-full items-center px-3 py-2 text-sm text-left hover:bg-accent active:bg-accent",
+                  )}
+                >
+                  <Check className={cn("mr-2 h-4 w-4 shrink-0", value === entry.zh ? "opacity-100" : "opacity-0")} />
+                  <span className="flex-1">{getDisplayName(entry)}</span>
+                </button>
+              ))
             )}
           </div>
         </div>
@@ -120,21 +129,30 @@ function RoleCombobox({ value, onChange, usedNames }: { value: string; onChange:
   );
 }
 
-function DatePickerButton({ date, onSelect, disabled }: { date: Date; onSelect: (d: Date) => void; disabled?: (d: Date) => boolean }) {
+
+
+function DatePickerButton({ date, onSelect, disabled, locale }: {
+  date: Date;
+  onSelect: (d: Date) => void;
+  disabled?: (d: Date) => boolean;
+  locale: Locale;
+}) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="w-full mt-1 justify-start bg-secondary border-border text-foreground text-xs px-2">
+        <Button variant="outline" className="w-full mt-1 justify-start bg-transparent border-border text-foreground text-xs px-2">
           <CalendarIcon className="mr-1 h-3 w-3" />
-          {format(date, "yyyy/MM/dd", { locale: zhCN })}
+          {format(date, "yyyy/MM/dd", { locale })}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
           mode="single"
           selected={date}
+          defaultMonth={date}
           onSelect={(d) => d && onSelect(d)}
           disabled={disabled}
+          locale={locale}
           className={cn("p-3 pointer-events-auto")}
         />
       </PopoverContent>
@@ -148,6 +166,9 @@ const toCharacters = (plans: CharacterPlan[]) =>
     : [emptyCharacter()];
 
 export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSave }: SetPlanDialogProps) {
+  const { t, lang } = useI18n();
+  const locale = lang === "en" ? enUS : zhCN;
+
   const [characters, setCharacters] = useState<CharacterPlan[]>(() => toCharacters(existingPlans));
 
   // 每次打开弹窗时从最新的 existingPlans 重新初始化，避免显示旧数据
@@ -191,22 +212,24 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
 
   const validateOverlap = (plans: CharacterPlan[]): string | null => {
     if (plans.length <= 3) return null;
-    const events: { date: number; delta: number }[] = [];
-    for (const p of plans) {
+    const ranges = plans.map((p) => {
       const start = new Date(p.startDate);
       start.setHours(0, 0, 0, 0);
       const end = getCompletionDate(p);
       end.setHours(0, 0, 0, 0);
-      events.push({ date: start.getTime(), delta: 1 });
-      events.push({ date: end.getTime() + 86400000, delta: -1 });
-    }
-    events.sort((a, b) => a.date - b.date || a.delta - b.delta);
-    let concurrent = 0;
-    for (const e of events) {
-      concurrent += e.delta;
-      if (concurrent > 3) {
-        const d = new Date(e.date);
-        return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} 当天同时跑片角色超过3人，请调整日期`;
+      return { name: p.name, start: start.getTime(), end: end.getTime() };
+    });
+    const allDates = new Set(ranges.flatMap((r) => {
+      const dates: number[] = [];
+      for (let d = r.start; d <= r.end; d += 86400000) dates.push(d);
+      return dates;
+    }));
+    for (const ts of allDates) {
+      const active = ranges.filter((r) => ts >= r.start && ts <= r.end);
+      const uniqueNames = new Set(active.map((r) => r.name));
+      if (uniqueNames.size > 3) {
+        const d = new Date(ts);
+        return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${t.setPlanDialog.tooManyChars}`;
       }
     }
     return null;
@@ -226,9 +249,9 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-card border-border">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-background border-border">
         <DialogHeader>
-          <DialogTitle className="text-gradient text-xl">设置跑片计划</DialogTitle>
+          <DialogTitle className="text-gradient-title text-xl">{t.setPlanDialog.title}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -238,19 +261,18 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
             const days = getDaysNeeded(char);
             const endDateObj = char.endDate ? parseLocalDate(char.endDate!) : completionDate;
             const freeDays = isFree
-              ? Math.max(0, Math.round((endDateObj.getTime() - parseLocalDate(char.startDate).getTime()) / 86400000))
+              ? Math.max(0, Math.round((endDateObj.getTime() - parseLocalDate(char.startDate).getTime()) / 86400000) + 1)
               : 0;
-            const freeLabel = isFree ? getFreeTargetLabel(char.currentStar, char.currentShards, freeDays) : "";
 
             return (
               <div key={char.id} className="gradient-card rounded-lg p-4 border border-border space-y-3">
                 {/* 标题行 */}
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-foreground">角色 {index + 1}</span>
+                  <span className="text-sm font-semibold text-foreground">{t.setPlanDialog.character} {index + 1}</span>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 text-destructive hover:text-destructive"
+                    className="h-7 w-7 text-destructive hover:text-destructive rounded-[4px]"
                     onClick={() => removeCharacter(index)}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -267,10 +289,10 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                         "flex-1 py-1.5 rounded-md text-xs font-medium border transition-all",
                         char.farmingMode === mode
                           ? "gradient-primary text-primary-foreground border-transparent glow-primary"
-                          : "bg-secondary text-muted-foreground border-border hover:text-foreground"
+                          : "bg-transparent text-muted-foreground border-border hover:text-foreground"
                       )}
                     >
-                      {mode === "star" ? "按星跑片" : "自由跑片"}
+                      {mode === "star" ? t.setPlanDialog.modeStar : t.setPlanDialog.modeFree}
                     </button>
                   ))}
                 </div>
@@ -278,30 +300,81 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                 {/* 角色名称 */}
                 <RoleCombobox
                   value={char.name}
-                  onChange={(v) => updateCharacter(index, { name: v })}
-                  usedNames={characters.map((c) => c.name).filter(Boolean)}
+                  onChange={(v) => {
+                    const prevSegments = characters
+                      .filter((c, ci) => ci !== index && c.name === v);
+                    if (prevSegments.length > 0) {
+                      const last = prevSegments.reduce((a, b) =>
+                        getCompletionDate(a).getTime() >= getCompletionDate(b).getTime() ? a : b
+                      );
+                      const lastEnd = getCompletionDate(last);
+                      const days = getDaysNeeded(last);
+                      const { reachableStar, remainingShards } = getPartialProgress(last.currentStar, last.currentShards, days);
+                      const nextStart = new Date(lastEnd);
+                      nextStart.setDate(nextStart.getDate() + 1);
+                      updateCharacter(index, {
+                        name: v,
+                        currentStar: reachableStar,
+                        currentShards: remainingShards,
+                        targetStar: Math.min(reachableStar + 1, 5),
+                        startDate: toDateStr(nextStart),
+                      });
+                    } else {
+                      updateCharacter(index, { name: v });
+                    }
+                  }}
                 />
 
-                {/* 已有碎片 */}
-                <div>
-                  <Label className="text-muted-foreground text-xs">
-                    已有碎片
-                    {!isFree && (
-                      <span className="ml-1">
-                        （还需 {Math.max(0, getTotalShardsNeeded(char.currentStar, char.targetStar) - char.currentShards)} 片）
-                      </span>
-                    )}
-                  </Label>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Input
-                      type="number"
-                      min={0}
-                      value={char.currentShards === 0 ? "" : char.currentShards}
-                      placeholder="0"
-                      onChange={(e) => updateCharacter(index, { currentShards: Math.max(0, Number(e.target.value) || 0) })}
-                      className="bg-secondary border-border"
-                    />
-                    <span className="text-muted-foreground text-sm shrink-0">片</span>
+                {/* 已有碎片 + 追忆/万能碎片 */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-muted-foreground text-xs">
+                      {t.setPlanDialog.currentShards}
+                      {!isFree && (() => {
+                        const needed = Math.max(0, getTotalShardsNeeded(char.currentStar, char.targetStar) - char.currentShards - (char.bonusShards ?? 0));
+                        return (
+                          <span className="ml-1">
+                            {lang === "en"
+                              ? `(${needed} ${t.setPlanDialog.need.toLowerCase()})`
+                              : `（${t.setPlanDialog.need} ${needed} ${t.setPlanDialog.shardsUnit}）`}
+                          </span>
+                        );
+                      })()}
+                    </Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Input
+                        type="number"
+                        min={0}
+                        value={char.currentShards === 0 ? "" : char.currentShards}
+                        placeholder="0"
+                        onChange={(e) => {
+                          const newShards = Math.max(0, Number(e.target.value) || 0);
+                          const updates: Partial<CharacterPlan> = { currentShards: newShards };
+                          if (isFree) {
+                            const starPlan = { ...char, currentShards: newShards, farmingMode: "star" as FarmingMode };
+                            updates.endDate = toDateStr(getCompletionDate(starPlan));
+                          }
+                          updateCharacter(index, updates);
+                        }}
+                        className="bg-transparent border-border"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground text-xs">{t.setPlanDialog.bonusShards}</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Input
+                        type="number"
+                        min={0}
+                        value={!char.bonusShards ? "" : char.bonusShards}
+                        placeholder="0"
+                        onChange={(e) => {
+                          const newBonus = Math.max(0, Number(e.target.value) || 0);
+                          updateCharacter(index, { bonusShards: newBonus });
+                        }}
+                        className="bg-transparent border-border"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -309,7 +382,7 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                 {!isFree && (
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-muted-foreground text-xs">当前星级</Label>
+                      <Label className="text-muted-foreground text-xs">{t.setPlanDialog.currentStar}</Label>
                       <Select
                         value={String(char.currentStar)}
                         onValueChange={(v) => {
@@ -320,7 +393,7 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                           });
                         }}
                       >
-                        <SelectTrigger className="mt-1 bg-secondary border-border">
+                        <SelectTrigger className="mt-1 bg-transparent border-border">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -333,12 +406,12 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                       </Select>
                     </div>
                     <div>
-                      <Label className="text-muted-foreground text-xs">目标星级</Label>
+                      <Label className="text-muted-foreground text-xs">{t.setPlanDialog.targetStar}</Label>
                       <Select
                         value={String(char.targetStar)}
                         onValueChange={(v) => updateCharacter(index, { targetStar: Number(v) })}
                       >
-                        <SelectTrigger className="mt-1 bg-secondary border-border">
+                        <SelectTrigger className="mt-1 bg-transparent border-border">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -358,12 +431,12 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                 {/* 自由跑片：仅当前星级可选 */}
                 {isFree && (
                   <div>
-                    <Label className="text-muted-foreground text-xs">当前星级</Label>
+                    <Label className="text-muted-foreground text-xs">{t.setPlanDialog.currentStar}</Label>
                     <Select
                       value={String(char.currentStar)}
                       onValueChange={(v) => updateCharacter(index, { currentStar: Number(v) })}
                     >
-                      <SelectTrigger className="mt-1 bg-secondary border-border">
+                      <SelectTrigger className="mt-1 bg-transparent border-border">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -380,9 +453,10 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                 {/* 日期区域 */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-muted-foreground text-xs">开始日期</Label>
+                    <Label className="text-muted-foreground text-xs">{t.setPlanDialog.startDate}</Label>
                     <DatePickerButton
                       date={parseLocalDate(char.startDate)}
+                      locale={locale}
                       onSelect={(d) => {
                         const newStart = toDateStr(d);
                         if (isFree && char.endDate && d > parseLocalDate(char.endDate!)) {
@@ -394,11 +468,11 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                     />
                   </div>
                   <div>
-                    <Label className="text-muted-foreground text-xs">结束日期</Label>
+                    <Label className="text-muted-foreground text-xs">{t.setPlanDialog.endDate}</Label>
                     {isFree ? (
-                      // 自由跑片：结束日期可选
                       <DatePickerButton
                         date={endDateObj}
+                        locale={locale}
                         onSelect={(d) => updateCharacter(index, { endDate: toDateStr(d) })}
                         disabled={(d) => {
                           const start = parseLocalDate(char.startDate);
@@ -407,30 +481,93 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                         }}
                       />
                     ) : (
-                      // 按星跑片：结束日期只读
                       <Button
                         variant="outline"
                         disabled
-                        className="w-full mt-1 justify-start bg-secondary border-border text-muted-foreground text-xs px-2 opacity-60"
+                        className="w-full mt-1 justify-start bg-transparent border-border text-muted-foreground text-xs px-2 opacity-60"
                       >
                         <CalendarIcon className="mr-1 h-3 w-3" />
-                        {format(completionDate, "yyyy/MM/dd", { locale: zhCN })}
+                        {format(completionDate, "yyyy/MM/dd", { locale })}
                       </Button>
                     )}
                   </div>
                 </div>
 
                 {/* 底部信息 */}
-                {isFree ? (
-                  <div className="text-xs text-info flex items-center gap-1">
-                    🎯 预计可达：<span className="font-bold text-star">{freeLabel}</span>
-                    <span className="text-muted-foreground ml-1">（共 {freeDays} 天）</span>
-                  </div>
-                ) : (
-                  <div className="text-xs text-info flex items-center gap-1">
-                    ⏱ 预计需要 <span className="font-bold">{days}</span> 天完成
-                  </div>
-                )}
+                {isFree ? (() => {
+                  const { reachableStar, remainingShards: freeRemaining } = getPartialProgress(
+                    char.currentStar, char.currentShards + (char.bonusShards ?? 0), freeDays
+                  );
+                  const isMaxStar = reachableStar >= 5;
+                  const freeExcess = isMaxStar ? freeRemaining : 0;
+                  if (lang === "en") {
+                    return (
+                      <div className="text-xs text-info flex items-center gap-1 flex-wrap">
+                        🎯{" "}
+                        {isMaxStar ? (
+                          <>
+                            <span className="font-bold text-star">Max★</span>
+                            {freeExcess > 0 && <span className="text-destructive font-medium">{freeExcess} {t.setPlanDialog.excess}</span>}
+                            🎉
+                          </>
+                        ) : (
+                          <span className="font-bold text-star">{reachableStar}★ {freeRemaining} Left</span>
+                        )}
+                        <span className="text-muted-foreground">· {freeDays}d</span>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="text-xs text-info flex items-center gap-1 flex-wrap">
+                      🎯 {t.setPlanDialog.estimated}
+                      <span className="font-bold text-star">
+                        {isMaxStar ? t.setPlanDialog.fullStar : `${reachableStar}★ 余 ${freeRemaining} ${t.setPlanDialog.shardsUnit}`}
+                      </span>
+                      {freeExcess > 0 && (
+                        <span className="text-destructive font-medium">（超 {freeExcess} {t.setPlanDialog.shardsUnit}）</span>
+                      )}
+                      {isMaxStar && <span>🎉</span>}
+                      <span className="text-muted-foreground ml-1">（共 {freeDays} {t.setPlanDialog.days}）</span>
+                    </div>
+                  );
+                })() : (() => {
+                  const totalNeeded = getTotalShardsNeeded(char.currentStar, char.targetStar);
+                  const remaining = Math.max(0, totalNeeded - char.currentShards - (char.bonusShards ?? 0));
+                  const excess = days > 0
+                    ? days * 3 - remaining
+                    : Math.max(0, char.currentShards + (char.bonusShards ?? 0) - totalNeeded);
+                  const bonusNeeded = excess > 0 ? 3 - excess : 0;
+                  if (lang === "en") {
+                    return (
+                      <div className="text-xs text-info flex items-center gap-1 flex-wrap">
+                        ⏱ ETA <span className="font-bold">{days}</span>d
+                        {excess > 0 && (
+                          days > 0 ? (
+                            <span className="text-destructive font-medium">
+                              (Excess {excess}) or +{bonusNeeded} Recollection → {days - 1}d
+                            </span>
+                          ) : (
+                            <span className="text-destructive font-medium">(Excess {excess})</span>
+                          )
+                        )}
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="text-xs text-info flex items-center gap-1 flex-wrap">
+                      {t.setPlanDialog.estimatedNeeds} <span className="font-bold">{days}</span> {t.setPlanDialog.daysToComplete}
+                      {excess > 0 && (
+                        days > 0 ? (
+                          <span className="text-destructive font-medium">
+                            （超 {excess} {t.setPlanDialog.shardsUnit}），或补 {bonusNeeded} {t.setPlanDialog.universalShards} {days - 1} 天完成
+                          </span>
+                        ) : (
+                          <span className="text-destructive font-medium">（已超 {excess} {t.setPlanDialog.shardsUnit}）</span>
+                        )
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             );
           })}
@@ -442,7 +579,7 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
               onClick={addCharacter}
             >
               <Plus className="mr-2 h-4 w-4" />
-              添加角色（{characters.length}/10）
+              {t.setPlanDialog.addCharacter}（{characters.length}/10）
             </Button>
           )}
 
@@ -451,7 +588,7 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
           )}
 
           <Button className="w-full gradient-primary text-primary-foreground glow-primary" onClick={handleSave}>
-            保存计划
+            {t.setPlanDialog.savePlan}
           </Button>
         </div>
       </DialogContent>

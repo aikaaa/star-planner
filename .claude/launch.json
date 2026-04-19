@@ -4,7 +4,7 @@
     {
       "name": "Vite Dev Server",
       "runtimeExecutable": "/usr/local/bin/node",
-      "runtimeArgs": ["node_modules/.bin/vite"],
+      "runtimeArgs": ["/Users/chenji/Git/star-planner/node_modules/.bin/vite", "--config", "/Users/chenji/Git/star-planner/vite.config.ts"],
       "port": 8080
     },
     {

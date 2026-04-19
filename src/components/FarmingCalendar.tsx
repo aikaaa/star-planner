@@ -1,36 +1,114 @@
-import { useMemo } from "react";
-import { CharacterPlan, getCharactersOnDate, getCompletionDate, getDaysNeeded, getEffectiveTargetStar } from "@/lib/types";
+import { useMemo, useState, useEffect, useCallback } from "react";
+import { CharacterPlan, formatCharName, getCharactersOnDate, getCompletionDate, getDaysNeeded, getEffectiveTargetStar, getPartialProgress, getTotalShardsNeeded, parseLocalDate, CHAR_ICON_OPTIONS } from "@/lib/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { getAvatarUrl, getEnName } from "@/lib/roles";
+import { useI18n } from "@/lib/i18n";
+import { CARD_SPACING } from "@/lib/cardSpacing";
 
 interface FarmingCalendarProps {
   plans: CharacterPlan[];
 }
 
-const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
+const WEEKDAYS    = ["日", "一", "二", "三", "四", "五", "六"];
+const WEEKDAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-// Color palette for up to 10 characters
-const CHAR_COLORS = [
-  "bg-primary/30 border-primary/50",
-  "bg-info/30 border-info/50",
-  "bg-orange-500/20 border-orange-500/40",
-  "bg-emerald-500/20 border-emerald-500/40",
-  "bg-pink-500/20 border-pink-500/40",
-  "bg-star/20 border-star/40",
-  "bg-cyan-500/20 border-cyan-500/40",
-  "bg-violet-500/20 border-violet-500/40",
-  "bg-rose-500/20 border-rose-500/40",
-  "bg-lime-500/20 border-lime-500/40",
-];
+const AVATAR_BG      = ["#B0D6CA", "#B0CED6", "#B0BFD6", "#D6B0B1", "#DBD19D", "#D3B0D6"];
+const AVATAR_BG_DARK = ["#6C877E", "#528693", "#647693", "#896161", "#7E7962", "#7B647D"];
 
-const CHAR_DOT_COLORS = [
-  "bg-primary", "bg-info", "bg-orange-500",
-  "bg-emerald-500", "bg-pink-500", "bg-star",
-  "bg-cyan-500", "bg-violet-500", "bg-rose-500", "bg-lime-500",
-];
+function useIsDark() {
+  const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setDark(document.documentElement.classList.contains("dark"));
+    });
+    observer.observe(document.documentElement, { attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
+  return dark;
+}
+
+// ── 卡片间距配置（单位 px）──────────────────────────────────
+// 修改这里即可调整卡片内所有行的上下间距
+const CARD_ROW_SPACING = 8;   // 每行计划的上下 padding（px）
+const CARD_HEADER_PB = 8;     // 头部到分割线的 padding-bottom（px）
+// ─────────────────────────────────────────────────────────────
+
+/** 取角色的图标 emoji，未设置时按 index 取默认值 */
+function getCharIcon(plan: CharacterPlan, index: number): string {
+  return plan.icon ?? CHAR_ICON_OPTIONS[index % CHAR_ICON_OPTIONS.length].emoji;
+}
+
+/**
+ * 角色头像组件：优先显示游戏头像图片，加载失败或无图片时降级为彩色圆。
+ * size: CSS 尺寸字符串，如 "20px"
+ * onFallback: 当头像实际渲染为彩色圆时回调（用于父组件更新颜色索引）
+ */
+function CharAvatar({
+  plan,
+  index,
+  size = "20px",
+  className = "",
+  onFallback,
+}: {
+  plan: CharacterPlan;
+  index: number;
+  size?: string;
+  className?: string;
+  onFallback?: (name: string) => void;
+}) {
+  const [imgFailed, setImgFailed] = useState(false);
+  const isDark = useIsDark();
+  const avatarUrl = getAvatarUrl(plan.name);
+
+  const sizeNum = parseFloat(size);
+  const unit = size.replace(String(sizeNum), "");
+  const fontSizeStr = isNaN(sizeNum) ? "0.48em" : `${sizeNum * 0.48}${unit}`;
+
+  const baseStyle = { width: size, height: size, minWidth: size, flexShrink: 0 };
+
+  if (avatarUrl && !imgFailed) {
+    return (
+      <div
+        title={plan.name}
+        className={`rounded-full overflow-hidden ${className}`}
+        style={{ ...baseStyle, background: "var(--avatar-circle-bg)" }}
+      >
+        <img
+          src={avatarUrl}
+          alt={plan.name}
+          onError={() => { setImgFailed(true); onFallback?.(plan.name); }}
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      title={plan.name}
+      className={`rounded-full flex items-center justify-center overflow-hidden ${className}`}
+      style={{
+        ...baseStyle,
+        background: (isDark ? AVATAR_BG_DARK : AVATAR_BG)[index % AVATAR_BG.length],
+      }}
+    >
+      <svg
+        viewBox="0 0 24 24"
+        fill="rgba(255,255,255,0.55)"
+        style={{ width: "55%", height: "55%" }}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 21c0-4.418 3.582-8 8-8s8 3.582 8 8H4z" />
+      </svg>
+    </div>
+  );
+}
 
 export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
+  const { t, lang } = useI18n();
+  const getCharName = (zh: string) => lang === "en" ? getEnName(zh) : formatCharName(zh);
   const [viewMonth, setViewMonth] = useState(() => new Date());
 
   const year = viewMonth.getFullYear();
@@ -45,6 +123,41 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  const startDateSet = useMemo(() => new Set(
+    plans.map(p => { const d = parseLocalDate(p.startDate); d.setHours(0, 0, 0, 0); return d.getTime(); })
+  ), [plans]);
+
+  // 追踪实际加载失败的头像（有 URL 但图片 404/加载失败）
+  // 失败的角色和无 URL 的角色一起进入"彩色圆"分组
+  const [failedAvatars, setFailedAvatars] = useState<Set<string>>(() => new Set());
+  const handleAvatarFallback = useCallback((name: string) => {
+    setFailedAvatars(prev => {
+      if (prev.has(name)) return prev;
+      const next = new Set(prev);
+      next.add(name);
+      return next;
+    });
+  }, []);
+
+  // 颜色索引分配：
+  //   - 实际渲染彩色圆的角色（无 URL 或图片加载失败）按计划出场顺序依次取色 0, 1, 2...
+  //   - 有真实头像的角色排在后面（索引不会被使用）
+  const charColorIndex = useMemo(() => {
+    const fallbackChars: string[] = [];
+    const avatarChars: string[] = [];
+    const seen = new Set<string>();
+    plans.forEach(p => {
+      if (seen.has(p.name)) return;
+      seen.add(p.name);
+      if (!getAvatarUrl(p.name) || failedAvatars.has(p.name)) fallbackChars.push(p.name);
+      else avatarChars.push(p.name);
+    });
+    const map = new Map<string, number>();
+    fallbackChars.forEach((name, i) => map.set(name, i));
+    avatarChars.forEach((name, i) => map.set(name, fallbackChars.length + i));
+    return map;
+  }, [plans, failedAvatars]);
+
   const calendarDays = useMemo(() => {
     const days: { day: number; characters: CharacterPlan[] }[] = [];
     for (let d = 1; d <= daysInMonth; d++) {
@@ -57,26 +170,35 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
   return (
     <div className="w-full">
       {/* Month navigation */}
-      <div className="flex items-center justify-between mb-4">
-        <Button variant="ghost" size="icon" onClick={prevMonth} className="text-muted-foreground hover:text-foreground">
+      <div className="flex items-center justify-between mb-1">
+        <Button variant="ghost" size="icon" onClick={prevMonth} className="text-muted-foreground hover:text-foreground rounded-[4px]">
           <ChevronLeft className="h-5 w-5" />
         </Button>
-        <h2 className="text-lg font-semibold text-foreground">
-          {year}年{month + 1}月
+        <h2 className="text-sm font-semibold text-foreground">
+          {lang === "en" ? `${new Date(year, month).toLocaleString("en", { month: "long" })} ${year}` : `${year}${t.calendar.year}${month + 1}${t.calendar.month}`}
         </h2>
-        <Button variant="ghost" size="icon" onClick={nextMonth} className="text-muted-foreground hover:text-foreground">
+        <Button variant="ghost" size="icon" onClick={nextMonth} className="text-muted-foreground hover:text-foreground rounded-[4px]">
           <ChevronRight className="h-5 w-5" />
         </Button>
       </div>
 
       {/* Legend */}
       {plans.length > 0 && (
-        <div className="flex flex-wrap gap-3 mb-4">
-          {plans.map((p, i) => (
-            <div key={p.id} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <div className={`w-2.5 h-2.5 rounded-full ${CHAR_DOT_COLORS[i]}`} />
-              <span>{p.name}</span>
-              <span>{p.currentStar}→{getEffectiveTargetStar(p)}</span>
+        <div className="flex flex-wrap gap-2 mb-2">
+          {Array.from(
+            plans.reduce((map, p) => {
+              if (!map.has(p.name)) map.set(p.name, { plan: p, segments: [] });
+              map.get(p.name)!.segments.push(p);
+              return map;
+            }, new Map<string, { plan: CharacterPlan; segments: CharacterPlan[] }>())
+          ).map(([name, { plan, segments }], i) => (
+            <div key={name} className="flex items-center gap-1 text-xs text-muted-foreground">
+              <CharAvatar plan={plan} index={charColorIndex.get(name) ?? 0} size="24px" onFallback={handleAvatarFallback} />
+              <span>{getCharName(name)}</span>
+              {segments.length === 1
+                ? <span>{segments[0].currentStar}→{getEffectiveTargetStar(segments[0])}</span>
+                : <span>{segments.map(s => `${s.currentStar}→${getEffectiveTargetStar(s)}`).join(", ")}</span>
+              }
             </div>
           ))}
         </div>
@@ -84,7 +206,7 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
 
       {/* Weekday headers */}
       <div className="grid grid-cols-7 gap-1 mb-1">
-        {WEEKDAYS.map((d) => (
+        {(lang === "en" ? WEEKDAYS_EN : WEEKDAYS).map((d) => (
           <div key={d} className="text-center text-xs text-muted-foreground py-1 font-medium">
             {d}
           </div>
@@ -99,64 +221,180 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
         {calendarDays.map(({ day, characters }) => {
           const date = new Date(year, month, day);
           date.setHours(0, 0, 0, 0);
-          const isToday = date.getTime() === today.getTime();
+          const isToday     = date.getTime() === today.getTime();
+          const isStartDate = startDateSet.has(date.getTime());
           const hasChars = characters.length > 0;
 
           return (
             <div
               key={day}
-              className={`relative flex flex-col items-center justify-center rounded-md p-1 min-h-[2.5rem] sm:min-h-[3.5rem] text-sm transition-all ${
-                isToday
-                  ? "ring-2 ring-primary bg-primary/10"
-                  : hasChars
-                  ? "bg-secondary/50"
-                  : ""
-              }`}
+              className={`relative flex flex-col items-center justify-center p-2 text-xs transition-all`}
+              style={{ backgroundColor: "hsl(var(--primary) / 0.08)", minHeight: "3.5rem", borderRadius: "8px" }}
             >
-              <span className={`text-xs sm:text-sm ${isToday ? "font-bold text-primary" : "text-foreground"}`}>
-                {day}
-              </span>
-              {hasChars && (
-                <div className="flex gap-0.5 mt-0.5">
-                  {characters.map((c) => {
-                    const idx = plans.findIndex((p) => p.id === c.id);
-                    return (
-                      <div
-                        key={c.id}
-                        className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${CHAR_DOT_COLORS[idx] || "bg-muted-foreground"}`}
-                        title={c.name}
-                      />
-                    );
-                  })}
-                </div>
+              {isToday && (
+                <span className="absolute inset-0 pointer-events-none z-10" style={{ boxShadow: "inset 0 0 0 2px hsl(var(--primary))", borderRadius: "8px" }} />
               )}
+              {isStartDate && (
+                <svg width={8} height={8} viewBox="0 0 12 12" fill="none" style={{ position: "absolute", top: 7, right: 6, zIndex: 10, pointerEvents: "none" }}>
+                  <path d="M6 0C6 0 6.85334 2.69555 8.07889 3.92111C9.30445 5.14666 12 6 12 6C12 6 9.30445 6.85334 8.07889 8.07889C6.85334 9.30445 6 12 6 12C6 12 5.14666 9.30445 3.92111 8.07889C2.69555 6.85334 0 6 0 6C0 6 3.34379 4.69221 3.92111 3.92111C4.49842 3.15 6 0 6 0Z" fill="#B9AD86"/>
+                </svg>
+              )}
+              <span className={`text-xs sm:text-xs leading-none ${isToday ? "font-bold text-primary" : "text-foreground"}`}>
+                {isToday ? t.calendar.today : day}
+              </span>
+              {hasChars && (() => {
+                const shown = characters.slice(0, 3);
+                const count = shown.length;
+                // 方案A：每个头像占格子宽度的 1/count，最大 22px
+                // 用 CSS 变量控制容器，每个头像撑满自己的槽
+                const slotSize = `min(22px, calc((min(100vw, 600px) - 48px) / ${7 * count}))`;
+                const overlap = count === 3 ? "-4px" : count === 2 ? "-2px" : "0px";
+                return (
+                  <div className="flex mt-0.5 justify-center items-center">
+                    {shown.map((c, ci) => {
+                      return (
+                        <div key={c.id} style={{ width: slotSize, height: slotSize, flexShrink: 0, fontSize: slotSize, marginLeft: ci > 0 ? overlap : 0, zIndex: ci, position: "relative" }}>
+                          <CharAvatar plan={c} index={charColorIndex.get(c.name) ?? 0} size="100%" onFallback={handleAvatarFallback} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </div>
           );
         })}
       </div>
 
-      {/* Summary cards */}
-      {plans.length > 0 && (
-        <div className="mt-4 space-y-2">
-          {plans.map((p, i) => {
-            const days = getDaysNeeded(p);
-            const endDate = getCompletionDate(p);
-            return (
-              <div key={p.id} className={`rounded-lg p-3 border ${CHAR_COLORS[i]}`}>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-foreground text-sm">{p.name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {p.currentStar}★ → {getEffectiveTargetStar(p)}★
-                  </span>
+      {/* 图例 */}
+      <div className="flex items-center gap-1 mt-2 mb-1">
+        <svg width={8} height={8} viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0 }}>
+          <path d="M6 0C6 0 6.85334 2.69555 8.07889 3.92111C9.30445 5.14666 12 6 12 6C12 6 9.30445 6.85334 8.07889 8.07889C6.85334 9.30445 6 12 6 12C6 12 5.14666 9.30445 3.92111 8.07889C2.69555 6.85334 0 6 0 6C0 6 3.34379 4.69221 3.92111 3.92111C4.49842 3.15 6 0 6 0Z" fill="#B9AD86"/>
+        </svg>
+        <span className="text-xs text-muted-foreground">{t.calendar.rosterChangeDay}</span>
+      </div>
+
+      {/* Summary cards — 按开始时间排序，同名角色合并 */}
+      {plans.length > 0 && (() => {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        // 按开始时间 → 结束时间排序
+        const sorted = [...plans].sort((a, b) => {
+          const startDiff = parseLocalDate(a.startDate).getTime() - parseLocalDate(b.startDate).getTime();
+          if (startDiff !== 0) return startDiff;
+          return getCompletionDate(a).getTime() - getCompletionDate(b).getTime();
+        });
+
+        // 按角色名分组（保持首次出现顺序）
+        const groups = new Map<string, CharacterPlan[]>();
+        for (const p of sorted) {
+          if (!groups.has(p.name)) groups.set(p.name, []);
+          groups.get(p.name)!.push(p);
+        }
+
+        return (
+          <div className="mt-2 space-y-2">
+            {[...groups.entries()].map(([name, group], gi) => {
+              // 用第一条计划的头像
+              const first = group[0];
+              const firstIdx = charColorIndex.get(name) ?? 0;
+              // 找今天正在进行的段（今天在 startDate ~ endDate 之间）
+              const activeToday = group.find((p) => {
+                const s = parseLocalDate(p.startDate); s.setHours(0, 0, 0, 0);
+                const e = getCompletionDate(p); e.setHours(0, 0, 0, 0);
+                return todayStart >= s && todayStart <= e;
+              });
+              const todayInfo = (() => {
+                if (!activeToday) return null;
+                const s = parseLocalDate(activeToday.startDate); s.setHours(0, 0, 0, 0);
+                const daysElapsed = Math.max(0, Math.round((todayStart.getTime() - s.getTime()) / 86400000)) + 1;
+                const { reachableStar, remainingShards } = getPartialProgress(activeToday.currentStar, activeToday.currentShards + (activeToday.bonusShards ?? 0), daysElapsed);
+                const isExcess = reachableStar >= 5 && remainingShards > 0;
+                return { reachableStar, remainingShards, isExcess };
+              })();
+
+              return (
+                <div
+                  key={name}
+                  className="rounded-lg p-3 bg-card shadow-sm"
+                  style={{ paddingTop: 10, paddingBottom: 8, border: "1px solid hsl(var(--border) / 0.7)" }}
+                >
+                  <div className="flex items-center justify-between" style={{paddingBottom: CARD_HEADER_PB, borderBottom: "1px solid hsl(var(--border) / 0.5)"}}>
+                    <div className="flex items-center gap-2">
+                      <CharAvatar plan={first} index={firstIdx} size="32px" onFallback={handleAvatarFallback} />
+                      <span className="font-semibold text-foreground text-sm">{getCharName(name)}</span>
+                    </div>
+                    {todayInfo && (
+                      <div className="text-xs text-muted-foreground">
+                        {t.calendar.todayReachable}{" "}
+                        {todayInfo.isExcess ? (
+                          lang === "en" ? (
+                            <span className="text-star font-bold">5★ <span className="text-destructive">{todayInfo.remainingShards} {t.calendar.excess}</span></span>
+                          ) : (
+                            <>
+                              <span className="text-star font-bold">5★ {t.calendar.fullStar.replace("★ ", "")}</span>
+                              <span className="text-destructive font-bold"> {t.calendar.excess} {todayInfo.remainingShards} {t.calendar.shards}</span>
+                            </>
+                          )
+                        ) : todayInfo.reachableStar >= 5 ? (
+                          <span className="text-star font-bold">5★ {t.calendar.fullStar.replace("★ ", "")}</span>
+                        ) : (
+                          <span className="text-star font-bold">{todayInfo.reachableStar}★ {lang === "en" ? `${todayInfo.remainingShards} ${t.calendar.remaining}` : `${t.calendar.remaining} ${todayInfo.remainingShards} ${t.calendar.shards}`}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {group.map((p) => {
+                    const days = getDaysNeeded(p);
+                    const endDate = getCompletionDate(p);
+                    const targetStar = getEffectiveTargetStar(p);
+                    const startD = parseLocalDate(p.startDate);
+                    const fmt = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}`;
+                    const { remainingShards, reachableStar } = p.farmingMode === "free"
+                      ? getPartialProgress(p.currentStar, p.currentShards + (p.bonusShards ?? 0), days)
+                      : { remainingShards: 0, reachableStar: targetStar };
+                    const isExcess = reachableStar >= 5 && remainingShards > 0;
+                    // 按星模式：ceil 天数可能多产出碎片，计算超出量
+                    const starModeExcess = p.farmingMode === "star"
+                      ? Math.max(0, (p.currentShards + (p.bonusShards ?? 0) + days * 3) - getTotalShardsNeeded(p.currentStar, p.targetStar))
+                      : 0;
+                    return (
+                      <div
+                        key={p.id}
+                        className="flex items-center justify-between"
+                        style={{
+                          paddingTop: CARD_ROW_SPACING,
+                          paddingBottom: CARD_ROW_SPACING,
+                          borderTop: group.indexOf(p) > 0 ? "1px solid hsl(var(--border) / 0.5)" : undefined,
+                        }}
+                      >
+                        <div className="text-xs text-muted-foreground">
+                          {p.currentStar}★{lang === "en" ? "→" : " → "}{targetStar}★
+                          {p.farmingMode === "star" && starModeExcess > 0 && (
+                            p.targetStar >= 5
+                              ? <span className="text-destructive"> {lang === "en" ? `${starModeExcess} ${t.calendar.excess}` : `${t.calendar.excess} ${starModeExcess} ${t.calendar.shards}`}</span>
+                              : ` ${lang === "en" ? `${starModeExcess} ${t.calendar.remaining}` : `${t.calendar.remaining} ${starModeExcess} ${t.calendar.shards}`}`
+                          )}
+                          {p.farmingMode === "free" && remainingShards > 0 && (
+                            isExcess
+                              ? <span className="text-destructive"> {lang === "en" ? `${remainingShards} ${t.calendar.excess}` : `${t.calendar.excess} ${remainingShards} ${t.calendar.shards}`}</span>
+                              : ` ${lang === "en" ? `${remainingShards} ${t.calendar.remaining}` : `${t.calendar.remaining} ${remainingShards} ${t.calendar.shards}`}`
+                          )}
+                          {" · "}{lang === "en" ? `${t.calendar.estimated} ${days}${t.calendar.days}` : `${t.calendar.estimated} ${days} ${t.calendar.days}`}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {fmt(startD)} - {fmt(endDate)}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  预计 {days} 天 · 完成于 {endDate.getFullYear()}/{endDate.getMonth() + 1}/{endDate.getDate()}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        );
+      })()}
     </div>
   );
 }
