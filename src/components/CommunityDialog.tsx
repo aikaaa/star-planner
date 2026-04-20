@@ -140,7 +140,7 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                         top: -10,
                         height: "80%",
                         width: "auto",
-                        opacity: isDark ? 0.45 : 0.25,
+                        opacity: isDark ? 0.45 : 0.30,
                         objectFit: "cover",
                         pointerEvents: "none",
                         userSelect: "none",
