@@ -124,10 +124,10 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                 <div
                   key={char.name}
                   className={cn(
-                    "flex items-center rounded-lg py-3 pr-4 border border-border",
+                    "flex items-center rounded-lg py-3 border border-border",
                     "gradient-card"
                   )}
-                  style={{ position: "relative", overflow: "hidden", paddingLeft: 44, gap: 8 }}
+                  style={{ position: "relative", overflow: "hidden", paddingLeft: 38, paddingRight: 18, gap: 8 }}
                 >
                   {getAvatarUrl(char.name) && (
                     <img
@@ -136,10 +136,9 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                       aria-hidden="true"
                       style={{
                         position: "absolute",
-                        left: -2,
-                        top: "50%",
-                        transform: "translateY(-50%)",
-                        height: "75%",
+                        left: -14,
+                        top: -10,
+                        height: "85%",
                         width: "auto",
                         opacity: isDark ? 0.45 : 0.20,
                         objectFit: "cover",
