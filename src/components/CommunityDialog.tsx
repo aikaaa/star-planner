@@ -35,25 +35,7 @@ interface CommunityDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const RANK_COLORS_LIGHT = ["#E7B232", "#A2A2A2", "#B77752"];
-const RANK_COLORS_DARK  = ["#B29F62", "#828695", "#998B84"];
-
-function RankIcon({ rank, isDark }: { rank: number; isDark: boolean }) {
-  const fill = rank < 3
-    ? (isDark ? RANK_COLORS_DARK[rank] : RANK_COLORS_LIGHT[rank])
-    : "hsl(var(--primary) / 0.15)";
-  const color = rank < 3 ? "rgba(255,255,255,0.8)" : "hsl(var(--muted-foreground) / 0.7)";
-  return (
-    <div style={{ width: 20, height: 20, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-      <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", inset: 0 }}>
-        <path d="M0.87868 13.8787C-0.292893 12.7071 -0.292893 10.8076 0.87868 9.63603L9.63603 0.87868C10.8076 -0.292893 12.7071 -0.292893 13.8787 0.87868L22.636 9.63603C23.8076 10.8076 23.8076 12.7071 22.636 13.8787L13.8787 22.636C12.7071 23.8076 10.8076 23.8076 9.63603 22.636L0.87868 13.8787Z" style={{ fill }} />
-      </svg>
-      <span style={{ position: "relative", fontSize: 10, fontWeight: 700, color, lineHeight: 1 }}>
-        {rank + 1}
-      </span>
-    </div>
-  );
-}
+const MEDALS = ["🥇", "🥈", "🥉"];
 
 export default function CommunityDialog({ open, onOpenChange }: CommunityDialogProps) {
   const { t, lang } = useI18n();
@@ -158,7 +140,7 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                         top: -11,
                         height: "70%",
                         width: "auto",
-                        opacity: 0.5,
+                        opacity: isDark ? 0.45 : 0.20,
                         objectFit: "cover",
                         pointerEvents: "none",
                         userSelect: "none",
@@ -167,7 +149,9 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                   )}
                   <div className="flex items-center gap-3 shrink-0">
                     <div style={{ width: 24, display: "flex", justifyContent: "center", alignItems: "center" }}>
-                      <RankIcon rank={index} isDark={isDark} />
+                      {index < 3
+                        ? <span style={{ fontSize: 16, lineHeight: 1 }}>{MEDALS[index]}</span>
+                        : <span className="text-sm font-bold text-muted-foreground">{index + 1}</span>}
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
