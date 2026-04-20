@@ -72,14 +72,13 @@ function AvatarPlaceholder({ size, index }: { size: number; index: number }) {
 function TemplateAvatar({ plan, size, index, onFallback }: { plan: CharacterPlan; size: number; index: number; onFallback?: (name: string) => void }) {
   const [failed, setFailed] = useState(false);
   const avatarUrl = getAvatarUrl(plan.name);
-  const bg = FALLBACK_BG[index % FALLBACK_BG.length];
 
   if (avatarUrl && !failed) {
     return (
       <div style={{
         width: size, height: size, minWidth: size,
         borderRadius: "50%", overflow: "hidden",
-        background: bg, flexShrink: 0,
+        background: C.avatarBg, flexShrink: 0,
       }}>
         <img
           src={avatarUrl}
@@ -99,13 +98,12 @@ function TemplateAvatar({ plan, size, index, onFallback }: { plan: CharacterPlan
 function CalAvatar({ plan, size, index, onFallback }: { plan: CharacterPlan; size: number; index: number; onFallback?: (name: string) => void }) {
   const [failed, setFailed] = useState(false);
   const avatarUrl = getAvatarUrl(plan.name);
-  const bg = FALLBACK_BG[index % FALLBACK_BG.length];
 
   if (avatarUrl && !failed) {
     return (
       <div style={{
         width: size, height: size, borderRadius: "50%",
-        overflow: "hidden", background: bg, flexShrink: 0,
+        overflow: "hidden", background: C.avatarBg, flexShrink: 0,
       }}>
         <img
           src={avatarUrl}
