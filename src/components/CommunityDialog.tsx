@@ -5,7 +5,30 @@ import { cn } from "@/lib/utils";
 import { fetchCommunityTop10, type CommunityCharacter } from "@/lib/communityStats";
 import { COMMUNITY_TOP_CHARACTERS, formatCharName } from "@/lib/types";
 import { getEnName } from "@/lib/roles";
+import { getAvatarUrl } from "@/lib/roleAvatars";
 import { useI18n } from "@/lib/i18n";
+
+function CharAvatar({ name }: { name: string }) {
+  const [failed, setFailed] = useState(false);
+  const url = getAvatarUrl(name);
+  const bg = "hsl(var(--primary) / 0.15)";
+  const size = 36;
+  if (url && !failed) {
+    return (
+      <div style={{ width: size, height: size, minWidth: size, borderRadius: "50%", overflow: "hidden", background: bg }}>
+        <img src={url} alt={name} onError={() => setFailed(true)} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+      </div>
+    );
+  }
+  return (
+    <div style={{ width: size, height: size, minWidth: size, borderRadius: "50%", background: bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <svg viewBox="0 0 24 24" fill="hsl(var(--primary) / 0.5)" style={{ width: "55%", height: "55%" }}>
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 21c0-4.418 3.582-8 8-8s8 3.582 8 8H4z" />
+      </svg>
+    </div>
+  );
+}
 
 interface CommunityDialogProps {
   open: boolean;
@@ -56,7 +79,7 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm max-h-[85vh] overflow-y-auto bg-background border-border">
+      <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto bg-background border-border">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-gradient-title text-xl">
             <Trophy className="h-5 w-5" style={{ color: "hsl(var(--star))" }} />
@@ -96,11 +119,12 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                     "gradient-card"
                   )}
                 >
-                  <span className="text-xl w-8 text-center">
+                  <span className="text-xl w-8 text-center shrink-0">
                     {index < 3
                       ? medals[index]
                       : <span className="text-sm font-bold text-muted-foreground">{index + 1}</span>}
                   </span>
+                  <CharAvatar name={char.name} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-1">
                       <span className="font-semibold text-foreground text-sm">{getCharName(char.name)}</span>
