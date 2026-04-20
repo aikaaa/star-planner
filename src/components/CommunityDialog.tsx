@@ -119,12 +119,14 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                     "gradient-card"
                   )}
                 >
-                  <span className="text-xl shrink-0 text-center" style={{ minWidth: "1.25rem" }}>
-                    {index < 3
-                      ? medals[index]
-                      : <span className="text-sm font-bold text-muted-foreground">{index + 1}</span>}
-                  </span>
-                  <CharAvatar name={char.name} />
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-xl text-center" style={{ minWidth: "1.25rem" }}>
+                      {index < 3
+                        ? medals[index]
+                        : <span className="text-sm font-bold text-muted-foreground">{index + 1}</span>}
+                    </span>
+                    <CharAvatar name={char.name} />
+                  </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-1">
                       <span className="font-semibold text-foreground text-sm">{getCharName(char.name)}</span>
