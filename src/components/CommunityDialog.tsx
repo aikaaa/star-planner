@@ -141,7 +141,7 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                         transform: "translateY(-50%)",
                         height: "75%",
                         width: "auto",
-                        opacity: isDark ? 0.45 : 0.30,
+                        opacity: isDark ? 0.45 : 0.20,
                         objectFit: "cover",
                         pointerEvents: "none",
                         userSelect: "none",
