@@ -109,7 +109,7 @@ const CN = {
     loaded: "数据已加载",
     noService: "暂未连接统计服务，显示示例数据",
     loading: "加载中…",
-    morePeople: "更多人选择跑",
+    morePeople: "更多人跑",
     peopleUnit: "人",
   },
   exportTemplate: {
