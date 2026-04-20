@@ -80,7 +80,7 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
 
       const canvas = await html2canvas(templateRef.current, {
         useCORS: true,
-        scale: Math.min(window.devicePixelRatio || 2, 3),
+        scale: Math.max(2, Math.min(window.devicePixelRatio || 2, 3)),
         backgroundColor: "#f2f8f6",
         logging: false,
       });
