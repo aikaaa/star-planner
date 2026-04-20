@@ -395,6 +395,11 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
                     if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) handleImportText();
                   }}
                 />
+                {codeError && (
+                  <p className="text-xs mt-1" style={{ color: "hsl(var(--destructive))" }}>
+                    {codeError}
+                  </p>
+                )}
                 <Button
                   className="mt-2 w-full gradient-primary text-primary-foreground"
                   style={{ borderRadius: 4 }}
@@ -403,11 +408,6 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
                 >
                   {t.importDialog.confirmImport}
                 </Button>
-                {codeError && (
-                  <p className="text-xs mt-2" style={{ color: "hsl(var(--destructive))" }}>
-                    {codeError}
-                  </p>
-                )}
               </div>
             </div>
           </div>
