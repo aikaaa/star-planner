@@ -70,6 +70,7 @@ const CN = {
     method2: "方式二：粘贴计划码",
     codePlaceholder: "粘贴以 [SOC] 开头的计划码…",
     confirmImport: "确认导入",
+    planCodeError: "计划码错误",
   },
   setPlanDialog: {
     title: "设置跑片计划",
@@ -192,6 +193,7 @@ const EN: typeof CN = {
     method2: "Method 2: Paste plan code",
     codePlaceholder: "Paste plan code starting with [SOC]...",
     confirmImport: "Confirm Import",
+    planCodeError: "Plan code is incorrect",
   },
   setPlanDialog: {
     title: "Schedule",

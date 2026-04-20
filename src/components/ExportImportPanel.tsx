@@ -34,6 +34,7 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
   const [showImport, setShowImport] = useState(false);
   const [importText, setImportText]   = useState("");
   const [importError, setImportError] = useState<string | null>(null);
+  const [codeError, setCodeError] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [isDragging, setIsDragging]   = useState(false);
   const [isProcessingFile, setIsProcessingFile] = useState(false);
@@ -51,6 +52,7 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
     setShowImport(false);
     setImportText("");
     setImportError(null);
+    setCodeError(null);
     setIsProcessingFile(false);
   }, []);
 
@@ -127,12 +129,13 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
 
   // ── 导入：粘贴文本 ────────────────────────────────────────────────
   const handleImportText = useCallback(async () => {
+    setCodeError(null);
     const socText = await resolveSocText(importText.trim());
-    if (!socText) { setImportError(t.toast.planExpired); return; }
+    if (!socText) { setCodeError(t.importDialog.planCodeError); return; }
     const data = decodeSoc(socText);
-    if (!data) { setImportError(t.importDialog.errorQRFormat); return; }
+    if (!data) { setCodeError(t.importDialog.planCodeError); return; }
     triggerImport(data.plans, plans);
-  }, [importText, resolveSocText, triggerImport, plans]);
+  }, [importText, resolveSocText, triggerImport, plans, t]);
 
   // ── 导入：读取图片二维码 ──────────────────────────────────────────
   const handleFile = useCallback(async (file: File) => {
@@ -387,7 +390,7 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
                   }}
                   placeholder={t.importDialog.codePlaceholder}
                   value={importText}
-                  onChange={e => { setImportText(e.target.value); setImportError(null); }}
+                  onChange={e => { setImportText(e.target.value); setCodeError(null); }}
                   onKeyDown={e => {
                     if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) handleImportText();
                   }}
@@ -400,6 +403,11 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
                 >
                   {t.importDialog.confirmImport}
                 </Button>
+                {codeError && (
+                  <p className="text-xs mt-2" style={{ color: "hsl(var(--destructive))" }}>
+                    {codeError}
+                  </p>
+                )}
               </div>
             </div>
           </div>
