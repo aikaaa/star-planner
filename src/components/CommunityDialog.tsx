@@ -5,14 +5,55 @@ import { cn } from "@/lib/utils";
 import { fetchCommunityTop10, type CommunityCharacter } from "@/lib/communityStats";
 import { COMMUNITY_TOP_CHARACTERS, formatCharName } from "@/lib/types";
 import { getEnName } from "@/lib/roles";
+import { getAvatarUrl } from "@/lib/roleAvatars";
 import { useI18n } from "@/lib/i18n";
+
+function CharAvatar({ name }: { name: string }) {
+  const [failed, setFailed] = useState(false);
+  const url = getAvatarUrl(name);
+  const bg = "hsl(var(--primary) / 0.15)";
+  const size = 32;
+  if (url && !failed) {
+    return (
+      <div style={{ width: size, height: size, minWidth: size, borderRadius: "50%", overflow: "hidden", background: bg }}>
+        <img src={url} alt={name} onError={() => setFailed(true)} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+      </div>
+    );
+  }
+  return (
+    <div style={{ width: size, height: size, minWidth: size, borderRadius: "50%", background: bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <svg viewBox="0 0 24 24" fill="hsl(var(--primary) / 0.5)" style={{ width: "55%", height: "55%" }}>
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 21c0-4.418 3.582-8 8-8s8 3.582 8 8H4z" />
+      </svg>
+    </div>
+  );
+}
 
 interface CommunityDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-const medals = ["🥇", "🥈", "🥉"];
+const RANK_COLORS_LIGHT = ["#E7B232", "#A2A2A2", "#B77752"];
+const RANK_COLORS_DARK  = ["#B29F62", "#828695", "#998B84"];
+
+function RankIcon({ rank, isDark }: { rank: number; isDark: boolean }) {
+  const fill = rank < 3
+    ? (isDark ? RANK_COLORS_DARK[rank] : RANK_COLORS_LIGHT[rank])
+    : "hsl(var(--primary) / 0.15)";
+  const color = rank < 3 ? "rgba(255,255,255,0.8)" : "hsl(var(--muted-foreground) / 0.7)";
+  return (
+    <div style={{ width: 20, height: 20, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+      <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", inset: 0 }}>
+        <path d="M0.87868 13.8787C-0.292893 12.7071 -0.292893 10.8076 0.87868 9.63603L9.63603 0.87868C10.8076 -0.292893 12.7071 -0.292893 13.8787 0.87868L22.636 9.63603C23.8076 10.8076 23.8076 12.7071 22.636 13.8787L13.8787 22.636C12.7071 23.8076 10.8076 23.8076 9.63603 22.636L0.87868 13.8787Z" style={{ fill }} />
+      </svg>
+      <span style={{ position: "relative", fontSize: 10, fontWeight: 700, color, lineHeight: 1 }}>
+        {rank + 1}
+      </span>
+    </div>
+  );
+}
 
 export default function CommunityDialog({ open, onOpenChange }: CommunityDialogProps) {
   const { t, lang } = useI18n();
@@ -21,6 +62,15 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
   const [loading, setLoading] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [isReal, setIsReal] = useState(false);
+  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains("dark"));
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains("dark"));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -44,18 +94,19 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     if (diffMins < 1) return t.communityDialog.justUpdated;
-    if (diffMins < 60) return `${diffMins} ${t.communityDialog.minutesAgo}`;
+    const prefix = lang === "en" ? "Updated " : "";
+    if (diffMins < 60) return `${prefix}${diffMins} ${t.communityDialog.minutesAgo}`;
     const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours} ${t.communityDialog.hoursAgo}`;
+    if (diffHours < 24) return `${prefix}${diffHours} ${t.communityDialog.hoursAgo}`;
     const diffDays = Math.floor(diffHours / 24);
-    return `${diffDays} ${t.communityDialog.daysAgo}`;
+    return `${prefix}${diffDays} ${t.communityDialog.daysAgo}`;
   }
 
   const totalCount = chars.reduce((sum, c) => sum + c.count, 0);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm max-h-[85vh] overflow-y-auto bg-background border-border">
+      <DialogContent className="max-h-[85vh] overflow-y-auto bg-background border-border" style={{ maxWidth: 400 }}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-gradient-title text-xl">
             <Trophy className="h-5 w-5" style={{ color: "hsl(var(--star))" }} />
@@ -91,15 +142,34 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                 <div
                   key={char.name}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg p-3 border border-border",
+                    "flex items-center rounded-lg py-3 border border-border",
                     "gradient-card"
                   )}
+                  style={{ position: "relative", overflow: "hidden", paddingLeft: 32, paddingRight: 18, gap: 8 }}
                 >
-                  <span className="text-xl w-8 text-center">
-                    {index < 3
-                      ? medals[index]
-                      : <span className="text-sm font-bold text-muted-foreground">{index + 1}</span>}
-                  </span>
+                  {getAvatarUrl(char.name) && (
+                    <img
+                      src={getAvatarUrl(char.name)!}
+                      alt=""
+                      aria-hidden="true"
+                      style={{
+                        position: "absolute",
+                        left: -12,
+                        top: -11,
+                        height: "70%",
+                        width: "auto",
+                        opacity: isDark ? 0.45 : 0.25,
+                        objectFit: "cover",
+                        pointerEvents: "none",
+                        userSelect: "none",
+                      }}
+                    />
+                  )}
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div style={{ width: 24, display: "flex", justifyContent: "center", alignItems: "center" }}>
+                      <RankIcon rank={index} isDark={isDark} />
+                    </div>
+                  </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-1">
                       <span className="font-semibold text-foreground text-sm">{getCharName(char.name)}</span>
@@ -109,7 +179,7 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                         </span>
                       )}
                     </div>
-                    <div className="w-full rounded-full h-1.5 mt-1" style={{ backgroundColor: "hsl(var(--primary) / 0.15)" }}>
+                    <div className="w-full rounded-full h-1.5 mt-1" style={{ backgroundColor: "hsl(var(--primary) / 0.15)", marginRight: 2 }}>
                       <div
                         className="h-1.5 rounded-full transition-all"
                         style={{ width: `${pct}%`, backgroundColor: "hsl(var(--star))" }}
