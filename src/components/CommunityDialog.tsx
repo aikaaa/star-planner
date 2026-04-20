@@ -44,6 +44,15 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
   const [loading, setLoading] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [isReal, setIsReal] = useState(false);
+  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains("dark"));
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains("dark"));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -115,17 +124,35 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                 <div
                   key={char.name}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg py-3 pl-3 pr-4 border border-border",
+                    "flex items-center rounded-lg py-3 pr-4 border border-border",
                     "gradient-card"
                   )}
+                  style={{ position: "relative", overflow: "hidden", paddingLeft: 52, gap: 8 }}
                 >
+                  {getAvatarUrl(char.name) && (
+                    <img
+                      src={getAvatarUrl(char.name)!}
+                      alt=""
+                      aria-hidden="true"
+                      style={{
+                        position: "absolute",
+                        left: -12,
+                        top: 0,
+                        height: "100%",
+                        width: "auto",
+                        opacity: isDark ? 0.45 : 0.20,
+                        objectFit: "cover",
+                        pointerEvents: "none",
+                        userSelect: "none",
+                      }}
+                    />
+                  )}
                   <div className="flex items-center gap-3 shrink-0">
                     <span className="text-xl text-center" style={{ width: 24, display: "inline-block" }}>
                       {index < 3
                         ? medals[index]
                         : <span className="text-sm font-bold text-muted-foreground">{index + 1}</span>}
                     </span>
-                    <CharAvatar name={char.name} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-1">
