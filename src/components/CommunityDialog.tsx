@@ -12,7 +12,7 @@ function CharAvatar({ name }: { name: string }) {
   const [failed, setFailed] = useState(false);
   const url = getAvatarUrl(name);
   const bg = "hsl(var(--primary) / 0.15)";
-  const size = 36;
+  const size = 28;
   if (url && !failed) {
     return (
       <div style={{ width: size, height: size, minWidth: size, borderRadius: "50%", overflow: "hidden", background: bg }}>
