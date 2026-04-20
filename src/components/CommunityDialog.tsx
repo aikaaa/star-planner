@@ -79,7 +79,7 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto bg-background border-border" style={{ maxWidth: 360 }}>
+      <DialogContent className="max-h-[85vh] overflow-y-auto bg-background border-border" style={{ maxWidth: 400 }}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-gradient-title text-xl">
             <Trophy className="h-5 w-5" style={{ color: "hsl(var(--star))" }} />
