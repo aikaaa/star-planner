@@ -119,7 +119,7 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                     "gradient-card"
                   )}
                 >
-                  <span className="text-xl w-8 text-center shrink-0">
+                  <span className="text-xl shrink-0 text-center" style={{ minWidth: "1.25rem" }}>
                     {index < 3
                       ? medals[index]
                       : <span className="text-sm font-bold text-muted-foreground">{index + 1}</span>}
