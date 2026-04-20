@@ -12,7 +12,7 @@ function CharAvatar({ name }: { name: string }) {
   const [failed, setFailed] = useState(false);
   const url = getAvatarUrl(name);
   const bg = "hsl(var(--primary) / 0.15)";
-  const size = 28;
+  const size = 30;
   if (url && !failed) {
     return (
       <div style={{ width: size, height: size, minWidth: size, borderRadius: "50%", overflow: "hidden", background: bg }}>
@@ -79,7 +79,7 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto bg-background border-border">
+      <DialogContent className="max-h-[85vh] overflow-y-auto bg-background border-border" style={{ maxWidth: 360 }}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-gradient-title text-xl">
             <Trophy className="h-5 w-5" style={{ color: "hsl(var(--star))" }} />
