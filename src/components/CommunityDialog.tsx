@@ -120,7 +120,7 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                   )}
                 >
                   <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-xl text-center" style={{ minWidth: "1.25rem" }}>
+                    <span className="text-xl text-center" style={{ width: 24, display: "inline-block" }}>
                       {index < 3
                         ? medals[index]
                         : <span className="text-sm font-bold text-muted-foreground">{index + 1}</span>}
