@@ -115,7 +115,7 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                 <div
                   key={char.name}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg p-3 border border-border",
+                    "flex items-center gap-3 rounded-lg py-3 pl-3 pr-4 border border-border",
                     "gradient-card"
                   )}
                 >
