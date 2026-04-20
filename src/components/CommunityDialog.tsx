@@ -145,7 +145,7 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                     "flex items-center rounded-lg py-3 border border-border",
                     "gradient-card"
                   )}
-                  style={{ position: "relative", overflow: "hidden", paddingLeft: 32, paddingRight: 18, gap: 8 }}
+                  style={{ position: "relative", overflow: "hidden", paddingLeft: 30, paddingRight: 18, gap: 8 }}
                 >
                   {getAvatarUrl(char.name) && (
                     <img
@@ -158,7 +158,7 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                         top: -11,
                         height: "70%",
                         width: "auto",
-                        opacity: isDark ? 0.45 : 0.25,
+                        opacity: 0.5,
                         objectFit: "cover",
                         pointerEvents: "none",
                         userSelect: "none",
