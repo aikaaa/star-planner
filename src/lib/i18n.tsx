@@ -70,6 +70,7 @@ const CN = {
     method2: "方式二：粘贴计划码",
     codePlaceholder: "粘贴以 [SOC] 开头的计划码…",
     confirmImport: "确认导入",
+    planCodeError: "计划码错误",
   },
   setPlanDialog: {
     title: "设置跑片计划",
@@ -108,7 +109,7 @@ const CN = {
     loaded: "数据已加载",
     noService: "暂未连接统计服务，显示示例数据",
     loading: "加载中…",
-    morePeople: "更多人选择跑",
+    morePeople: "更多人跑",
     peopleUnit: "人",
   },
   exportTemplate: {
@@ -192,6 +193,7 @@ const EN: typeof CN = {
     method2: "Method 2: Paste plan code",
     codePlaceholder: "Paste plan code starting with [SOC]...",
     confirmImport: "Confirm Import",
+    planCodeError: "Plan code is incorrect",
   },
   setPlanDialog: {
     title: "Schedule",

@@ -240,7 +240,7 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
                 </svg>
               )}
               <span className={`text-xs sm:text-xs leading-none ${isToday ? "font-bold text-primary" : "text-foreground"}`}>
-                {isToday ? t.calendar.today : day}
+                {isToday && lang === "cn" ? t.calendar.today : day}
               </span>
               {hasChars && (() => {
                 const shown = characters.slice(0, 3);

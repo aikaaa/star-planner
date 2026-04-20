@@ -3,7 +3,7 @@
  * 用 html2canvas 截图，不影响页面可见区域。
  */
 
-import { forwardRef, useState } from "react";
+import { forwardRef, useState, useMemo } from "react";
 import {
   CharacterPlan,
   formatCharName,
@@ -69,7 +69,7 @@ function AvatarPlaceholder({ size, index }: { size: number; index: number }) {
 }
 
 // ── 头像子组件（跨域 img + fallback 占位图标） ──────────────────────
-function TemplateAvatar({ plan, size, index }: { plan: CharacterPlan; size: number; index: number }) {
+function TemplateAvatar({ plan, size, index, onFallback }: { plan: CharacterPlan; size: number; index: number; onFallback?: (name: string) => void }) {
   const [failed, setFailed] = useState(false);
   const avatarUrl = getAvatarUrl(plan.name);
 
@@ -84,7 +84,7 @@ function TemplateAvatar({ plan, size, index }: { plan: CharacterPlan; size: numb
           src={avatarUrl}
           alt={plan.name}
           crossOrigin="anonymous"
-          onError={() => setFailed(true)}
+          onError={() => { setFailed(true); onFallback?.(plan.name); }}
           style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
         />
       </div>
@@ -95,9 +95,10 @@ function TemplateAvatar({ plan, size, index }: { plan: CharacterPlan; size: numb
 }
 
 // ── 小头像（日历格用） ──────────────
-function CalAvatar({ plan, size, index }: { plan: CharacterPlan; size: number; index: number }) {
+function CalAvatar({ plan, size, index, onFallback }: { plan: CharacterPlan; size: number; index: number; onFallback?: (name: string) => void }) {
   const [failed, setFailed] = useState(false);
   const avatarUrl = getAvatarUrl(plan.name);
+
   if (avatarUrl && !failed) {
     return (
       <div style={{
@@ -107,7 +108,7 @@ function CalAvatar({ plan, size, index }: { plan: CharacterPlan; size: number; i
         <img
           src={avatarUrl}
           crossOrigin="anonymous"
-          onError={() => setFailed(true)}
+          onError={() => { setFailed(true); onFallback?.(plan.name); }}
           style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
         />
       </div>
@@ -127,6 +128,10 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
     const { lang, t } = useI18n();
     const weekdays = lang === "en" ? WEEKDAYS_EN : WEEKDAYS;
     const charDisplayName = (zh: string) => lang === "en" ? getEnName(zh) : formatCharName(zh);
+    const [failedAvatars, setFailedAvatars] = useState<Set<string>>(() => new Set());
+    const handleAvatarFallback = (name: string) => {
+      setFailedAvatars(prev => { const next = new Set(prev); next.add(name); return next; });
+    };
     if (plans.length === 0) return null;
 
     // 日期范围
@@ -153,22 +158,22 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
       plans.map(p => { const d = parseLocalDate(p.startDate); d.setHours(0, 0, 0, 0); return d.getTime(); })
     );
 
-    // 颜色索引：无头像角色优先顺序分配，有URL角色排后（避免图片失败时撞色）
-    const charColorIndex = (() => {
-      const noAvatarChars: string[] = [];
+    // 颜色索引：无头像或已加载失败的角色优先分配，与网页逻辑一致
+    const charColorIndex = useMemo(() => {
+      const fallbackChars: string[] = [];
       const withAvatarChars: string[] = [];
       const seen = new Set<string>();
       plans.forEach(p => {
         if (seen.has(p.name)) return;
         seen.add(p.name);
-        if (!getAvatarUrl(p.name)) noAvatarChars.push(p.name);
+        if (!getAvatarUrl(p.name) || failedAvatars.has(p.name)) fallbackChars.push(p.name);
         else withAvatarChars.push(p.name);
       });
       const map = new Map<string, number>();
-      noAvatarChars.forEach((name, i) => map.set(name, i));
-      withAvatarChars.forEach((name, i) => map.set(name, noAvatarChars.length + i));
+      fallbackChars.forEach((name, i) => map.set(name, i));
+      withAvatarChars.forEach((name, i) => map.set(name, fallbackChars.length + i));
       return map;
-    })();
+    }, [plans, failedAvatars]);
 
     // 按开始时间排序，再按角色名分组
     const sorted = [...plans].sort((a, b) => {
@@ -320,7 +325,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                       color: isToday ? C.primary : C.fg,
                       lineHeight: 1,
                     }}>
-                      {isToday ? t.exportTemplate.todayLabel : day}
+                      {isToday && lang === "cn" ? t.exportTemplate.todayLabel : day}
                     </span>
                     {count > 0 && (
                       <div style={{ display: "flex", marginTop: 5, justifyContent: "center", alignItems: "center" }}>
@@ -334,7 +339,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                               flexShrink: 0,
                             }}
                           >
-                            <CalAvatar plan={c} size={14} index={charColorIndex.get(c.name) ?? 0} />
+                            <CalAvatar plan={c} size={14} index={charColorIndex.get(c.name) ?? 0} onFallback={handleAvatarFallback} />
                           </div>
                         ))}
                       </div>
@@ -417,7 +422,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                     {/* 左：头像 + 名字 */}
                     <span style={{ display: "inline-block", verticalAlign: "middle", fontSize: 0 }}>
                       <span style={{ display: "inline-block", verticalAlign: "middle" }}>
-                        <TemplateAvatar plan={first} size={28} index={charColorIndex.get(name) ?? 0} />
+                        <TemplateAvatar plan={first} size={28} index={charColorIndex.get(name) ?? 0} onFallback={handleAvatarFallback} />
                       </span>
                       <span style={{ display: "inline-block", verticalAlign: "middle", fontSize: 13, fontWeight: 600, lineHeight: 1, marginLeft: 8 }}>
                         {charDisplayName(name)}
