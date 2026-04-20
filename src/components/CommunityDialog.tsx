@@ -127,7 +127,7 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                     "flex items-center rounded-lg py-3 border border-border",
                     "gradient-card"
                   )}
-                  style={{ position: "relative", overflow: "hidden", paddingLeft: 38, paddingRight: 18, gap: 8 }}
+                  style={{ position: "relative", overflow: "hidden", paddingLeft: 32, paddingRight: 18, gap: 8 }}
                 >
                   {getAvatarUrl(char.name) && (
                     <img
@@ -138,7 +138,7 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                         position: "absolute",
                         left: -14,
                         top: -10,
-                        height: "85%",
+                        height: "80%",
                         width: "auto",
                         opacity: isDark ? 0.45 : 0.20,
                         objectFit: "cover",
@@ -163,7 +163,7 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                         </span>
                       )}
                     </div>
-                    <div className="w-full rounded-full h-1.5 mt-1" style={{ backgroundColor: "hsl(var(--primary) / 0.15)" }}>
+                    <div className="w-full rounded-full h-1.5 mt-1" style={{ backgroundColor: "hsl(var(--primary) / 0.15)", marginRight: 2 }}>
                       <div
                         className="h-1.5 rounded-full transition-all"
                         style={{ width: `${pct}%`, backgroundColor: "hsl(var(--star))" }}
