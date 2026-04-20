@@ -127,7 +127,7 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                     </span>
                     <CharAvatar name={char.name} />
                   </div>
-                  <div className="flex-1 min-w-0 ml-1">
+                  <div className="flex-1 min-w-0" style={{ marginLeft: 2 }}>
                     <div className="flex items-center justify-between gap-1">
                       <span className="font-semibold text-foreground text-sm">{getCharName(char.name)}</span>
                       {char.topTargetStar != null && (
