@@ -116,13 +116,13 @@ export default function Index() {
   const handleSavePlans = (newPlans: CharacterPlan[]) => {
     setPlans(newPlans);
     const today = new Date(); today.setHours(0, 0, 0, 0);
-    const in7Days = new Date(today); in7Days.setDate(today.getDate() + 7);
+    const past7Days = new Date(today); past7Days.setDate(today.getDate() - 6);
     reportFarmingCharacters(
       newPlans
         .filter((p) => {
           const start = parseLocalDate(p.startDate);
           const end = getCompletionDate(p);
-          return start <= today && end >= today;
+          return start <= today && end >= past7Days;
         })
         .map((p) => ({
           name: p.name,
