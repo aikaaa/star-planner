@@ -141,7 +141,7 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="gradient-primary pt-[27px] pb-[20px] sm:py-[35px] text-center relative">
+      <header className="gradient-primary pt-[27px] pb-[27px] sm:py-[35px] text-center relative">
         <div className="mx-auto px-4 grid items-center mb-1" style={{ maxWidth: "600px", gridTemplateColumns: "1fr auto 1fr" }}>
           <div className="flex items-center justify-start" style={{ position: "relative" }}>
             <button
@@ -194,11 +194,11 @@ export default function Index() {
             </button>
           </div>
         </div>
-        <p className="text-primary-foreground/70 text-xs sm:text-sm" style={{ marginTop: 0 }}>{t.app.subtitle}</p>
+        <p className="text-primary-foreground/70 text-xs sm:text-sm" style={{ marginTop: -2 }}>{t.app.subtitle}</p>
       </header>
 
       {/* Action buttons */}
-      <div className="mx-auto px-4 flex gap-3 relative z-10 -mt-3 sm:-mt-[21px]" style={{ maxWidth: "600px" }}>
+      <div className="mx-auto px-4 flex gap-3 relative z-10 -mt-[19px] sm:-mt-[21px]" style={{ maxWidth: "600px" }}>
         <Button
           className="flex-1 gradient-card border border-border text-foreground hover:text-foreground active:text-foreground hover:glow-primary h-12 font-semibold"
           style={{ borderRadius: "4px" }}
