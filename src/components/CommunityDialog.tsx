@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Trophy, Loader2, WifiOff, Clock, User } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { fetchCommunityTop10, type CommunityCharacter } from "@/lib/communityStats";
+import { fetchCommunityTop10, type CommunityCharacter, type Server } from "@/lib/communityStats";
 import { COMMUNITY_TOP_CHARACTERS, formatCharName } from "@/lib/types";
 import { getEnName } from "@/lib/roles";
 import { getAvatarUrl } from "@/lib/roleAvatars";
@@ -35,7 +35,7 @@ interface CommunityDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const medals = ["🥇", "🥈", "🥉"];
+const MEDALS = ["🥇", "🥈", "🥉"];
 
 export default function CommunityDialog({ open, onOpenChange }: CommunityDialogProps) {
   const { t, lang } = useI18n();
@@ -57,7 +57,8 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
   useEffect(() => {
     if (!open) return;
     setLoading(true);
-    fetchCommunityTop10().then((result) => {
+    const server: Server = lang === "en" ? "gl" : "cn";
+    fetchCommunityTop10(server).then((result) => {
       if (result && result.data.length > 0) {
         setChars(result.data);
         setUpdatedAt(result.updatedAt);
@@ -69,7 +70,7 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
       }
       setLoading(false);
     });
-  }, [open]);
+  }, [open, lang]);
 
   function formatUpdatedAt(date: Date): string {
     const now = new Date();
@@ -117,7 +118,7 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
             <span className="ml-2 text-sm text-muted-foreground">{t.communityDialog.loading}</span>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-2" style={{ marginTop: -2 }}>
             {chars.map((char, index) => {
               const pct = totalCount > 0 ? ((char.count / totalCount) * 100).toFixed(1) : "0.0";
               return (
@@ -127,20 +128,21 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                     "flex items-center rounded-lg py-3 border border-border",
                     "gradient-card"
                   )}
-                  style={{ position: "relative", overflow: "hidden", paddingLeft: 32, paddingRight: 18, gap: 8 }}
+                  style={{ position: "relative", overflow: "hidden", paddingLeft: 30, paddingRight: 18, gap: 8 }}
                 >
                   {getAvatarUrl(char.name) && (
                     <img
                       src={getAvatarUrl(char.name)!}
                       alt=""
                       aria-hidden="true"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                       style={{
                         position: "absolute",
                         left: -12,
                         top: -11,
                         height: "80%",
                         width: "auto",
-                        opacity: isDark ? 0.45 : 0.25,
+                        opacity: isDark ? 0.45 : 0.20,
                         objectFit: "cover",
                         pointerEvents: "none",
                         userSelect: "none",
@@ -148,11 +150,11 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                     />
                   )}
                   <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-xl text-center" style={{ width: 24, display: "inline-block" }}>
+                    <div style={{ width: 24, display: "flex", justifyContent: "center", alignItems: "center" }}>
                       {index < 3
-                        ? medals[index]
+                        ? <span style={{ fontSize: 16, lineHeight: 1 }}>{MEDALS[index]}</span>
                         : <span className="text-sm font-bold text-muted-foreground">{index + 1}</span>}
-                    </span>
+                    </div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-1">

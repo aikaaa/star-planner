@@ -102,6 +102,8 @@ const CN = {
   },
   communityDialog: {
     title: "近7天跑片热门角色 Top10",
+    tabDefault: "国服",
+    tabOther: "外服",
     justUpdated: "刚刚更新",
     minutesAgo: "分钟前更新",
     hoursAgo: "小时前更新",
@@ -225,6 +227,8 @@ const EN: typeof CN = {
   },
   communityDialog: {
     title: "Top 10 Characters (7 Days)",
+    tabDefault: "GL",
+    tabOther: "CN",
     justUpdated: "Just updated",
     minutesAgo: "min ago",
     hoursAgo: "hr ago",

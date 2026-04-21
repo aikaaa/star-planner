@@ -254,7 +254,7 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
           <DialogTitle className="text-gradient-title text-xl">{t.setPlanDialog.title}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4" style={{ marginTop: -2 }}>
           {characters.map((char, index) => {
             const isFree = char.farmingMode === "free";
             const completionDate = getCompletionDate(char);
