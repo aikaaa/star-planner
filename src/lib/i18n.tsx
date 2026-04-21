@@ -268,7 +268,10 @@ const I18nContext = createContext<I18nContextValue>({
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLang] = useState<Lang>(() => {
     const saved = localStorage.getItem("lang");
-    return saved === "en" ? "en" : "cn";
+    if (saved) return saved === "en" ? "en" : "cn";
+    // 首次访问：根据浏览器语言自动判断
+    const browserLang = navigator.language || "";
+    return browserLang.startsWith("zh") ? "cn" : "en";
   });
 
   const toggleLang = () => {
