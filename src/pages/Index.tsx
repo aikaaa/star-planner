@@ -29,6 +29,7 @@ export default function Index() {
   const [plans, setPlans] = useState<CharacterPlan[]>(loadPlans);
   const [showSetPlan, setShowSetPlan] = useState(false);
   const [showCommunity, setShowCommunity] = useState(false);
+  const [showServerMenu, setShowServerMenu] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const { t, lang, toggleLang } = useI18n();
   const [rolesReady, setRolesReady] = useState(false);
@@ -121,7 +122,8 @@ export default function Index() {
           const end = getCompletionDate(p);
           return start <= in7Days && end >= today;
         })
-        .map((p) => ({ name: p.name, targetStar: getEffectiveTargetStar(p) }))
+        .map((p) => ({ name: p.name, targetStar: getEffectiveTargetStar(p) })),
+      lang === "en" ? "gl" : "cn"
     );
   };
 
@@ -139,15 +141,41 @@ export default function Index() {
       {/* Header */}
       <header className="gradient-primary py-6 sm:py-8 text-center relative">
         <div className="mx-auto px-4 grid items-center mb-1" style={{ maxWidth: "600px", gridTemplateColumns: "1fr auto 1fr" }}>
-          <div className="flex items-center justify-start">
+          <div className="flex items-center justify-start" style={{ position: "relative" }}>
             <button
-              onClick={toggleLang}
-              className="p-2 rounded-full bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground transition-colors text-xs font-bold leading-none"
-              aria-label="切换语言"
-              style={{ minWidth: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center" }}
+              onClick={() => setShowServerMenu(v => !v)}
+              onBlur={() => setTimeout(() => setShowServerMenu(false), 150)}
+              className="px-2 rounded-full bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground transition-colors text-xs font-bold leading-none flex items-center gap-1"
+              style={{ height: 32 }}
+              aria-label="切换服务器/语言"
             >
-              {lang === "cn" ? "EN" : "中"}
+              <span>{lang === "cn" ? "CN" : "GL"}</span>
+              <span style={{ fontSize: 8, opacity: 0.7 }}>▾</span>
             </button>
+            {showServerMenu && (
+              <div
+                className="absolute top-9 left-0 rounded-lg border border-border bg-popover shadow-lg overflow-hidden z-50"
+                style={{ minWidth: 130 }}
+              >
+                <button
+                  onClick={() => { if (lang !== "cn") toggleLang(); setShowServerMenu(false); }}
+                  className="w-full text-left px-4 py-2.5 text-sm hover:bg-accent transition-colors flex items-center justify-between"
+                  style={{ color: lang === "cn" ? "hsl(var(--primary))" : "hsl(var(--foreground))" }}
+                >
+                  <span>国服</span>
+                  <span className="text-xs opacity-60 ml-3">CN</span>
+                </button>
+                <div className="border-t border-border" />
+                <button
+                  onClick={() => { if (lang !== "en") toggleLang(); setShowServerMenu(false); }}
+                  className="w-full text-left px-4 py-2.5 text-sm hover:bg-accent transition-colors flex items-center justify-between"
+                  style={{ color: lang === "en" ? "hsl(var(--primary))" : "hsl(var(--foreground))" }}
+                >
+                  <span>Waifu</span>
+                  <span className="text-xs opacity-60 ml-3">GL</span>
+                </button>
+              </div>
+            )}
           </div>
           <h1 className={`${lang === "en" ? "text-base sm:text-2xl" : "text-xl sm:text-2xl"} font-bold text-primary-foreground whitespace-nowrap`} style={{ display: "flex", alignItems: "center" }}>
             <span className="text-lg sm:text-base" style={{ opacity: 0.4, fontWeight: 400, lineHeight: 1, marginRight: 7}}>✦</span>
@@ -164,11 +192,11 @@ export default function Index() {
             </button>
           </div>
         </div>
-        <p className="text-primary-foreground/70 text-xs sm:text-sm">{t.app.subtitle}</p>
+        <p className="text-primary-foreground/70 text-xs sm:text-sm" style={{ marginTop: -4 }}>{t.app.subtitle}</p>
       </header>
 
       {/* Action buttons */}
-      <div className="mx-auto px-4 -mt-4 flex gap-3 relative z-10" style={{ maxWidth: "600px" }}>
+      <div className="mx-auto px-4 flex gap-3 relative z-10" style={{ maxWidth: "600px", marginTop: "-14px" }}>
         <Button
           className="flex-1 gradient-card border border-border text-foreground hover:text-foreground active:text-foreground hover:glow-primary h-12 font-semibold"
           style={{ borderRadius: "4px" }}

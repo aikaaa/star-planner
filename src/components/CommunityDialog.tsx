@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Trophy, Loader2, WifiOff, Clock, User } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { fetchCommunityTop10, type CommunityCharacter } from "@/lib/communityStats";
+import { fetchCommunityTop10, type CommunityCharacter, type Server } from "@/lib/communityStats";
 import { COMMUNITY_TOP_CHARACTERS, formatCharName } from "@/lib/types";
 import { getEnName } from "@/lib/roles";
 import { getAvatarUrl } from "@/lib/roleAvatars";
@@ -57,7 +57,8 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
   useEffect(() => {
     if (!open) return;
     setLoading(true);
-    fetchCommunityTop10().then((result) => {
+    const server: Server = lang === "en" ? "gl" : "cn";
+    fetchCommunityTop10(server).then((result) => {
       if (result && result.data.length > 0) {
         setChars(result.data);
         setUpdatedAt(result.updatedAt);
@@ -69,7 +70,7 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
       }
       setLoading(false);
     });
-  }, [open]);
+  }, [open, lang]);
 
   function formatUpdatedAt(date: Date): string {
     const now = new Date();
@@ -117,7 +118,7 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
             <span className="ml-2 text-sm text-muted-foreground">{t.communityDialog.loading}</span>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-2" style={{ marginTop: -2 }}>
             {chars.map((char, index) => {
               const pct = totalCount > 0 ? ((char.count / totalCount) * 100).toFixed(1) : "0.0";
               return (
@@ -134,11 +135,12 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
                       src={getAvatarUrl(char.name)!}
                       alt=""
                       aria-hidden="true"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                       style={{
                         position: "absolute",
                         left: -12,
                         top: -11,
-                        height: "70%",
+                        height: "80%",
                         width: "auto",
                         opacity: isDark ? 0.45 : 0.20,
                         objectFit: "cover",
