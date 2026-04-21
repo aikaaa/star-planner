@@ -122,9 +122,14 @@ export default function Index() {
         .filter((p) => {
           const start = parseLocalDate(p.startDate);
           const end = getCompletionDate(p);
-          return start <= in7Days && end >= today;
+          return start <= today && end >= today;
         })
-        .map((p) => ({ name: p.name, targetStar: getEffectiveTargetStar(p) })),
+        .map((p) => ({
+          name: p.name,
+          targetStar: getEffectiveTargetStar(p),
+          startDate: p.startDate,
+          endDate: getCompletionDate(p).toISOString().slice(0, 10),
+        })),
       lang === "en" ? "gl" : "cn"
     );
   };
