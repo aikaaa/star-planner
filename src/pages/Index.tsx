@@ -7,7 +7,7 @@ import FarmingCalendar from "@/components/FarmingCalendar";
 import SetPlanDialog from "@/components/SetPlanDialog";
 import CommunityDialog from "@/components/CommunityDialog";
 import ExportImportPanel, { ExportImportHandle } from "@/components/ExportImportPanel";
-import { CharacterPlan, COMMUNITY_TOP_CHARACTERS, getCompletionDate, getEffectiveTargetStar, parseLocalDate } from "@/lib/types";
+import { CharacterPlan, COMMUNITY_TOP_CHARACTERS, getCompletionDate, getEffectiveTargetStar } from "@/lib/types";
 import { fetchCommunityTop10, reportFarmingCharacters, type CommunityCharacter } from "@/lib/communityStats";
 import { fetchRemoteRoles } from "@/lib/roles";
 import { encodeSoc } from "@/lib/socExport";
@@ -115,21 +115,13 @@ export default function Index() {
 
   const handleSavePlans = (newPlans: CharacterPlan[]) => {
     setPlans(newPlans);
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const past7Days = new Date(today); past7Days.setDate(today.getDate() - 6);
     reportFarmingCharacters(
-      newPlans
-        .filter((p) => {
-          const start = parseLocalDate(p.startDate);
-          const end = getCompletionDate(p);
-          return start <= today && end >= past7Days;
-        })
-        .map((p) => ({
-          name: p.name,
-          targetStar: getEffectiveTargetStar(p),
-          startDate: p.startDate,
-          endDate: getCompletionDate(p).toISOString().slice(0, 10),
-        })),
+      newPlans.map((p) => ({
+        name: p.name,
+        targetStar: getEffectiveTargetStar(p),
+        startDate: p.startDate,
+        endDate: getCompletionDate(p).toISOString().slice(0, 10),
+      })),
       lang === "en" ? "gl" : "cn"
     );
   };
