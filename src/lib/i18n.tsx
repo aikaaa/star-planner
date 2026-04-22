@@ -101,7 +101,7 @@ const CN = {
     universalShards: "片万能可",
   },
   communityDialog: {
-    title: "近7天跑片热门角色 Top10",
+    title: "热门跑片角色 Top10",
     tabDefault: "国服",
     tabOther: "外服",
     justUpdated: "刚刚更新",
@@ -226,7 +226,7 @@ const EN: typeof CN = {
     universalShards: "Recollection shards required",
   },
   communityDialog: {
-    title: "Top 10 Characters (7 Days)",
+    title: "Top 10 Characters",
     tabDefault: "GL",
     tabOther: "CN",
     justUpdated: "Just updated",
