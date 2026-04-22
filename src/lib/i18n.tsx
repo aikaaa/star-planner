@@ -101,7 +101,7 @@ const CN = {
     universalShards: "片万能可",
   },
   communityDialog: {
-    title: "热门角色 Top10｜近30天",
+    title: "热门角色 Top 10 - 近 30 天",
     tabDefault: "国服",
     tabOther: "外服",
     justUpdated: "刚刚更新",
@@ -226,7 +226,7 @@ const EN: typeof CN = {
     universalShards: "Recollection shards required",
   },
   communityDialog: {
-    title: "Top 10 Characters｜Last 30 days",
+    title: "Top 10 Characters - Last 30 days",
     tabDefault: "GL",
     tabOther: "CN",
     justUpdated: "Just updated",
