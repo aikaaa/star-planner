@@ -391,6 +391,10 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
                   placeholder={t.importDialog.codePlaceholder}
                   value={importText}
                   onChange={e => { setImportText(e.target.value); setCodeError(null); }}
+                  onFocus={e => {
+                    const el = e.currentTarget;
+                    setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "center" }), 300);
+                  }}
                   onKeyDown={e => {
                     if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) handleImportText();
                   }}
