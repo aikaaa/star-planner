@@ -226,7 +226,7 @@ const EN: typeof CN = {
     universalShards: "Recollection shards required",
   },
   communityDialog: {
-    title: "Top 10 Characters - Last 30 days",
+    title: "Top 10 Chars - Last 30 days",
     tabDefault: "GL",
     tabOther: "CN",
     justUpdated: "Just updated",
