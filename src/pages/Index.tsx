@@ -161,8 +161,8 @@ export default function Index() {
                   className="w-full text-left px-4 py-2.5 text-sm hover:bg-accent transition-colors flex items-center justify-between"
                   style={{ color: lang === "cn" ? "hsl(var(--primary))" : "hsl(var(--foreground))" }}
                 >
-                  <span>国服</span>
-                  <span className="text-xs opacity-60 ml-3">CN</span>
+                  <span>CN</span>
+                  <span className="text-xs opacity-60 ml-3">国服</span>
                 </button>
                 <div className="border-t border-border" />
                 <button
@@ -170,8 +170,8 @@ export default function Index() {
                   className="w-full text-left px-4 py-2.5 text-sm hover:bg-accent transition-colors flex items-center justify-between"
                   style={{ color: lang === "en" ? "hsl(var(--primary))" : "hsl(var(--foreground))" }}
                 >
-                  <span>Waifu</span>
-                  <span className="text-xs opacity-60 ml-3">GL</span>
+                  <span>GL</span>
+                  <span className="text-xs opacity-60 ml-3">Waifu</span>
                 </button>
               </div>
             )}
