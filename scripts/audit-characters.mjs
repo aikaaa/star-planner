@@ -1,70 +1,104 @@
 #!/usr/bin/env node
 /**
- * 角色数据审计脚本（一次性使用）
+ * 角色数据审计脚本
  *
- * 功能：
- *   1. 从 wiki 抓取所有传说角色
- *   2. 逐一访问详情页获取英文名
- *   3. 与 roles.ts 对比，生成 audit-report.json + audit-report.txt
+ * 第一步（生成报告 + 待审核清单）：
+ *   node scripts/audit-characters.mjs
+ *   → 生成 audit-report.txt（人读报告）
+ *   → 生成 audit-apply.json（待审核的变更清单，可手动编辑名称或删除条目）
  *
- * 注意：会访问 wiki 详情页，每次间隔 1.5s，共约需 2-3 分钟
- * 运行：node scripts/audit-characters.mjs
+ * 第二步（审核通过后写入 Supabase）：
+ *   node scripts/audit-characters.mjs --apply
+ *   → 读取 audit-apply.json，将其中的角色写入 Supabase（characters 表 + avatars Storage）
+ *
+ * 环境变量：SUPABASE_URL、SUPABASE_SERVICE_KEY
  */
 
+import { createClient } from "@supabase/supabase-js";
 import { load } from "cheerio";
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
+import sharp from "sharp";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, "..");
-const ROLES_FILE = join(ROOT, "src/lib/roles.ts");
-const REPORT_JSON = join(__dirname, "audit-report.json");
-const REPORT_TXT = join(__dirname, "audit-report.txt");
-const CACHE_FILE = join(__dirname, "audit-cache.json"); // 中断后可续跑
+const REPORT_TXT  = join(__dirname, "audit-report.txt");
+const CACHE_FILE  = join(__dirname, "audit-cache.json");
+const APPLY_FILE  = join(__dirname, "audit-apply.json");
 
 const WIKI_BASE = "https://wiki.biligame.com/llzj";
 const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 const DELAY_MS = 1500;
+const APPLY = process.argv.includes("--apply");
 
-// wiki 名与 roles.ts 名的映射（wiki 用全称，我们用 SP 前缀）
+// wiki 全称 → Supabase 中存储的名称
 const WIKI_TO_ROLES = {
-  "阿列克谢•风雪孤行": "SP阿列克谢",
-  "伦伽勒•传承之枪":   "SP伦伽勒",
-  "萨曼莎•不灭微光":   "SP萨曼莎",
-  "拉维耶•初夏记忆":   "SP拉维耶",
-  "伊南娜•铃兰之剑":   "SP伊南娜",
-  "索菲亚•夏日约定":   "SP索菲亚",
-  "全装甲麦莎":        "SP麦莎",
-  "内尔伽勒":          "内尔伽勃",
+  "全装甲麦莎": "SP麦莎",
+  "内尔伽勒":   "内尔伽勃",
 };
 
-// ── 工具函数 ─────────────────────────────────────────────────
+function resolveZh(wikiZh) {
+  if (WIKI_TO_ROLES[wikiZh]) return WIKI_TO_ROLES[wikiZh];
+  if (wikiZh.includes("•") || wikiZh.includes("·")) {
+    return `SP${wikiZh.split(/[•·]/)[0]}`;
+  }
+  return wikiZh;
+}
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function wikiGet(url) {
-  const res = await fetch(url, { headers: { "User-Agent": UA } });
-  if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
-  return res;
+// ── Supabase ─────────────────────────────────────────────────
+
+function getSupabase() {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_KEY;
+  if (!url || !key) throw new Error("缺少环境变量 SUPABASE_URL / SUPABASE_SERVICE_KEY");
+  return createClient(url, key);
 }
 
-/** 获取评价表 HTML */
+async function fetchSupabaseChars(sb) {
+  const { data, error } = await sb.from("characters").select("zh, en, sort_order");
+  if (error) throw error;
+  return data;
+}
+
+async function uploadAvatar(sb, imgUrl, enName) {
+  try {
+    const fullUrl = imgUrl.startsWith("http") ? imgUrl : `https://wiki.biligame.com${imgUrl}`;
+    const res = await fetch(fullUrl, { headers: { "User-Agent": UA } });
+    if (!res.ok) return false;
+    const buf = Buffer.from(await res.arrayBuffer());
+    const resized = await sharp(buf)
+      .resize(64, 64, { fit: "cover", position: "top" })
+      .png()
+      .toBuffer();
+    const { error } = await sb.storage
+      .from("avatars")
+      .upload(`${enName}.png`, resized, { contentType: "image/png", upsert: true });
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+// ── Wiki ─────────────────────────────────────────────────────
+
 async function fetchEvalPage() {
-  const url = `${WIKI_BASE}/${encodeURIComponent("角色评价表")}`;
-  const res = await wikiGet(url);
+  const res = await fetch(`${WIKI_BASE}/${encodeURIComponent("角色评价表")}`, {
+    headers: { "User-Agent": UA },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.text();
 }
 
-/** 从详情页提取英文名 */
 async function fetchEnName(wikiZhName) {
   const url = `${WIKI_BASE}/${encodeURIComponent("角色图鉴库")}/${encodeURIComponent(wikiZhName)}`;
   try {
-    const res = await wikiGet(url);
+    const res = await fetch(url, { headers: { "User-Agent": UA } });
+    if (!res.ok) return "";
     const html = await res.text();
     const $ = load(html);
     const title = $("h1.firstHeading, h1").first().text().trim();
-    // "索菲亚 Safiyyah" → 取末尾英文
     const match = title.match(/([A-Za-z][A-Za-z0-9'\-\s]*)$/);
     return match ? match[1].trim() : "";
   } catch {
@@ -72,120 +106,177 @@ async function fetchEnName(wikiZhName) {
   }
 }
 
-/** 读取 roles.ts 中所有角色 */
-function readRoles() {
-  const content = readFileSync(ROLES_FILE, "utf-8");
-  const entries = [];
-  for (const m of content.matchAll(/\{\s*zh:\s*"([^"]+)",\s*en:\s*"([^"]*)"/g)) {
-    entries.push({ zh: m[1], en: m[2] });
-  }
-  return entries;
-}
+// ── 第一步：生成报告 + audit-apply.json ──────────────────────
 
-// ── 主流程 ───────────────────────────────────────────────────
+async function runAudit() {
+  const logs = [];
+  const log = (...a) => { const s = a.join(" "); console.log(s); logs.push(s); };
 
-async function main() {
-  console.log("=".repeat(55));
-  console.log("角色数据审计");
-  console.log("=".repeat(55));
+  log("=".repeat(55));
+  log(`角色数据审计`);
+  log(`运行时间: ${new Date().toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}`);
+  log("=".repeat(55));
 
-  // 读缓存（支持中断续跑）
+  const sb = getSupabase();
+
+  log("\n[1/4] 读取 Supabase characters 表...");
+  const sbChars = await fetchSupabaseChars(sb);
+  const sbMap = new Map(sbChars.map((r) => [r.zh, r]));
+  const minOrder = sbChars.length > 0 ? Math.min(...sbChars.map((r) => r.sort_order)) : 100;
+  log(`  → 已有 ${sbChars.length} 个角色，最小 sort_order: ${minOrder}`);
+
   const cache = existsSync(CACHE_FILE)
     ? JSON.parse(readFileSync(CACHE_FILE, "utf-8"))
     : {};
 
-  // 1. 抓取评价表
-  console.log("\n[1/3] 抓取 wiki 评价表...");
+  log("\n[2/4] 抓取 wiki 评价表...");
   const html = await fetchEvalPage();
   const $ = load(html);
 
   const wikiChars = [];
   $('tr[data-param1="传说"]').each((_, el) => {
     const tds = $(el).find("td");
-    const zh = tds.eq(1).text().trim();
-    if (zh) wikiChars.push(zh);
+    const zh    = tds.eq(1).text().trim();
+    const imgSrc = tds.eq(0).find("img").first().attr("src") || "";
+    if (zh) wikiChars.push({ wikiZh: zh, rolesZh: resolveZh(zh), imgSrc });
   });
-  console.log(`  → wiki 传说角色: ${wikiChars.length} 个`);
+  log(`  → wiki 传说角色: ${wikiChars.length} 个`);
 
-  // 2. 逐一获取英文名（有缓存则跳过）
-  console.log(`\n[2/3] 获取英文名（已缓存 ${Object.keys(cache).length} 个，剩余约需 ${Math.ceil((wikiChars.length - Object.keys(cache).length) * DELAY_MS / 1000 / 60)} 分钟）...`);
+  const uncached = wikiChars.filter((c) => cache[c.wikiZh] === undefined);
+  log(`\n[3/4] 获取英文名（缓存 ${Object.keys(cache).length}，待请求 ${uncached.length}）...`);
 
   for (let i = 0; i < wikiChars.length; i++) {
-    const zh = wikiChars[i];
-    if (cache[zh] !== undefined) {
-      process.stdout.write(`  [${i + 1}/${wikiChars.length}] ${zh} (cached)\n`);
+    const c = wikiChars[i];
+    if (cache[c.wikiZh] !== undefined) {
+      process.stdout.write(`  [${i + 1}/${wikiChars.length}] ${c.wikiZh} (cached)\n`);
       continue;
     }
-    // SP 角色详情页用全称
-    const en = await fetchEnName(zh);
-    cache[zh] = en;
+    const en = await fetchEnName(c.wikiZh);
+    cache[c.wikiZh] = en;
     writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2));
-    process.stdout.write(`  [${i + 1}/${wikiChars.length}] ${zh} → ${en || "（未找到）"}\n`);
+    process.stdout.write(`  [${i + 1}/${wikiChars.length}] ${c.wikiZh} → ${en || "（未找到）"}\n`);
     await sleep(DELAY_MS);
   }
 
-  // 3. 生成对比报告
-  console.log("\n[3/3] 生成对比报告...");
-  const rolesEntries = readRoles();
-  const rolesMap = new Map(rolesEntries.map((r) => [r.zh, r.en]));
+  log("\n[4/4] 生成报告...");
 
-  const rows = [];
+  // 分类差异
+  const notInSb   = []; // wiki 有，Supabase 没有（新角色）
+  const enMissing = []; // Supabase en 为空，wiki 有
+  const enDiff    = []; // en 有差异（仅报告，不自动改）
 
-  for (const wikiZh of wikiChars) {
-    const wikiEn = cache[wikiZh] || "";
-    // 对应到 roles.ts 中的名称
-    const rolesZh = WIKI_TO_ROLES[wikiZh] || wikiZh;
-    const rolesEn = rolesMap.has(rolesZh) ? rolesMap.get(rolesZh) : null;
+  for (const c of wikiChars) {
+    const wikiEn  = cache[c.wikiZh] || "";
+    const sbEntry = sbMap.get(c.rolesZh);
 
-    rows.push({
-      wikiZh,
-      rolesZh,
-      wikiEn,
-      rolesEn,
-      inRoles: rolesMap.has(rolesZh),
-      nameMismatch: rolesZh !== wikiZh,
-      enMismatch: rolesEn !== null && rolesEn !== wikiEn,
-      enMissing: rolesEn === "",
-    });
+    if (!sbEntry) {
+      notInSb.push({ zh: c.rolesZh, wikiZh: c.wikiZh, en: wikiEn, imgSrc: c.imgSrc });
+      continue;
+    }
+    if (sbEntry.en === "" && wikiEn) {
+      enMissing.push({ zh: c.rolesZh, wikiZh: c.wikiZh, en: wikiEn, imgSrc: c.imgSrc });
+    } else if (sbEntry.en && wikiEn && sbEntry.en !== wikiEn) {
+      enDiff.push({ zh: c.rolesZh, sbEn: sbEntry.en, wikiEn });
+    }
   }
 
-  // 还有 roles.ts 里有但 wiki 没有的
-  const wikiRolesNames = new Set(rows.map((r) => r.rolesZh));
-  const onlyInRoles = rolesEntries.filter((r) => !wikiRolesNames.has(r.zh));
+  const wikiRolesZhSet = new Set(wikiChars.map((c) => c.rolesZh));
+  const onlyInSb = sbChars.filter((r) => !wikiRolesZhSet.has(r.zh));
 
-  writeFileSync(REPORT_JSON, JSON.stringify({ rows, onlyInRoles }, null, 2));
+  // 打印报告
+  const section = (title) => { log(""); log(`=== ${title} ===`); };
 
-  // 文本报告
-  const lines = [];
-  const add = (...args) => { const s = args.join(" "); lines.push(s); console.log(s); };
+  section("wiki 有但 Supabase 没有（新角色）");
+  if (notInSb.length === 0) log("  （无）");
+  notInSb.forEach((r) => log(`  ${r.wikiZh} → zh="${r.zh}"  en="${r.en}"`));
 
-  add("\n=== 英文名差异（wiki 有，我们不同）===");
-  const enDiff = rows.filter((r) => r.inRoles && r.enMismatch);
-  if (enDiff.length === 0) add("  （无差异）");
-  enDiff.forEach((r) => add(`  ${r.rolesZh}: 我们="${r.rolesEn}" wiki="${r.wikiEn}"`));
+  section("英文名缺失（Supabase en 为空，wiki 有）");
+  if (enMissing.length === 0) log("  （无）");
+  enMissing.forEach((r) => log(`  ${r.zh}: en="${r.en}"`));
 
-  add("\n=== 英文名缺失（roles.ts 为空，wiki 有）===");
-  const enEmpty = rows.filter((r) => r.inRoles && r.enMissing && r.wikiEn);
-  if (enEmpty.length === 0) add("  （无）");
-  enEmpty.forEach((r) => add(`  ${r.rolesZh}: wiki="${r.wikiEn}"`));
+  section("英文名差异（Supabase ≠ wiki，仅供参考）");
+  if (enDiff.length === 0) log("  （无）");
+  enDiff.forEach((r) => log(`  ${r.zh}: 当前="${r.sbEn}"  wiki="${r.wikiEn}"`));
 
-  add("\n=== wiki 有但 roles.ts 没有（可能是新角色）===");
-  const notInRoles = rows.filter((r) => !r.inRoles);
-  if (notInRoles.length === 0) add("  （无）");
-  notInRoles.forEach((r) => add(`  ${r.wikiZh} (英文: ${r.wikiEn || "未找到"})`));
+  section("Supabase 有但 wiki 传说列表没有");
+  if (onlyInSb.length === 0) log("  （无）");
+  onlyInSb.forEach((r) => log(`  ${r.zh} (en: ${r.en || "空"})`));
 
-  add("\n=== roles.ts 有但 wiki 传说列表没有 ===");
-  if (onlyInRoles.length === 0) add("  （无）");
-  onlyInRoles.forEach((r) => add(`  ${r.zh} (en: ${r.en || "空"})`));
+  writeFileSync(REPORT_TXT, logs.join("\n") + "\n");
+  log(`\n报告已写入: ${REPORT_TXT}`);
 
-  add("\n=== SP 角色名称映射（供参考）===");
-  rows.filter((r) => r.nameMismatch).forEach((r) =>
-    add(`  wiki: "${r.wikiZh}" → roles.ts: "${r.rolesZh}" (wiki英文: ${r.wikiEn || "未找到"})`)
-  );
+  // 生成 audit-apply.json
+  const applyPlan = {
+    _readme: [
+      "审核通过后运行：node scripts/audit-characters.mjs --apply",
+      "可手动修改 zh / en 字段，或删除不需要写入的条目",
+      "imgSrc 用于下载头像，留空则跳过头像上传",
+    ],
+    newChars: notInSb.map((r) => ({ zh: r.zh, en: r.en, imgSrc: r.imgSrc })),
+    fillEn:   enMissing.map((r) => ({ zh: r.zh, en: r.en, imgSrc: r.imgSrc })),
+  };
 
-  writeFileSync(REPORT_TXT, lines.join("\n") + "\n");
-  console.log(`\n报告已写入:\n  ${REPORT_JSON}\n  ${REPORT_TXT}`);
-  console.log("（audit-cache.json 可删除）");
+  writeFileSync(APPLY_FILE, JSON.stringify(applyPlan, null, 2) + "\n");
+  log(`待审核清单: ${APPLY_FILE}`);
+  log(`\n下一步：检查 audit-apply.json，确认/修改名称后运行 --apply`);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+// ── 第二步：读取 audit-apply.json 写入 Supabase ──────────────
+
+async function runApply() {
+  if (!existsSync(APPLY_FILE)) {
+    console.error(`找不到 ${APPLY_FILE}，请先运行不带 --apply 的审计脚本`);
+    process.exit(1);
+  }
+
+  const plan = JSON.parse(readFileSync(APPLY_FILE, "utf-8"));
+  const sb = getSupabase();
+
+  // 获取当前最小 sort_order
+  const { data: sbChars, error: sbErr } = await sb.from("characters").select("zh, sort_order");
+  if (sbErr) throw sbErr;
+  let nextOrder = sbChars.length > 0 ? Math.min(...sbChars.map((r) => r.sort_order)) - 1 : 99;
+
+  console.log(`\n[apply] 读取 ${APPLY_FILE}`);
+  console.log(`  新角色: ${plan.newChars?.length ?? 0} 个`);
+  console.log(`  补全英文名: ${plan.fillEn?.length ?? 0} 个`);
+
+  // 补全缺失英文名
+  for (const r of (plan.fillEn ?? [])) {
+    if (!r.en) { console.log(`  跳过 ${r.zh}（en 为空）`); continue; }
+    const { error } = await sb.from("characters").update({ en: r.en }).eq("zh", r.zh);
+    console.log(`  ${r.zh}: en → "${r.en}" ${error ? "❌ " + error.message : "✅"}`);
+    if (r.imgSrc) {
+      const ok = await uploadAvatar(sb, r.imgSrc, r.en);
+      console.log(`    头像: ${ok ? "✅" : "❌"}`);
+      await sleep(500);
+    }
+  }
+
+  // 新增角色
+  for (const r of (plan.newChars ?? [])) {
+    if (!r.en) { console.log(`  跳过 ${r.zh}（en 为空）`); continue; }
+    const { error } = await sb.from("characters").upsert(
+      { zh: r.zh, en: r.en, sort_order: nextOrder },
+      { onConflict: "zh" }
+    );
+    console.log(`  新增 ${r.zh} (en="${r.en}", order=${nextOrder}) ${error ? "❌ " + error.message : "✅"}`);
+    if (r.imgSrc) {
+      const ok = await uploadAvatar(sb, r.imgSrc, r.en);
+      console.log(`    头像: ${ok ? "✅" : "❌"}`);
+      await sleep(500);
+    }
+    nextOrder--;
+    await sleep(DELAY_MS);
+  }
+
+  console.log("\n完成。（audit-cache.json / audit-apply.json 可删除）");
+}
+
+// ── 入口 ─────────────────────────────────────────────────────
+
+if (APPLY) {
+  runApply().catch((e) => { console.error(e); process.exit(1); });
+} else {
+  runAudit().catch((e) => { console.error(e); process.exit(1); });
+}
