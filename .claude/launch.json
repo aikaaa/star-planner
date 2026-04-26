@@ -18,6 +18,12 @@
       "runtimeExecutable": "/usr/local/bin/node",
       "runtimeArgs": ["/Users/chenji/Git/star-planner/.claude/worktrees/keen-wilson/node_modules/.bin/vite", "--config", "/Users/chenji/Git/star-planner/vite.config.ts", "--root", "/Users/chenji/Git/star-planner"],
       "port": 5174
+    },
+    {
+      "name": "Double Drop Dev Server",
+      "runtimeExecutable": "/usr/local/bin/node",
+      "runtimeArgs": ["/Users/chenji/Git/star-planner/node_modules/.bin/vite", "--config", "/Users/chenji/Git/star-planner/.claude/worktrees/double-drop/vite.config.ts", "--root", "/Users/chenji/Git/star-planner/.claude/worktrees/double-drop", "--port", "5176", "--host"],
+      "port": 5176
     }
   ]
 }
