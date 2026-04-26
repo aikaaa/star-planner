@@ -533,8 +533,8 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                         borderColor: hasDouble ? "transparent" : "hsl(var(--border))",
                         background: hasDouble ? "hsl(var(--star) / 0.12)" : "transparent",
                         minHeight: 36,
-                        padding: "0 8px",
-                        gap: 20,
+                        padding: "0 6px",
+                        gap: 8,
                       }}
                     >
                       {/* 左50%：checkbox + 文字 + ×2 徽标 */}
