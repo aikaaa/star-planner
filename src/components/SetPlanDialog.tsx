@@ -156,7 +156,7 @@ function DatePickerButton({ date, onSelect, disabled, locale, dateFormat = "yyyy
           {format(date, dateFormat, { locale })}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent className="w-auto p-0" align="start" collisionPadding={8}>
         <Calendar
           mode="single"
           selected={date}
@@ -533,9 +533,8 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                         borderColor: hasDouble ? "transparent" : "hsl(var(--border))",
                         background: hasDouble ? "hsl(var(--star) / 0.12)" : "transparent",
                         minHeight: 36,
-                        paddingLeft: 10,
-                        paddingRight: 6,
-                        gap: 8,
+                        padding: "0 8px",
+                        gap: 20,
                       }}
                     >
                       {/* 左50%：checkbox + 文字 + ×2 徽标 */}
@@ -554,29 +553,31 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                             });
                           }
                         }}
-                        className="flex items-center gap-1.5 flex-1"
-                        style={{ color: hasDouble ? "hsl(var(--star))" : "hsl(var(--muted-foreground))" }}
+                        className="flex items-center gap-1.5"
+                        style={{ flex: 1, color: hasDouble ? "hsl(var(--star))" : "hsl(var(--muted-foreground))" }}
                       >
                         {hasDouble
                           ? <CheckSquare className="h-3.5 w-3.5 shrink-0" style={{ color: "hsl(var(--star))" }} />
                           : <Square className="h-3.5 w-3.5 shrink-0" />
                         }
-                        <span className="text-xs font-medium">{t.setPlanDialog.doubleDrop}</span>
-                        <span style={{
-                          background: hasDouble ? "hsl(var(--star))" : "hsl(var(--muted-foreground) / 0.35)",
-                          color: "#fff",
-                          fontSize: "7px",
-                          fontWeight: 700,
-                          lineHeight: 1,
-                          padding: "2px 2.5px",
-                          borderRadius: "3px",
-                          flexShrink: 0,
-                        }}>×2</span>
+                        <span className="flex items-center" style={{ gap: 2 }}>
+                          <span className="text-xs font-medium">{t.setPlanDialog.doubleDrop}</span>
+                          <span style={{
+                            background: hasDouble ? "hsl(var(--star))" : "hsl(var(--muted-foreground) / 0.35)",
+                            color: "var(--double-badge-text)",
+                            fontSize: "7px",
+                            fontWeight: 700,
+                            lineHeight: 1,
+                            padding: "2px 2.5px",
+                            borderRadius: "3px",
+                            flexShrink: 0,
+                          }}>×2</span>
+                        </span>
                       </button>
 
-                      {/* 右50%：日期范围（勾选后出现，与上方结束日期左对齐） */}
-                      <div className="flex items-center gap-1 flex-1">
-                        {hasDouble && (
+                      {/* 右50%：开始日期 + 结束日期 */}
+                      <div className="flex items-center gap-1" style={{ flex: 1 }}>
+                        {hasDouble ? (
                           <>
                             <DatePickerButton
                               date={parseLocalDate(char.doubleDropStart!)}
@@ -586,10 +587,12 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                               buttonStyle={{ height: 26 }}
                               onSelect={(d) => {
                                 const clamped = d < farmStart ? farmStart : d > farmEnd ? farmEnd : d;
-                                const ddEnd = char.doubleDropEnd ? parseLocalDate(char.doubleDropEnd) : farmEnd;
+                                const autoEnd = new Date(clamped);
+                                autoEnd.setDate(autoEnd.getDate() + 6);
+                                if (autoEnd > farmEnd) autoEnd.setTime(farmEnd.getTime());
                                 updateCharacter(index, {
                                   doubleDropStart: toDateStr(clamped),
-                                  doubleDropEnd: toDateStr(clamped > ddEnd ? clamped : ddEnd),
+                                  doubleDropEnd: toDateStr(autoEnd),
                                 });
                               }}
                               disabled={(d) => d < farmStart || d > farmEnd}
@@ -612,7 +615,7 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                               disabled={(d) => d < farmStart || d > farmEnd}
                             />
                           </>
-                        )}
+                        ) : <div />}
                       </div>
                     </div>
                   );

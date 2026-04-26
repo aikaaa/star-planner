@@ -29,6 +29,8 @@ interface PlanCompact {
   sd: string;           // startDate
   ed?: string;          // endDate
   ic?: string;          // icon
+  ds?: string;          // doubleDropStart
+  de?: string;          // doubleDropEnd
 }
 
 // ── UTF-8 安全 base64（比 encodeURIComponent+btoa 节省 ~3x） ────
@@ -56,9 +58,11 @@ export function encodeSoc(plans: CharacterPlan[], server = "cn"): string {
       ch: pl.currentShards,
       sd: pl.startDate,
     };
-    if (pl.bonusShards) c.bs = pl.bonusShards;
-    if (pl.endDate)     c.ed = pl.endDate;
-    if (pl.icon)        c.ic = pl.icon;
+    if (pl.bonusShards)       c.bs = pl.bonusShards;
+    if (pl.endDate)           c.ed = pl.endDate;
+    if (pl.icon)              c.ic = pl.icon;
+    if (pl.doubleDropStart)   c.ds = pl.doubleDropStart;
+    if (pl.doubleDropEnd)     c.de = pl.doubleDropEnd;
     return c;
   });
   const json = JSON.stringify({ v: 2, s: server, p });
@@ -95,10 +99,12 @@ export function decodeSoc(text: string): SocData | null {
         currentStar:  c.cs,
         targetStar:   c.ts,
         currentShards: c.ch,
-        bonusShards:  c.bs,
-        startDate:    c.sd,
-        endDate:      c.ed,
-        icon:         c.ic,
+        bonusShards:      c.bs,
+        startDate:        c.sd,
+        endDate:          c.ed,
+        icon:             c.ic,
+        doubleDropStart:  c.ds,
+        doubleDropEnd:    c.de,
       }));
     } else {
       // v1：完整字段名（旧格式兼容）

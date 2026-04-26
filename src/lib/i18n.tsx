@@ -246,7 +246,7 @@ const EN: typeof CN = {
     doubleDropEnd: "End",
   },
   feedback: {
-    title: "Submit Feedback",
+    title: "Feedback",
     desc: "Describe the issue. I'll reply and handle it.",
     sendEmail: "Send an email",
     copyEmail: "Copy email address",

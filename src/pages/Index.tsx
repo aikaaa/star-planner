@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Settings, Flame, Upload, Download, Copy, Sun, Moon, ArrowRight, Sparkles, RotateCcw, ImageDown, X } from "lucide-react";
+import { Settings, Flame, Upload, Download, Copy, Sun, Moon, ArrowRight, Sparkles, RotateCcw, ImageDown, X, CircleHelp } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useI18n } from "@/lib/i18n";
 import FarmingCalendar from "@/components/FarmingCalendar";
@@ -219,7 +219,7 @@ export default function Index() {
       </div>
 
       {/* Calendar + Export/Import */}
-      <div className="mx-auto px-4" style={{ maxWidth: "600px", paddingTop: "12px", paddingBottom: "32px" }}>
+      <div className="mx-auto px-4" style={{ maxWidth: "600px", paddingTop: "12px", paddingBottom: 0 }}>
         {plans.length === 0 ? (
           /* 未配置：空状态卡片 */
           <div className="gradient-card border border-border text-center" style={{ borderRadius: "4px", padding: "48px 32px 120px" }}>
@@ -248,7 +248,7 @@ export default function Index() {
                   position: "absolute", top: -6, right: -6,
                   background: "#e84b4b", color: "#fff",
                   fontSize: 10, fontWeight: 700, lineHeight: 1,
-                  padding: "2px 4px", borderRadius: 3,
+                  padding: "2px 6px", borderRadius: 999,
                   pointerEvents: "none",
                 }}>NEW</span>
               </div>
@@ -316,20 +316,16 @@ export default function Index() {
         {/* 弹窗 + 离屏模板（无可见 UI） */}
         <ExportImportPanel ref={exportImportRef} plans={plans} onImport={handleSavePlans} onExportingChange={setIsExporting} viewMonth={calViewMonth} />
 
-        {/* 问题反馈入口 */}
-        <div className="flex justify-end" style={{ marginTop: 16, marginBottom: 8 }}>
-          <button
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors rounded-full px-3 py-1.5"
-            style={{ background: "hsl(var(--muted) / 0.5)" }}
-            onClick={() => setShowFeedback(true)}
-          >
-            <span className="flex items-center justify-center rounded-full text-muted-foreground shrink-0"
-              style={{ width: 16, height: 16, border: "1.5px solid currentColor", fontSize: 10, fontWeight: 700, lineHeight: 1 }}>
-              ?
-            </span>
-            <span>{t.feedback.title}</span>
-          </button>
-        </div>
+      </div>
+
+      <div className="sm:fixed sm:z-30 sm:right-4 sm:bottom-6 flex justify-end sm:p-0 sm:m-0 mx-auto px-4" style={{ maxWidth: "600px", marginTop: 24, marginBottom: 16 }}>
+        <button
+          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          onClick={() => setShowFeedback(true)}
+        >
+          <span>{t.feedback.title}</span>
+          <CircleHelp className="h-4 w-4 shrink-0" />
+        </button>
       </div>
 
       <SetPlanDialog open={showSetPlan} onOpenChange={setShowSetPlan} existingPlans={plans} onSave={handleSavePlans} />
@@ -358,19 +354,19 @@ export default function Index() {
               </button>
             </div>
 
-            <div className="pt-4 px-4" style={{ paddingBottom: 24 }}>
-              <p className="text-muted-foreground mb-4" style={{ fontSize: 14 }}>{t.feedback.desc}</p>
+            <div className="px-4" style={{ paddingTop: 12, paddingBottom: 16 }}>
+              <p className="text-muted-foreground" style={{ fontSize: 14, marginBottom: 12 }}>{t.feedback.desc}</p>
               <div className="grid grid-cols-2 gap-3">
                 {/* 邮箱反馈 */}
-                <div className="flex flex-col items-center gap-2 rounded-xl"
-                  style={{ background: "hsl(var(--primary) / 0.08)", padding: 12, borderRadius: 4 }}>
+                <div className="flex flex-col items-center rounded-xl"
+                  style={{ background: "hsl(var(--background))", padding: "12px 12px 16px", borderRadius: 4, gap: 2 }}>
                   <span className="text-2xl">✉️</span>
                   <span className="font-medium text-foreground text-center" style={{ fontSize: 14 }}>{t.feedback.sendEmail}</span>
                   <Button
                     size="sm"
                     variant="outline"
                     className="h-7 text-xs px-3 w-full mt-auto"
-                    style={{ borderRadius: 4 }}
+                    style={{ borderRadius: 4, marginTop: 8 }}
                     onClick={async () => {
                       const email = "707953365@qq.com";
                       let copied = false;
@@ -393,15 +389,15 @@ export default function Index() {
                 </div>
 
                 {/* 私信作者 */}
-                <div className="flex flex-col items-center gap-2 rounded-xl"
-                  style={{ background: "hsl(var(--primary) / 0.08)", padding: 12, borderRadius: 4 }}>
+                <div className="flex flex-col items-center rounded-xl"
+                  style={{ background: "hsl(var(--background))", padding: "12px 12px 16px", borderRadius: 4, gap: 2 }}>
                   <span className="text-2xl">💬</span>
                   <span className="font-medium text-foreground text-center" style={{ fontSize: 14 }}>{t.feedback.dmAuthor}</span>
                   <Button
                     size="sm"
                     variant="outline"
                     className="h-7 text-xs px-3 w-full mt-auto"
-                    style={{ borderRadius: 4 }}
+                    style={{ borderRadius: 4, marginTop: 8 }}
                     onClick={() => window.open("https://www.taptap.cn/user/735086541", "_blank")}
                   >
                     {t.feedback.aika}
