@@ -111,7 +111,7 @@ const CN = {
     sendEmail: "发送邮件",
     copyEmail: "复制邮箱",
     dmAuthor: "私信作者",
-    aika: "aika",
+    aika: "@aika",
   },
   communityDialog: {
     title: "热门角色 Top 10 - 近 30 天",
