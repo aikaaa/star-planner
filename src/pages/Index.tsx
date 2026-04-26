@@ -245,12 +245,12 @@ export default function Index() {
                   {t.actions.trialPlan}
                 </Button>
                 <span style={{
-                  position: "absolute", top: -6, right: -6,
+                  position: "absolute", top: -6, right: -4,
                   background: "#e84b4b", color: "#fff",
                   fontSize: 10, fontWeight: 700, lineHeight: 1,
-                  padding: "2px 6px", borderRadius: 999,
+                  padding: "2px 4px", borderRadius: 3,
                   pointerEvents: "none",
-                }}>NEW</span>
+                }}>{t.actions.newBadge}</span>
               </div>
             </div>
           </div>
@@ -355,7 +355,7 @@ export default function Index() {
             </div>
 
             <div className="px-4" style={{ paddingTop: 12, paddingBottom: 16 }}>
-              <p className="text-muted-foreground" style={{ fontSize: 14, marginBottom: 12 }}>{t.feedback.desc}</p>
+              <p className="text-muted-foreground" style={{ fontSize: 14, marginBottom: 8 }}>{t.feedback.desc}</p>
               <div className="grid grid-cols-2 gap-3">
                 {/* 邮箱反馈 */}
                 <div className="flex flex-col items-center rounded-xl"

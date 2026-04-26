@@ -18,6 +18,7 @@ const CN = {
     reset: "重置",
     importPlan: "导入计划",
     trialPlan: "一键试配",
+    newBadge: "新",
   },
   empty: {
     noPlan: "暂未设置跑片计划",
@@ -158,6 +159,7 @@ const EN: typeof CN = {
     reset: "Reset",
     importPlan: "Import Plan",
     trialPlan: "Quick Setup",
+    newBadge: "NEW",
   },
   empty: {
     noPlan: "No plan set yet",
