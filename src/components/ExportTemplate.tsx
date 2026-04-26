@@ -363,11 +363,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
               </span>
               {plans.some(p => p.doubleDropStart && p.doubleDropEnd) && (
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
-                  <span style={{
-                    background: C.star, color: C.bg,
-                    fontSize: 7, fontWeight: 700, lineHeight: 1,
-                    padding: "2px 2.5px", borderRadius: 2,
-                  }}>×2</span>
+                  <span style={{ fontSize: 10, lineHeight: 1, color: C.star }}>▪</span>
                   {t.exportTemplate.doubleDropDay}
                 </span>
               )}
