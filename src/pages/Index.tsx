@@ -318,7 +318,7 @@ export default function Index() {
 
       </div>
 
-      <div className="sm:fixed sm:z-30 sm:right-4 sm:bottom-6 flex justify-end sm:p-0 sm:m-0 mx-auto px-4" style={{ maxWidth: "600px", marginTop: 24, marginBottom: 16 }}>
+      <div className="sm:fixed sm:z-30 sm:right-4 sm:bottom-6 flex justify-end sm:p-0 sm:m-0 mx-auto px-4" style={{ maxWidth: "600px", marginTop: 24, marginBottom: 32 }}>
         <button
           className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
           onClick={() => setShowFeedback(true)}
@@ -366,7 +366,7 @@ export default function Index() {
                     size="sm"
                     variant="outline"
                     className="h-7 text-xs px-3 w-full mt-auto"
-                    style={{ borderRadius: 4, marginTop: 8 }}
+                    style={{ borderRadius: 4, marginTop: 4 }}
                     onClick={async () => {
                       const email = "707953365@qq.com";
                       let copied = false;
@@ -397,7 +397,7 @@ export default function Index() {
                     size="sm"
                     variant="outline"
                     className="h-7 text-xs px-3 w-full mt-auto"
-                    style={{ borderRadius: 4, marginTop: 8 }}
+                    style={{ borderRadius: 4, marginTop: 4 }}
                     onClick={() => window.open("https://www.taptap.cn/user/735086541", "_blank")}
                   >
                     {t.feedback.aika}

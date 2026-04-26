@@ -142,7 +142,7 @@ const CN = {
 
 const EN: typeof CN = {
   app: {
-    title: "SoC Shard Planner",
+    title: "SOC Shard Planner",
     subtitle: "Manage your shard farming progress",
   },
   header: {
@@ -273,7 +273,7 @@ const EN: typeof CN = {
     gameName: "Sword of Convallaria: For This World of Peace",
     rosterChangeDay: "Lineup Change",
     footerPlatform: "TapTap Game Tool",
-    footerTool: "SoC Shard Planner",
+    footerTool: "SOC Shard Planner",
     footerHint: "Save the image, import your plan anytime.",
     todayLabel: "T",
     doubleDropDay: "Double Shard",
