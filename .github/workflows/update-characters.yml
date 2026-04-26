@@ -1,0 +1,50 @@
+name: Update Characters from Wiki
+
+on:
+  schedule:
+    # 每周五 20:00 UTC+8 = 12:00 UTC
+    - cron: "0 12 * * 5"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (只输出日志，不提交)"
+        type: boolean
+        default: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install script dependencies
+        run: npm install
+        working-directory: scripts
+
+      - name: Run scraper
+        run: node scripts/scrape-characters.mjs
+
+      - name: Show diff
+        run: |
+          git diff --stat
+          echo "--- character-diff.log ---"
+          cat scripts/character-diff.log
+
+      - name: Commit and push
+        if: ${{ !inputs.dry_run }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/lib/roles.ts public/avatars/ scripts/character-diff.log
+          git diff --cached --quiet && echo "没有变动，跳过提交" || \
+            git commit -m "chore: auto-update characters from wiki $(date +'%Y-%m-%d')" && \
+            git push
