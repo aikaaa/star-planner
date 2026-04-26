@@ -142,7 +142,7 @@ const CN = {
 
 const EN: typeof CN = {
   app: {
-    title: "SOC Shard Planner",
+    title: "SoC Shard Planner",
     subtitle: "Manage your shard farming progress",
   },
   header: {
@@ -248,10 +248,10 @@ const EN: typeof CN = {
   feedback: {
     title: "Feedback",
     desc: "Describe the issue. I'll reply and handle it.",
-    sendEmail: "Send an email",
-    copyEmail: "Copy email address",
-    dmAuthor: "DM the author",
-    aika: "aika",
+    sendEmail: "Send an Email",
+    copyEmail: "Copy Address",
+    dmAuthor: "DM on TapTap",
+    aika: "@aika",
   },
   communityDialog: {
     title: "Top 10 Chars - Last 30 days",
@@ -273,7 +273,7 @@ const EN: typeof CN = {
     gameName: "Sword of Convallaria: For This World of Peace",
     rosterChangeDay: "Lineup Change",
     footerPlatform: "TapTap Game Tool",
-    footerTool: "SOC Shard Planner",
+    footerTool: "SoC Shard Planner",
     footerHint: "Save the image, import your plan anytime.",
     todayLabel: "T",
     doubleDropDay: "Double Shard",
