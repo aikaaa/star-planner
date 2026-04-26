@@ -42,6 +42,7 @@
     --avatar-circle: #e8eef2;        /* 深色模式首字圆框 */
     --avatar-circle-bg: #1e3430;     /* 深色模式首字圆框底色 */
     --star: 47 36% 63%;              /* #BDAB7F 深色模式金色 */
+    --double-badge-text: #12221F;
     --gold: 40 20% 52%;              /* #90855F 棕金色 */
     --success: 150 70% 45%;
     --info: 172 40% 50%;
@@ -96,6 +97,7 @@
     --avatar-circle: #627798;        /* 浅色模式首字圆框 */
     --avatar-circle-bg: #c8dbd8;     /* 浅色模式首字圆框底色，比日历格子深一点的浅绿 */
     --star: 40 65% 45%;              /* 浅色模式金色，更深更饱和 */
+    --double-badge-text: #FAFCFC;
     --gold: 40 20% 50%;              /* #90855F 棕金色 浅色调整 */
     --success: 150 65% 38%;
     --info: 172 40% 42%;

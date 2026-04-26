@@ -12,6 +12,7 @@ import {
   getDaysNeeded,
   getEffectiveTargetStar,
   getPartialProgress,
+  isDoubleDropDate,
   parseLocalDate,
 } from "@/lib/types";
 import { getAvatarUrl } from "@/lib/roleAvatars";
@@ -121,10 +122,11 @@ function CalAvatar({ plan, size, index, onFallback }: { plan: CharacterPlan; siz
 export interface ExportTemplateProps {
   plans: CharacterPlan[];
   qrDataUrl: string | null;
+  viewMonth?: Date;
 }
 
 const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
-  ({ plans, qrDataUrl }, ref) => {
+  ({ plans, qrDataUrl, viewMonth }, ref) => {
     const { lang, t } = useI18n();
     const weekdays = lang === "en" ? WEEKDAYS_EN : WEEKDAYS;
     const charDisplayName = (zh: string) => lang === "en" ? getEnName(zh) : formatCharName(zh);
@@ -145,9 +147,10 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
     const fmtShort = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}`;
     const title = `我的跑片计划 · ${fmtShort(minDate)} - ${fmtShort(maxDate)}`;
 
-    // 日历：从最早的开始月份起
-    const calYear  = minDate.getFullYear();
-    const calMonth = minDate.getMonth();
+    // 日历：使用用户当前浏览的月份（若未传则默认最早开始月）
+    const calBase  = viewMonth ?? minDate;
+    const calYear  = calBase.getFullYear();
+    const calMonth = calBase.getMonth();
     const daysInMonth   = new Date(calYear, calMonth + 1, 0).getDate();
     const firstDayOfWeek = new Date(calYear, calMonth, 1).getDay();
 
@@ -291,16 +294,19 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                 const isToday     = date.getTime() === today.getTime();
                 const isStartDate = startDateSet.has(date.getTime());
                 const chars   = getCharactersOnDate(plans, date);
-                const shown   = chars.slice(0, 3);
+                const hasDoubleDrop = chars.some(c => isDoubleDropDate(c, date));
+                const shown   = chars.slice(0, 6);
                 const count   = shown.length;
-                const overlap = count === 3 ? -3 : count === 2 ? -2 : 0;
+                const avatarSize = Math.round(4 + 54 / Math.max(count, 1));
+                const avPx = Math.min(14, avatarSize);
+                const overlap = count > 1 ? -3 : 0;
 
                 return (
                   <div
                     key={day}
                     style={{
                       position: "relative",
-                      background: C.calCell,
+                      background: hasDoubleDrop ? `${C.star}22` : C.calCell,
                       borderRadius: 6,
                       minHeight: 42,
                       display: "flex",
@@ -314,8 +320,8 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                   >
                     {isStartDate && (
                       <span style={{
-                        position: "absolute", top: 0, right: 4,
-                        fontSize: 8, lineHeight: 1, color: "#B9AD86",
+                        position: "absolute", top: -1, right: 4,
+                        fontSize: 8, lineHeight: 1, color: C.star,
                         display: "block",
                       }}>✦</span>
                     )}
@@ -339,7 +345,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                               flexShrink: 0,
                             }}
                           >
-                            <CalAvatar plan={c} size={14} index={charColorIndex.get(c.name) ?? 0} onFallback={handleAvatarFallback} />
+                            <CalAvatar plan={c} size={avPx} index={charColorIndex.get(c.name) ?? 0} onFallback={handleAvatarFallback} />
                           </div>
                         ))}
                       </div>
@@ -350,8 +356,17 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
             </div>
 
             {/* 图例说明 */}
-            <div style={{ marginTop: 8, fontSize: 10, color: "#888", lineHeight: 1 }}>
-              <span style={{ fontSize: 10, color: "#B9AD86", position: "relative", top: 0 }}>✦</span>{" "}{t.exportTemplate.rosterChangeDay}
+            <div style={{ marginTop: 8, fontSize: 10, color: "#888", display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+                <span style={{ fontSize: 10, lineHeight: 1, color: C.star }}>✦</span>
+                {t.exportTemplate.rosterChangeDay}
+              </span>
+              {plans.some(p => p.doubleDropStart && p.doubleDropEnd) && (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+                  <span style={{ fontSize: 10, lineHeight: 1, color: C.star }}>▪</span>
+                  {t.exportTemplate.doubleDropDay}
+                </span>
+              )}
             </div>
           </div>
 

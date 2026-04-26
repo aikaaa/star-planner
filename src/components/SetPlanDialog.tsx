@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Plus, Trash2, Star, Check, ChevronsUpDown } from "lucide-react";
+import { CalendarIcon, Plus, Trash2, Star, Check, ChevronsUpDown, Square, CheckSquare } from "lucide-react";
 import { format } from "date-fns";
 import { zhCN, enUS } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -18,8 +18,11 @@ import {
   getTotalShardsNeeded,
   getTargetStarFromDays,
   getPartialProgress,
+  getActualShardsForDays,
   parseLocalDate,
   toDateStr,
+  countDoubleDropDaysInRange,
+  isDoubleDropDate,
 } from "@/lib/types";
 import { ROLES, fetchRemoteRoles, type RoleEntry } from "@/lib/roles";
 import { generateUUID } from "@/lib/supabase";
@@ -131,18 +134,26 @@ function RoleCombobox({ value, onChange }: { value: string; onChange: (v: string
 
 
 
-function DatePickerButton({ date, onSelect, disabled, locale }: {
+function DatePickerButton({ date, onSelect, disabled, locale, dateFormat = "yyyy/MM/dd", className = "", buttonStyle }: {
   date: Date;
   onSelect: (d: Date) => void;
   disabled?: (d: Date) => boolean;
   locale: Locale;
+  dateFormat?: string;
+  className?: string;
+  buttonStyle?: React.CSSProperties;
 }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="w-full mt-1 justify-start bg-transparent border-border text-foreground text-xs px-2">
-          <CalendarIcon className="mr-1 h-3 w-3" />
-          {format(date, "yyyy/MM/dd", { locale })}
+        <Button
+          type="button"
+          variant="outline"
+          className={cn("w-full mt-1 justify-start bg-transparent border-border text-foreground text-xs px-2", className)}
+          style={buttonStyle}
+        >
+          <CalendarIcon className="mr-1 h-3 w-3 shrink-0" />
+          {format(date, dateFormat, { locale })}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
@@ -150,10 +161,10 @@ function DatePickerButton({ date, onSelect, disabled, locale }: {
           mode="single"
           selected={date}
           defaultMonth={date}
-          onSelect={(d) => d && onSelect(d)}
+          onSelect={(d) => { if (d) onSelect(d); }}
           disabled={disabled}
           locale={locale}
-          className={cn("p-3 pointer-events-auto")}
+          className="p-3 pointer-events-auto"
         />
       </PopoverContent>
     </Popover>
@@ -211,13 +222,12 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const validateOverlap = (plans: CharacterPlan[]): string | null => {
-    if (plans.length <= 3) return null;
     const ranges = plans.map((p) => {
-      const start = new Date(p.startDate);
+      const start = parseLocalDate(p.startDate);
       start.setHours(0, 0, 0, 0);
       const end = getCompletionDate(p);
       end.setHours(0, 0, 0, 0);
-      return { name: p.name, start: start.getTime(), end: end.getTime() };
+      return { plan: p, start: start.getTime(), end: end.getTime() };
     });
     const allDates = new Set(ranges.flatMap((r) => {
       const dates: number[] = [];
@@ -226,10 +236,16 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
     }));
     for (const ts of allDates) {
       const active = ranges.filter((r) => ts >= r.start && ts <= r.end);
-      const uniqueNames = new Set(active.map((r) => r.name));
-      if (uniqueNames.size > 3) {
-        const d = new Date(ts);
-        return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${t.setPlanDialog.tooManyChars}`;
+      const date = new Date(ts);
+      // 统计名额占用：双倍日的角色占 2 个名额，普通角色占 1 个
+      const totalSlots = active.reduce((sum, { plan }) => {
+        return sum + (isDoubleDropDate(plan, date) ? 2 : 1);
+      }, 0);
+      // 当日有任一角色处于双倍期 → 上限 6，否则上限 3
+      const isDoubleDrop = active.some(({ plan }) => isDoubleDropDate(plan, date));
+      const maxSlots = isDoubleDrop ? 6 : 3;
+      if (totalSlots > maxSlots) {
+        return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${t.setPlanDialog.tooManyChars}`;
       }
     }
     return null;
@@ -243,7 +259,19 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
       return;
     }
     setValidationError(null);
-    onSave(valid);
+    // 裁剪双倍日期到各角色跑片周期
+    const clipped = valid.map((p) => {
+      if (!p.doubleDropStart || !p.doubleDropEnd) return p;
+      const farmStart = parseLocalDate(p.startDate); farmStart.setHours(0, 0, 0, 0);
+      const farmEnd = getCompletionDate(p); farmEnd.setHours(0, 0, 0, 0);
+      const ddS = parseLocalDate(p.doubleDropStart); ddS.setHours(0, 0, 0, 0);
+      const ddE = parseLocalDate(p.doubleDropEnd); ddE.setHours(0, 0, 0, 0);
+      const cs = new Date(Math.max(farmStart.getTime(), ddS.getTime()));
+      const ce = new Date(Math.min(farmEnd.getTime(), ddE.getTime()));
+      if (cs > ce) return { ...p, doubleDropStart: undefined, doubleDropEnd: undefined };
+      return { ...p, doubleDropStart: toDateStr(cs), doubleDropEnd: toDateStr(ce) };
+    });
+    onSave(clipped);
     onOpenChange(false);
   };
 
@@ -493,10 +521,109 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                   </div>
                 </div>
 
+                {/* 双倍跑片设置：一行容器，左侧 checkbox+标签，右侧日期范围 */}
+                {(() => {
+                  const hasDouble = !!(char.doubleDropStart && char.doubleDropEnd);
+                  const farmEnd = getCompletionDate(char);
+                  const farmStart = parseLocalDate(char.startDate);
+                  return (
+                    <div
+                      className="flex items-center rounded-md border transition-all"
+                      style={{
+                        borderColor: hasDouble ? "transparent" : "hsl(var(--border))",
+                        background: hasDouble ? "hsl(var(--star) / 0.12)" : "transparent",
+                        minHeight: 36,
+                        paddingLeft: 10,
+                        paddingRight: 6,
+                        gap: 8,
+                      }}
+                    >
+                      {/* 左50%：checkbox + 文字 + ×2 徽标 */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (hasDouble) {
+                            updateCharacter(index, { doubleDropStart: undefined, doubleDropEnd: undefined });
+                          } else {
+                            const ddEnd = new Date(farmStart);
+                            ddEnd.setDate(ddEnd.getDate() + 6);
+                            if (ddEnd > farmEnd) ddEnd.setTime(farmEnd.getTime());
+                            updateCharacter(index, {
+                              doubleDropStart: toDateStr(farmStart),
+                              doubleDropEnd: toDateStr(ddEnd),
+                            });
+                          }
+                        }}
+                        className="flex items-center gap-1.5 flex-1"
+                        style={{ color: hasDouble ? "hsl(var(--star))" : "hsl(var(--muted-foreground))" }}
+                      >
+                        {hasDouble
+                          ? <CheckSquare className="h-3.5 w-3.5 shrink-0" style={{ color: "hsl(var(--star))" }} />
+                          : <Square className="h-3.5 w-3.5 shrink-0" />
+                        }
+                        <span className="text-xs font-medium">{t.setPlanDialog.doubleDrop}</span>
+                        <span style={{
+                          background: hasDouble ? "hsl(var(--star))" : "hsl(var(--muted-foreground) / 0.35)",
+                          color: "#fff",
+                          fontSize: "7px",
+                          fontWeight: 700,
+                          lineHeight: 1,
+                          padding: "2px 2.5px",
+                          borderRadius: "3px",
+                          flexShrink: 0,
+                        }}>×2</span>
+                      </button>
+
+                      {/* 右50%：日期范围（勾选后出现，与上方结束日期左对齐） */}
+                      <div className="flex items-center gap-1 flex-1">
+                        {hasDouble && (
+                          <>
+                            <DatePickerButton
+                              date={parseLocalDate(char.doubleDropStart!)}
+                              locale={locale}
+                              dateFormat="M/d"
+                              className="mt-0 flex-1 min-w-0"
+                              buttonStyle={{ height: 26 }}
+                              onSelect={(d) => {
+                                const clamped = d < farmStart ? farmStart : d > farmEnd ? farmEnd : d;
+                                const ddEnd = char.doubleDropEnd ? parseLocalDate(char.doubleDropEnd) : farmEnd;
+                                updateCharacter(index, {
+                                  doubleDropStart: toDateStr(clamped),
+                                  doubleDropEnd: toDateStr(clamped > ddEnd ? clamped : ddEnd),
+                                });
+                              }}
+                              disabled={(d) => d < farmStart || d > farmEnd}
+                            />
+                            <span className="text-muted-foreground text-xs shrink-0">~</span>
+                            <DatePickerButton
+                              date={parseLocalDate(char.doubleDropEnd!)}
+                              locale={locale}
+                              dateFormat="M/d"
+                              className="mt-0 flex-1 min-w-0"
+                              buttonStyle={{ height: 26 }}
+                              onSelect={(d) => {
+                                const clamped = d > farmEnd ? farmEnd : d < farmStart ? farmStart : d;
+                                const ddStart = char.doubleDropStart ? parseLocalDate(char.doubleDropStart) : farmStart;
+                                updateCharacter(index, {
+                                  doubleDropEnd: toDateStr(clamped),
+                                  doubleDropStart: toDateStr(clamped < ddStart ? clamped : ddStart),
+                                });
+                              }}
+                              disabled={(d) => d < farmStart || d > farmEnd}
+                            />
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* 底部信息 */}
                 {isFree ? (() => {
+                  const freeEndDate = char.endDate ? parseLocalDate(char.endDate) : getCompletionDate(char);
+                  const ddBonus = countDoubleDropDaysInRange(char, parseLocalDate(char.startDate), freeEndDate);
                   const { reachableStar, remainingShards: freeRemaining } = getPartialProgress(
-                    char.currentStar, char.currentShards + (char.bonusShards ?? 0), freeDays
+                    char.currentStar, char.currentShards + (char.bonusShards ?? 0), freeDays, ddBonus
                   );
                   const isMaxStar = reachableStar >= 5;
                   const freeExcess = isMaxStar ? freeRemaining : 0;
@@ -533,10 +660,15 @@ export default function SetPlanDialog({ open, onOpenChange, existingPlans, onSav
                 })() : (() => {
                   const totalNeeded = getTotalShardsNeeded(char.currentStar, char.targetStar);
                   const remaining = Math.max(0, totalNeeded - char.currentShards - (char.bonusShards ?? 0));
+                  // 用实际产出碎片数（含双倍）计算超出量和补片需求
+                  const actualShards = days > 0 ? getActualShardsForDays(char, days) : 0;
                   const excess = days > 0
-                    ? days * 3 - remaining
+                    ? actualShards - remaining
                     : Math.max(0, char.currentShards + (char.bonusShards ?? 0) - totalNeeded);
-                  const bonusNeeded = excess > 0 ? 3 - excess : 0;
+                  // bonusNeeded：补多少万能片可少1天完成（末尾1天可能是双倍日，用实际差值）
+                  const bonusNeeded = excess > 0 && days > 0
+                    ? Math.max(0, remaining - getActualShardsForDays(char, days - 1))
+                    : 0;
                   if (lang === "en") {
                     return (
                       <div className="text-xs text-info flex items-center gap-1 flex-wrap">

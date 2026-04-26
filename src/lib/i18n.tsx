@@ -46,6 +46,7 @@ const CN = {
     days: "天",
     rosterChangeDay: "阵容变动日",
     estimated: "预计",
+    doubleDropDay: "双倍跑片",
   },
   export: {
     saveInstruction: "移动端长按图片保存",
@@ -96,9 +97,21 @@ const CN = {
     daysToComplete: "天完成",
     addCharacter: "添加角色",
     savePlan: "保存计划",
-    tooManyChars: "当天不同角色超过3人，请调整日期",
+    tooManyChars: "当日名额已超限，请调整日期",
     shardsUnit: "片",
     universalShards: "片万能可",
+    doubleDrop: "双倍跑片",
+    doubleDropRange: "双倍日期",
+    doubleDropStart: "双倍开始",
+    doubleDropEnd: "双倍结束",
+  },
+  feedback: {
+    title: "问题反馈",
+    desc: "描述具体问题，我会尽快回复处理。",
+    sendEmail: "发送邮件",
+    copyEmail: "复制邮箱",
+    dmAuthor: "私信作者",
+    aika: "aika",
   },
   communityDialog: {
     title: "热门角色 Top 10 - 近 30 天",
@@ -123,6 +136,7 @@ const CN = {
     footerTool: "铃兰跑片助手",
     footerHint: "保存图片，可直接导入计划",
     todayLabel: "今",
+    doubleDropDay: "双倍跑片",
   },
 } as const;
 
@@ -172,6 +186,7 @@ const EN: typeof CN = {
     days: "d",
     rosterChangeDay: "Lineup Change",
     estimated: "ETA",
+    doubleDropDay: "Double Shard",
   },
   export: {
     saveInstruction: "Long press image to save on mobile",
@@ -222,9 +237,21 @@ const EN: typeof CN = {
     daysToComplete: "days to complete",
     addCharacter: "Add Character",
     savePlan: "Save",
-    tooManyChars: "More than 3 characters on the same day, please adjust the date",
+    tooManyChars: "Daily slot limit exceeded, please adjust dates",
     shardsUnit: "shards",
     universalShards: "Recollection shards required",
+    doubleDrop: "Double Shard",
+    doubleDropRange: "Double Shard Dates",
+    doubleDropStart: "Start",
+    doubleDropEnd: "End",
+  },
+  feedback: {
+    title: "Submit Feedback",
+    desc: "Describe the issue. I'll reply and handle it.",
+    sendEmail: "Send an email",
+    copyEmail: "Copy email address",
+    dmAuthor: "DM the author",
+    aika: "aika",
   },
   communityDialog: {
     title: "Top 10 Chars - Last 30 days",
@@ -249,6 +276,7 @@ const EN: typeof CN = {
     footerTool: "SOC Shard Planner",
     footerHint: "Save the image, import your plan anytime.",
     todayLabel: "T",
+    doubleDropDay: "Double Shard",
   },
 };
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Settings, Flame, Upload, Download, Copy, Sun, Moon, ArrowRight, Sparkles, RotateCcw, ImageDown } from "lucide-react";
+import { Settings, Flame, Upload, Download, Copy, Sun, Moon, ArrowRight, Sparkles, RotateCcw, ImageDown, X } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useI18n } from "@/lib/i18n";
 import FarmingCalendar from "@/components/FarmingCalendar";
@@ -37,6 +37,8 @@ export default function Index() {
   const [isExporting, setIsExporting] = useState(false);
   const exportImportRef = useRef<ExportImportHandle>(null);
   const [previewChars, setPreviewChars] = useState<CommunityCharacter[]>([]);
+  const [calViewMonth, setCalViewMonth] = useState(() => new Date());
+  const [showFeedback, setShowFeedback] = useState(false);
 
   const handleCopyCode = async () => {
     if (isCopying) return;
@@ -254,8 +256,8 @@ export default function Index() {
           </div>
         ) : (
           /* 已配置：日历卡片 + 卡片下方右对齐的操作按钮 */
-          <div className="gradient-card border border-border" style={{ paddingTop: "8px", paddingLeft: "12px", paddingRight: "12px", paddingBottom: "12px", borderRadius: "4px" }}>
-            <FarmingCalendar plans={plans} />
+          <div className="gradient-card border border-border" style={{ paddingTop: "8px", paddingLeft: "12px", paddingRight: "12px", paddingBottom: "16px", borderRadius: "4px" }}>
+            <FarmingCalendar plans={plans} viewMonth={calViewMonth} onViewMonthChange={setCalViewMonth} />
             <div className="flex flex-col gap-2" style={{ marginTop: 12 }}>
               {/* 第一行：截图保存 */}
               <Button
@@ -312,11 +314,104 @@ export default function Index() {
         )}
 
         {/* 弹窗 + 离屏模板（无可见 UI） */}
-        <ExportImportPanel ref={exportImportRef} plans={plans} onImport={handleSavePlans} onExportingChange={setIsExporting} />
+        <ExportImportPanel ref={exportImportRef} plans={plans} onImport={handleSavePlans} onExportingChange={setIsExporting} viewMonth={calViewMonth} />
+
+        {/* 问题反馈入口 */}
+        <div className="flex justify-end" style={{ marginTop: 16, marginBottom: 8 }}>
+          <button
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors rounded-full px-3 py-1.5"
+            style={{ background: "hsl(var(--muted) / 0.5)" }}
+            onClick={() => setShowFeedback(true)}
+          >
+            <span className="flex items-center justify-center rounded-full text-muted-foreground shrink-0"
+              style={{ width: 16, height: 16, border: "1.5px solid currentColor", fontSize: 10, fontWeight: 700, lineHeight: 1 }}>
+              ?
+            </span>
+            <span>{t.feedback.title}</span>
+          </button>
+        </div>
       </div>
 
       <SetPlanDialog open={showSetPlan} onOpenChange={setShowSetPlan} existingPlans={plans} onSave={handleSavePlans} />
       <CommunityDialog open={showCommunity} onOpenChange={setShowCommunity} />
+
+      {/* 问题反馈弹窗 */}
+      {showFeedback && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.5)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowFeedback(false); }}
+        >
+          <div
+            className="bg-card text-card-foreground w-full sm:max-w-sm rounded-t-2xl sm:rounded-xl shadow-2xl"
+            style={{ border: "1px solid hsl(var(--border))" }}
+          >
+            {/* 头部 */}
+            <div className="flex items-center justify-between px-4 pt-4 pb-3"
+              style={{ borderBottom: "1px solid hsl(var(--border) / 0.6)" }}>
+              <span className="font-semibold text-sm">{t.feedback.title}</span>
+              <button
+                onClick={() => setShowFeedback(false)}
+                className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="pt-4 px-4" style={{ paddingBottom: 24 }}>
+              <p className="text-muted-foreground mb-4" style={{ fontSize: 14 }}>{t.feedback.desc}</p>
+              <div className="grid grid-cols-2 gap-3">
+                {/* 邮箱反馈 */}
+                <div className="flex flex-col items-center gap-2 rounded-xl"
+                  style={{ background: "hsl(var(--primary) / 0.08)", padding: 12, borderRadius: 4 }}>
+                  <span className="text-2xl">✉️</span>
+                  <span className="font-medium text-foreground text-center" style={{ fontSize: 14 }}>{t.feedback.sendEmail}</span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs px-3 w-full mt-auto"
+                    style={{ borderRadius: 4 }}
+                    onClick={async () => {
+                      const email = "707953365@qq.com";
+                      let copied = false;
+                      if (navigator.clipboard?.writeText) {
+                        try { await navigator.clipboard.writeText(email); copied = true; } catch { /* fallback */ }
+                      }
+                      if (!copied) {
+                        const ta = document.createElement("textarea");
+                        ta.value = email;
+                        ta.style.cssText = "position:fixed;top:-9999px;left:-9999px;opacity:0";
+                        document.body.appendChild(ta); ta.focus(); ta.select();
+                        copied = document.execCommand("copy");
+                        document.body.removeChild(ta);
+                      }
+                      copied ? toast.success(t.toast.copySuccess) : toast.error(t.toast.copyFail);
+                    }}
+                  >
+                    {t.feedback.copyEmail}
+                  </Button>
+                </div>
+
+                {/* 私信作者 */}
+                <div className="flex flex-col items-center gap-2 rounded-xl"
+                  style={{ background: "hsl(var(--primary) / 0.08)", padding: 12, borderRadius: 4 }}>
+                  <span className="text-2xl">💬</span>
+                  <span className="font-medium text-foreground text-center" style={{ fontSize: 14 }}>{t.feedback.dmAuthor}</span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs px-3 w-full mt-auto"
+                    style={{ borderRadius: 4 }}
+                    onClick={() => window.open("https://www.taptap.cn/user/735086541", "_blank")}
+                  >
+                    {t.feedback.aika}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

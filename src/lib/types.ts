@@ -25,10 +25,12 @@ export interface CharacterPlan {
   currentStar: number;
   targetStar: number;
   currentShards: number;
-  bonusShards?: number; // 追忆/万能碎片可补充量（可选，默认0）
-  startDate: string; // ISO date string
-  endDate?: string;  // 自由跑片时由用户设置
-  icon?: string;     // 用户自选的 emoji 图标
+  bonusShards?: number;      // 追忆/万能碎片可补充量（可选，默认0）
+  startDate: string;         // ISO date string
+  endDate?: string;          // 自由跑片时由用户设置
+  icon?: string;             // 用户自选的 emoji 图标
+  doubleDropStart?: string;  // 双倍掉落开始日期（已裁剪至跑片周期内）
+  doubleDropEnd?: string;    // 双倍掉落结束日期（已裁剪至跑片周期内）
 }
 
 export interface FarmingPlan {
@@ -109,6 +111,26 @@ export function getTotalShardsNeeded(currentStar: number, targetStar: number): n
   return total;
 }
 
+/**
+ * 计算跑片计划在前 days 天内实际产出的碎片总量（含双倍加成）。
+ * 按三阶段：双倍前3/天 → 双倍期6/天 → 双倍后3/天
+ */
+export function getActualShardsForDays(plan: CharacterPlan, days: number): number {
+  if (days <= 0) return 0;
+  if (!plan.doubleDropStart || !plan.doubleDropEnd) return days * 3;
+
+  const farmStart = parseLocalDate(plan.startDate); farmStart.setHours(0, 0, 0, 0);
+  const ddStart = parseLocalDate(plan.doubleDropStart); ddStart.setHours(0, 0, 0, 0);
+  const ddEnd = parseLocalDate(plan.doubleDropEnd); ddEnd.setHours(0, 0, 0, 0);
+
+  const preDays = Math.max(0, Math.round((ddStart.getTime() - farmStart.getTime()) / 86400000));
+  const ddDays = Math.max(0, Math.round((ddEnd.getTime() - ddStart.getTime()) / 86400000) + 1);
+
+  if (days <= preDays) return days * 3;
+  if (days <= preDays + ddDays) return preDays * 3 + (days - preDays) * 6;
+  return preDays * 3 + ddDays * 6 + (days - preDays - ddDays) * 3;
+}
+
 export function getDaysNeeded(plan: CharacterPlan): number {
   if (plan.farmingMode === "free" && plan.endDate) {
     const start = parseLocalDate(plan.startDate);
@@ -117,6 +139,37 @@ export function getDaysNeeded(plan: CharacterPlan): number {
   }
   const totalNeeded = getTotalShardsNeeded(plan.currentStar, plan.targetStar);
   const remaining = Math.max(0, totalNeeded - plan.currentShards - (plan.bonusShards ?? 0));
+
+  // 按星跑片 + 双倍掉落：分阶段模拟
+  if (plan.doubleDropStart && plan.doubleDropEnd && remaining > 0) {
+    const farmStart = parseLocalDate(plan.startDate);
+    farmStart.setHours(0, 0, 0, 0);
+    const ddStart = parseLocalDate(plan.doubleDropStart);
+    ddStart.setHours(0, 0, 0, 0);
+    const ddEnd = parseLocalDate(plan.doubleDropEnd);
+    ddEnd.setHours(0, 0, 0, 0);
+
+    // 双倍开始前的天数
+    const preDays = Math.max(0, Math.round((ddStart.getTime() - farmStart.getTime()) / 86400000));
+    // 双倍持续天数
+    const ddDays = Math.max(0, Math.round((ddEnd.getTime() - ddStart.getTime()) / 86400000) + 1);
+
+    let rem = remaining;
+
+    // 阶段1：双倍前，每天3片
+    const preShards = preDays * 3;
+    if (preShards >= rem) return Math.ceil(rem / 3);
+    rem -= preShards;
+
+    // 阶段2：双倍期间，每天6片
+    const doubleShards = ddDays * 6;
+    if (doubleShards >= rem) return preDays + Math.ceil(rem / 6);
+    rem -= doubleShards;
+
+    // 阶段3：双倍后，每天3片
+    return preDays + ddDays + Math.ceil(rem / 3);
+  }
+
   return Math.ceil(remaining / 3); // 3 shards per day
 }
 
@@ -136,13 +189,37 @@ export function getTargetStarFromDays(currentStar: number, currentShards: number
   return Math.max(currentStar + 1, reachable);
 }
 
+/** 判断某天是否在该计划的双倍掉落期内 */
+export function isDoubleDropDate(plan: CharacterPlan, date: Date): boolean {
+  if (!plan.doubleDropStart || !plan.doubleDropEnd) return false;
+  const d = new Date(date); d.setHours(0, 0, 0, 0);
+  const ddStart = parseLocalDate(plan.doubleDropStart); ddStart.setHours(0, 0, 0, 0);
+  const ddEnd = parseLocalDate(plan.doubleDropEnd); ddEnd.setHours(0, 0, 0, 0);
+  return d >= ddStart && d <= ddEnd;
+}
+
+/** 统计某计划在给定范围内的双倍天数 */
+export function countDoubleDropDaysInRange(plan: CharacterPlan, rangeStart: Date, rangeEnd: Date): number {
+  if (!plan.doubleDropStart || !plan.doubleDropEnd) return 0;
+  const ddS = parseLocalDate(plan.doubleDropStart); ddS.setHours(0, 0, 0, 0);
+  const ddE = parseLocalDate(plan.doubleDropEnd); ddE.setHours(0, 0, 0, 0);
+  const rs = new Date(rangeStart); rs.setHours(0, 0, 0, 0);
+  const re = new Date(rangeEnd); re.setHours(0, 0, 0, 0);
+  const cs = new Date(Math.max(rs.getTime(), ddS.getTime()));
+  const ce = new Date(Math.min(re.getTime(), ddE.getTime()));
+  if (cs > ce) return 0;
+  return Math.round((ce.getTime() - cs.getTime()) / 86400000) + 1;
+}
+
 // 自由跑片：计算可达星级及剩余碎片（用于展示不完整进度）
+// bonusDays：双倍掉落天数，每天额外+3片
 export function getPartialProgress(
   currentStar: number,
   currentShards: number,
-  days: number
+  days: number,
+  bonusDays: number = 0
 ): { reachableStar: number; remainingShards: number } {
-  let shards = currentShards + days * 3;
+  let shards = currentShards + days * 3 + bonusDays * 3;
   let star = currentStar;
   while (star < 5) {
     const cost = SHARD_COSTS[`${star}-${star + 1}`] || 0;

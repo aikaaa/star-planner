@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useCallback } from "react";
-import { CharacterPlan, formatCharName, getCharactersOnDate, getCompletionDate, getDaysNeeded, getEffectiveTargetStar, getPartialProgress, getTotalShardsNeeded, parseLocalDate, CHAR_ICON_OPTIONS } from "@/lib/types";
+import { CharacterPlan, formatCharName, getCharactersOnDate, getCompletionDate, getDaysNeeded, getEffectiveTargetStar, getPartialProgress, getTotalShardsNeeded, parseLocalDate, CHAR_ICON_OPTIONS, isDoubleDropDate, countDoubleDropDaysInRange, getActualShardsForDays } from "@/lib/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getAvatarUrl, getEnName } from "@/lib/roles";
@@ -8,6 +8,8 @@ import { CARD_SPACING } from "@/lib/cardSpacing";
 
 interface FarmingCalendarProps {
   plans: CharacterPlan[];
+  viewMonth?: Date;
+  onViewMonthChange?: (d: Date) => void;
 }
 
 const WEEKDAYS    = ["日", "一", "二", "三", "四", "五", "六"];
@@ -87,16 +89,19 @@ function CharAvatar({
   return (
     <div
       title={plan.name}
-      className={`rounded-full flex items-center justify-center overflow-hidden ${className}`}
+      className={`rounded-full overflow-hidden ${className}`}
       style={{
         ...baseStyle,
         background: (isDark ? AVATAR_BG_DARK : AVATAR_BG)[index % AVATAR_BG.length],
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
       }}
     >
       <svg
-        viewBox="0 0 24 24"
-        fill="rgba(255,255,255,0.55)"
-        style={{ width: "55%", height: "55%" }}
+        viewBox="2 2 20 20"
+        fill="rgba(255,255,255,0.6)"
+        style={{ width: "58%", height: "58%", display: "block" }}
         xmlns="http://www.w3.org/2000/svg"
       >
         <circle cx="12" cy="8" r="4" />
@@ -106,10 +111,18 @@ function CharAvatar({
   );
 }
 
-export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
+export default function FarmingCalendar({ plans, viewMonth: controlledViewMonth, onViewMonthChange }: FarmingCalendarProps) {
   const { t, lang } = useI18n();
+  const isDark = useIsDark();
+  const rosterStarColor = "hsl(var(--star))";
   const getCharName = (zh: string) => lang === "en" ? getEnName(zh) : formatCharName(zh);
-  const [viewMonth, setViewMonth] = useState(() => new Date());
+  const [internalViewMonth, setInternalViewMonth] = useState(() => new Date());
+
+  const viewMonth = controlledViewMonth ?? internalViewMonth;
+  const setViewMonth = (d: Date) => {
+    setInternalViewMonth(d);
+    onViewMonthChange?.(d);
+  };
 
   const year = viewMonth.getFullYear();
   const month = viewMonth.getMonth();
@@ -224,37 +237,70 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
           const isToday     = date.getTime() === today.getTime();
           const isStartDate = startDateSet.has(date.getTime());
           const hasChars = characters.length > 0;
+          const hasDoubleDrop = characters.some(c => isDoubleDropDate(c, date));
 
           return (
             <div
               key={day}
-              className={`relative flex flex-col items-center justify-center p-2 text-xs transition-all`}
-              style={{ backgroundColor: "hsl(var(--primary) / 0.08)", minHeight: "3.5rem", borderRadius: "8px" }}
+              className="relative flex flex-col items-center justify-center p-2 text-xs"
+              style={{
+                backgroundColor: hasDoubleDrop
+                  ? "hsl(var(--star) / 0.13)"
+                  : "hsl(var(--primary) / 0.08)",
+                minHeight: "3.5rem",
+                borderRadius: "8px",
+              }}
             >
               {isToday && (
                 <span className="absolute inset-0 pointer-events-none z-10" style={{ boxShadow: "inset 0 0 0 2px hsl(var(--primary))", borderRadius: "8px" }} />
               )}
               {isStartDate && (
-                <svg width={8} height={8} viewBox="0 0 12 12" fill="none" style={{ position: "absolute", top: 7, right: 6, zIndex: 10, pointerEvents: "none" }}>
-                  <path d="M6 0C6 0 6.85334 2.69555 8.07889 3.92111C9.30445 5.14666 12 6 12 6C12 6 9.30445 6.85334 8.07889 8.07889C6.85334 9.30445 6 12 6 12C6 12 5.14666 9.30445 3.92111 8.07889C2.69555 6.85334 0 6 0 6C0 6 3.34379 4.69221 3.92111 3.92111C4.49842 3.15 6 0 6 0Z" fill="#B9AD86"/>
+                <svg width={8} height={8} viewBox="0 0 12 12" fill="none" style={{ position: "absolute", top: 6, right: 6, zIndex: 10, pointerEvents: "none" }}>
+                  <path d="M6 0C6 0 6.85334 2.69555 8.07889 3.92111C9.30445 5.14666 12 6 12 6C12 6 9.30445 6.85334 8.07889 8.07889C6.85334 9.30445 6 12 6 12C6 12 5.14666 9.30445 3.92111 8.07889C2.69555 6.85334 0 6 0 6C0 6 3.34379 4.69221 3.92111 3.92111C4.49842 3.15 6 0 6 0Z" fill={rosterStarColor}/>
                 </svg>
               )}
               <span className={`text-xs sm:text-xs leading-none ${isToday ? "font-bold text-primary" : "text-foreground"}`}>
                 {isToday && lang === "cn" ? t.calendar.today : day}
               </span>
               {hasChars && (() => {
-                const shown = characters.slice(0, 3);
+                const shown = characters.slice(0, 6);
                 const count = shown.length;
-                // 方案A：每个头像占格子宽度的 1/count，最大 22px
-                // 用 CSS 变量控制容器，每个头像撑满自己的槽
-                const slotSize = `min(22px, calc((min(100vw, 600px) - 48px) / ${7 * count}))`;
-                const overlap = count === 3 ? "-4px" : count === 2 ? "-2px" : "0px";
+                // 维持总宽度约 58px：3人@22px，-4px重叠 → 22+18+18=58px
+                // 公式：size = 4 + 54/count，总宽 = size + (count-1)*(size-4) = size*count - (count-1)*4 ≈ 58px
+                const avatarSize = Math.round(4 + 54 / count); // N=3→22, N=4→18, N=5→15, N=6→13
+                const maxPx = Math.min(22, avatarSize);
+                const slotSize = `min(${maxPx}px, calc((min(100vw, 600px) - 48px) / ${7 * count}))`;
+                // 固定 -4px 重叠，保持总宽一致
+                const overlap = count > 1 ? "-4px" : "0px";
+                // 人多时徽章更小
+                const badgeFontSize = avatarSize <= 15 ? "5px" : "6px";
+                const badgePad = avatarSize <= 15 ? "1px 1.5px" : "1px 2.5px";
                 return (
                   <div className="flex mt-0.5 justify-center items-center">
                     {shown.map((c, ci) => {
+                      const isDouble = isDoubleDropDate(c, date);
                       return (
                         <div key={c.id} style={{ width: slotSize, height: slotSize, flexShrink: 0, fontSize: slotSize, marginLeft: ci > 0 ? overlap : 0, zIndex: ci, position: "relative" }}>
                           <CharAvatar plan={c} index={charColorIndex.get(c.name) ?? 0} size="100%" onFallback={handleAvatarFallback} />
+                          {isDouble && (
+                            <span style={{
+                              position: "absolute",
+                              bottom: "-4px",
+                              left: "50%",
+                              transform: "translateX(-50%)",
+                              background: "hsl(var(--star))",
+                              color: "var(--double-badge-text)",
+                              fontSize: badgeFontSize,
+                              fontWeight: 700,
+                              lineHeight: 1,
+                              padding: badgePad,
+                              borderRadius: "3px",
+                              border: "1px solid hsl(var(--card))",
+                              pointerEvents: "none",
+                              zIndex: 10,
+                              whiteSpace: "nowrap",
+                            }}>×2</span>
+                          )}
                         </div>
                       );
                     })}
@@ -267,11 +313,28 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
       </div>
 
       {/* 图例 */}
-      <div className="flex items-center gap-1 mt-2 mb-1">
-        <svg width={8} height={8} viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0 }}>
-          <path d="M6 0C6 0 6.85334 2.69555 8.07889 3.92111C9.30445 5.14666 12 6 12 6C12 6 9.30445 6.85334 8.07889 8.07889C6.85334 9.30445 6 12 6 12C6 12 5.14666 9.30445 3.92111 8.07889C2.69555 6.85334 0 6 0 6C0 6 3.34379 4.69221 3.92111 3.92111C4.49842 3.15 6 0 6 0Z" fill="#B9AD86"/>
-        </svg>
-        <span className="text-xs text-muted-foreground">{t.calendar.rosterChangeDay}</span>
+      <div className="flex items-center flex-wrap mt-2 mb-1" style={{ gap: 8 }}>
+        <div className="flex items-center gap-1">
+          <svg width={8} height={8} viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0 }}>
+            <path d="M6 0C6 0 6.85334 2.69555 8.07889 3.92111C9.30445 5.14666 12 6 12 6C12 6 9.30445 6.85334 8.07889 8.07889C6.85334 9.30445 6 12 6 12C6 12 5.14666 9.30445 3.92111 8.07889C2.69555 6.85334 0 6 0 6C0 6 3.34379 4.69221 3.92111 3.92111C4.49842 3.15 6 0 6 0Z" fill={rosterStarColor}/>
+          </svg>
+          <span className="text-xs text-muted-foreground">{t.calendar.rosterChangeDay}</span>
+        </div>
+        {plans.some(p => p.doubleDropStart && p.doubleDropEnd) && (
+          <div className="flex items-center gap-1">
+            <span style={{
+              background: "hsl(var(--star))",
+              color: "var(--double-badge-text)",
+              fontSize: "8px",
+              fontWeight: 700,
+              lineHeight: 1,
+              padding: "2px 3px",
+              borderRadius: "3px",
+              flexShrink: 0,
+            }}>×2</span>
+            <span className="text-xs text-muted-foreground">{t.calendar.doubleDropDay}</span>
+          </div>
+        )}
       </div>
 
       {/* Summary cards — 按开始时间排序，同名角色合并 */}
@@ -309,7 +372,8 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
                 if (!activeToday) return null;
                 const s = parseLocalDate(activeToday.startDate); s.setHours(0, 0, 0, 0);
                 const daysElapsed = Math.max(0, Math.round((todayStart.getTime() - s.getTime()) / 86400000)) + 1;
-                const { reachableStar, remainingShards } = getPartialProgress(activeToday.currentStar, activeToday.currentShards + (activeToday.bonusShards ?? 0), daysElapsed);
+                const ddBonus = countDoubleDropDaysInRange(activeToday, s, todayStart);
+                const { reachableStar, remainingShards } = getPartialProgress(activeToday.currentStar, activeToday.currentShards + (activeToday.bonusShards ?? 0), daysElapsed, ddBonus);
                 const isExcess = reachableStar >= 5 && remainingShards > 0;
                 return { reachableStar, remainingShards, isExcess };
               })();
@@ -351,13 +415,16 @@ export default function FarmingCalendar({ plans }: FarmingCalendarProps) {
                     const targetStar = getEffectiveTargetStar(p);
                     const startD = parseLocalDate(p.startDate);
                     const fmt = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}`;
+                    const freeDdBonus = p.farmingMode === "free"
+                      ? countDoubleDropDaysInRange(p, parseLocalDate(p.startDate), endDate)
+                      : 0;
                     const { remainingShards, reachableStar } = p.farmingMode === "free"
-                      ? getPartialProgress(p.currentStar, p.currentShards + (p.bonusShards ?? 0), days)
+                      ? getPartialProgress(p.currentStar, p.currentShards + (p.bonusShards ?? 0), days, freeDdBonus)
                       : { remainingShards: 0, reachableStar: targetStar };
                     const isExcess = reachableStar >= 5 && remainingShards > 0;
-                    // 按星模式：ceil 天数可能多产出碎片，计算超出量
+                    // 按星模式：用实际产出碎片（含双倍）计算超出量
                     const starModeExcess = p.farmingMode === "star"
-                      ? Math.max(0, (p.currentShards + (p.bonusShards ?? 0) + days * 3) - getTotalShardsNeeded(p.currentStar, p.targetStar))
+                      ? Math.max(0, p.currentShards + (p.bonusShards ?? 0) + getActualShardsForDays(p, days) - getTotalShardsNeeded(p.currentStar, p.targetStar))
                       : 0;
                     return (
                       <div

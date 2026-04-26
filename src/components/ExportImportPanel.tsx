@@ -22,6 +22,7 @@ interface Props {
   plans: CharacterPlan[];
   onImport: (plans: CharacterPlan[]) => void;
   onExportingChange?: (exporting: boolean) => void;
+  viewMonth?: Date;
 }
 
 export interface ExportImportHandle {
@@ -29,7 +30,7 @@ export interface ExportImportHandle {
   startExport: () => void;
 }
 
-const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportImportPanel({ plans, onImport, onExportingChange }, ref) {
+const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportImportPanel({ plans, onImport, onExportingChange, viewMonth }, ref) {
   const { t } = useI18n();
   const [showImport, setShowImport] = useState(false);
   const [importText, setImportText]   = useState("");
@@ -285,7 +286,7 @@ const ExportImportPanel = forwardRef<ExportImportHandle, Props>(function ExportI
 
       {/* 离屏模板（html2canvas 截图用） */}
       {plans.length > 0 && (
-        <ExportTemplate ref={templateRef} plans={plans} qrDataUrl={qrDataUrl} />
+        <ExportTemplate ref={templateRef} plans={plans} qrDataUrl={qrDataUrl} viewMonth={viewMonth} />
       )}
 
       {/* 导入弹窗 */}
