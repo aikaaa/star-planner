@@ -7,7 +7,7 @@ import FarmingCalendar from "@/components/FarmingCalendar";
 import SetPlanDialog from "@/components/SetPlanDialog";
 import CommunityDialog from "@/components/CommunityDialog";
 import ExportImportPanel, { ExportImportHandle } from "@/components/ExportImportPanel";
-import { CharacterPlan, COMMUNITY_TOP_CHARACTERS, getCompletionDate, getEffectiveTargetStar, parseLocalDate } from "@/lib/types";
+import { CharacterPlan, COMMUNITY_TOP_CHARACTERS, getCompletionDate, getEffectiveTargetStar } from "@/lib/types";
 import { fetchCommunityTop10, reportFarmingCharacters, type CommunityCharacter } from "@/lib/communityStats";
 import { fetchRemoteRoles } from "@/lib/roles";
 import { encodeSoc } from "@/lib/socExport";
@@ -79,13 +79,15 @@ export default function Index() {
     fetchRemoteRoles().then(() => setRolesReady(true)).catch(() => setRolesReady(true));
   }, []);
 
-  // 无计划时拉取社区 Top3，供一键试配使用
+  // 无计划时拉取社区 Top3，供一键试配使用（随服务器切换）
   useEffect(() => {
     if (plans.length > 0) return;
-    fetchCommunityTop10().then(result => {
+    const server = lang === "en" ? "gl" : "cn";
+    fetchCommunityTop10(server).then(result => {
       if (result && result.data.length > 0) setPreviewChars(result.data.slice(0, 3));
+      else setPreviewChars([]);
     }).catch(() => {});
-  }, [plans.length]);
+  }, [plans.length, lang]);
 
   // 一键试配：加载热门计划，不上报排行
   const handleQuickTry = () => {
@@ -113,16 +115,13 @@ export default function Index() {
 
   const handleSavePlans = (newPlans: CharacterPlan[]) => {
     setPlans(newPlans);
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const in7Days = new Date(today); in7Days.setDate(today.getDate() + 7);
     reportFarmingCharacters(
-      newPlans
-        .filter((p) => {
-          const start = parseLocalDate(p.startDate);
-          const end = getCompletionDate(p);
-          return start <= in7Days && end >= today;
-        })
-        .map((p) => ({ name: p.name, targetStar: getEffectiveTargetStar(p) })),
+      newPlans.map((p) => ({
+        name: p.name,
+        targetStar: getEffectiveTargetStar(p),
+        startDate: p.startDate,
+        endDate: getCompletionDate(p).toISOString().slice(0, 10),
+      })),
       lang === "en" ? "gl" : "cn"
     );
   };
@@ -139,7 +138,7 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="gradient-primary py-6 sm:py-8 text-center relative">
+      <header className="gradient-primary pt-[27px] pb-[27px] sm:py-[35px] text-center relative">
         <div className="mx-auto px-4 grid items-center mb-1" style={{ maxWidth: "600px", gridTemplateColumns: "1fr auto 1fr" }}>
           <div className="flex items-center justify-start" style={{ position: "relative" }}>
             <button
@@ -162,8 +161,8 @@ export default function Index() {
                   className="w-full text-left px-4 py-2.5 text-sm hover:bg-accent transition-colors flex items-center justify-between"
                   style={{ color: lang === "cn" ? "hsl(var(--primary))" : "hsl(var(--foreground))" }}
                 >
-                  <span>国服</span>
-                  <span className="text-xs opacity-60 ml-3">CN</span>
+                  <span>CN</span>
+                  <span className="text-xs opacity-60 ml-3">国服</span>
                 </button>
                 <div className="border-t border-border" />
                 <button
@@ -171,8 +170,8 @@ export default function Index() {
                   className="w-full text-left px-4 py-2.5 text-sm hover:bg-accent transition-colors flex items-center justify-between"
                   style={{ color: lang === "en" ? "hsl(var(--primary))" : "hsl(var(--foreground))" }}
                 >
-                  <span>Waifu</span>
-                  <span className="text-xs opacity-60 ml-3">GL</span>
+                  <span>GL</span>
+                  <span className="text-xs opacity-60 ml-3">Waifu</span>
                 </button>
               </div>
             )}
@@ -192,11 +191,11 @@ export default function Index() {
             </button>
           </div>
         </div>
-        <p className="text-primary-foreground/70 text-xs sm:text-sm" style={{ marginTop: -4 }}>{t.app.subtitle}</p>
+        <p className="text-primary-foreground/70 text-xs sm:text-sm" style={{ marginTop: -2 }}>{t.app.subtitle}</p>
       </header>
 
       {/* Action buttons */}
-      <div className="mx-auto px-4 flex gap-3 relative z-10" style={{ maxWidth: "600px", marginTop: "-14px" }}>
+      <div className="mx-auto px-4 flex gap-3 relative z-10 -mt-[19px] sm:-mt-[21px]" style={{ maxWidth: "600px" }}>
         <Button
           className="flex-1 gradient-card border border-border text-foreground hover:text-foreground active:text-foreground hover:glow-primary h-12 font-semibold"
           style={{ borderRadius: "4px" }}
@@ -257,7 +256,7 @@ export default function Index() {
           /* 已配置：日历卡片 + 卡片下方右对齐的操作按钮 */
           <div className="gradient-card border border-border" style={{ paddingTop: "8px", paddingLeft: "12px", paddingRight: "12px", paddingBottom: "12px", borderRadius: "4px" }}>
             <FarmingCalendar plans={plans} />
-            <div className="flex flex-col gap-2" style={{ marginTop: 16 }}>
+            <div className="flex flex-col gap-2" style={{ marginTop: 12 }}>
               {/* 第一行：截图保存 */}
               <Button
                 size="sm"

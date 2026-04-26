@@ -101,13 +101,14 @@ const CN = {
     universalShards: "片万能可",
   },
   communityDialog: {
-    title: "近7天跑片热门角色 Top10",
+    title: "热门角色 Top 10 - 近 30 天",
     tabDefault: "国服",
     tabOther: "外服",
     justUpdated: "刚刚更新",
     minutesAgo: "分钟前更新",
     hoursAgo: "小时前更新",
     daysAgo: "天前更新",
+    updateSchedule: "每日 00:00 更新",
     loaded: "数据已加载",
     noService: "暂未连接统计服务，显示示例数据",
     loading: "加载中…",
@@ -226,13 +227,14 @@ const EN: typeof CN = {
     universalShards: "Recollection shards required",
   },
   communityDialog: {
-    title: "Top 10 Characters (7 Days)",
+    title: "Top 10 Chars - Last 30 days",
     tabDefault: "GL",
     tabOther: "CN",
     justUpdated: "Just updated",
     minutesAgo: "min ago",
     hoursAgo: "hr ago",
     daysAgo: "days ago",
+    updateSchedule: "Daily update at 00:00 (UTC+8)",
     loaded: "Data loaded",
     noService: "Stats service unavailable, showing sample data",
     loading: "Loading...",
@@ -268,7 +270,10 @@ const I18nContext = createContext<I18nContextValue>({
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLang] = useState<Lang>(() => {
     const saved = localStorage.getItem("lang");
-    return saved === "en" ? "en" : "cn";
+    if (saved) return saved === "en" ? "en" : "cn";
+    // 首次访问：根据浏览器语言自动判断
+    const browserLang = navigator.language || "";
+    return browserLang.startsWith("zh") ? "cn" : "en";
   });
 
   const toggleLang = () => {

@@ -10,6 +10,8 @@ export interface CommunityCharacter {
 export interface CharacterReport {
   name: string;
   targetStar: number;
+  startDate: string; // YYYY-MM-DD
+  endDate: string;   // YYYY-MM-DD
 }
 
 export interface CommunityResult {
@@ -35,10 +37,12 @@ export async function reportFarmingCharacters(characters: CharacterReport[], ser
   if (characters.length === 0) return;
 
   await supabase.from("character_farm_reports").insert(
-    characters.map(({ name, targetStar }) => ({
+    characters.map(({ name, targetStar, startDate, endDate }) => ({
       device_id: deviceId,
       character_name: name,
       target_star: targetStar,
+      start_date: startDate,
+      end_date: endDate,
       server,
     }))
   );

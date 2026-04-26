@@ -100,7 +100,7 @@ export default function CommunityDialog({ open, onOpenChange }: CommunityDialogP
               {isReal ? (
                 <>
                   <Clock className="h-3 w-3 shrink-0" />
-                  <span>{updatedAt ? formatUpdatedAt(updatedAt) : t.communityDialog.loaded}</span>
+                  <span>{t.communityDialog.updateSchedule}</span>
                 </>
               ) : (
                 <>
