@@ -219,7 +219,7 @@ export default function Index() {
       </div>
 
       {/* Calendar + Export/Import */}
-      <div className="mx-auto px-4" style={{ maxWidth: "600px", paddingTop: "12px", paddingBottom: 0 }}>
+      <div className="mx-auto px-4 sm:pb-16" style={{ maxWidth: "600px", paddingTop: "12px", paddingBottom: 0 }}>
         {plans.length === 0 ? (
           /* 未配置：空状态卡片 */
           <div className="gradient-card border border-border text-center" style={{ borderRadius: "4px", padding: "48px 32px 120px" }}>
