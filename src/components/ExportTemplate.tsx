@@ -9,9 +9,13 @@ import {
   formatCharName,
   getCharactersOnDate,
   getCompletionDate,
+  countDoubleDropDaysInRange,
+  getActualShardsForDays,
+  getCompletionDate,
   getDaysNeeded,
   getEffectiveTargetStar,
   getPartialProgress,
+  getTotalShardsNeeded,
   isDoubleDropDate,
   parseLocalDate,
 } from "@/lib/types";
@@ -379,17 +383,31 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
               const headerStar = (() => {
                 const first = group[0];
                 const last  = group[group.length - 1];
-                // free 模式：用计划总天数算结束时能达到的星级和剩余碎片
-                if (group.length === 1 && first.farmingMode === "free") {
-                  const totalDays = getDaysNeeded(first);
-                  const { reachableStar, remainingShards } = getPartialProgress(
-                    first.currentStar, first.currentShards + (first.bonusShards ?? 0), totalDays
+                if (group.length === 1) {
+                  const p = first;
+                  const days = getDaysNeeded(p);
+                  const targetStar = getEffectiveTargetStar(p);
+                  if (p.farmingMode === "free") {
+                    const freeDdBonus = countDoubleDropDaysInRange(p, parseLocalDate(p.startDate), getCompletionDate(p));
+                    const { reachableStar, remainingShards } = getPartialProgress(
+                      p.currentStar, p.currentShards + (p.bonusShards ?? 0), days, freeDdBonus
+                    );
+                    return {
+                      from:   p.currentStar,
+                      to:     reachableStar,
+                      shards: remainingShards,
+                      excess: reachableStar >= 5 && remainingShards > 0,
+                    };
+                  }
+                  // star 模式：计算完成后超出的碎片
+                  const starModeExcess = Math.max(0,
+                    p.currentShards + (p.bonusShards ?? 0) + getActualShardsForDays(p, days) - getTotalShardsNeeded(p.currentStar, p.targetStar)
                   );
                   return {
-                    from:   first.currentStar,
-                    to:     reachableStar,
-                    shards: remainingShards,
-                    excess: reachableStar >= 5 && remainingShards > 0,
+                    from:   p.currentStar,
+                    to:     targetStar,
+                    shards: starModeExcess,
+                    excess: p.targetStar >= 5 && starModeExcess > 0,
                   };
                 }
                 return {
