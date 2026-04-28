@@ -11,7 +11,6 @@ import {
   getCompletionDate,
   getDaysNeeded,
   getEffectiveTargetStar,
-  getPartialProgress,
   isDoubleDropDate,
   parseLocalDate,
 } from "@/lib/types";
@@ -377,26 +376,11 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
 
               // 头部右侧星级摘要（提前计算，避免 IIFE 内 JSX 渲染不稳）
               const headerStar = (() => {
-                if (group.length === 1) {
-                  const p    = group[0];
-                  if (p.farmingMode === "free") {
-                    const s = parseLocalDate(p.startDate); s.setHours(0, 0, 0, 0);
-                    const daysElapsed = Math.max(0, Math.round((today.getTime() - s.getTime()) / 86400000)) + 1;
-                    const { reachableStar, remainingShards } = getPartialProgress(
-                      p.currentStar, p.currentShards + (p.bonusShards ?? 0), daysElapsed
-                    );
-                    return {
-                      from: p.currentStar,
-                      to:   reachableStar,
-                      shards: remainingShards,
-                      excess: reachableStar >= 5 && remainingShards > 0,
-                    };
-                  }
-                  return { from: p.currentStar, to: getEffectiveTargetStar(p), shards: 0, excess: false };
-                }
+                const first = group[0];
+                const last  = group[group.length - 1];
                 return {
-                  from:  group[0].currentStar,
-                  to:    getEffectiveTargetStar(group[group.length - 1]),
+                  from:   first.currentStar,
+                  to:     getEffectiveTargetStar(last),
                   shards: 0,
                   excess: false,
                 };
