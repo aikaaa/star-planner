@@ -11,6 +11,7 @@ import {
   getCompletionDate,
   getDaysNeeded,
   getEffectiveTargetStar,
+  getPartialProgress,
   isDoubleDropDate,
   parseLocalDate,
 } from "@/lib/types";
@@ -378,6 +379,19 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
               const headerStar = (() => {
                 const first = group[0];
                 const last  = group[group.length - 1];
+                // free 模式：用计划总天数算结束时能达到的星级和剩余碎片
+                if (group.length === 1 && first.farmingMode === "free") {
+                  const totalDays = getDaysNeeded(first);
+                  const { reachableStar, remainingShards } = getPartialProgress(
+                    first.currentStar, first.currentShards + (first.bonusShards ?? 0), totalDays
+                  );
+                  return {
+                    from:   first.currentStar,
+                    to:     reachableStar,
+                    shards: remainingShards,
+                    excess: reachableStar >= 5 && remainingShards > 0,
+                  };
+                }
                 return {
                   from:   first.currentStar,
                   to:     getEffectiveTargetStar(last),
